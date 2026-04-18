@@ -58,7 +58,7 @@ export function useCharacterCreation() {
     );
   }, []);
 
-  const handleCreateCharacter = useCallback(() => {
+  const handleCreateCharacter = useCallback((): Character | null => {
     setErrorMessage('');
     setSuccessMessage('');
 
@@ -66,17 +66,17 @@ export function useCharacterCreation() {
 
     if (trimmedName.length < 2) {
       setErrorMessage('Character name must contain at least 2 characters.');
-      return;
+      return null;
     }
 
     if (!selectedClassId) {
       setErrorMessage('Please select a class.');
-      return;
+      return null;
     }
 
     if (!selectedGiftId) {
       setErrorMessage('Please select a starter gift.');
-      return;
+      return null;
     }
 
     const character = createCharacter({
@@ -88,6 +88,8 @@ export function useCharacterCreation() {
     saveCharacter(character);
     setCreatedCharacter(character);
     setSuccessMessage(`Character "${character.name}" has been created successfully.`);
+
+    return character;
   }, [name, saveCharacter, selectedClassId, selectedGiftId]);
 
   const resetForm = useCallback(() => {

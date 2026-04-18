@@ -21,6 +21,7 @@ The project focuses on:
 - Language: TypeScript
 - Current Storage: localStorage
 - Future Storage: PostgreSQL
+- Current Deployment: Vercel frontend deployment
 
 ## Project Structure
 
@@ -50,6 +51,7 @@ Implemented:
 - starter skill metadata
 - character preview UI
 - localStorage persistence
+- frontend deployment on Vercel
 
 ## Phase 1 Character Creation Flow
 
@@ -117,6 +119,8 @@ At the current stage, character data is saved in the browser using localStorage.
 
 This is suitable for early prototyping, personal testing, and small-scale feedback from friends.
 
+Each user currently has their own local saved character in their own browser.
+
 Later, when the project adds accounts, shared progression, chat, inventory, or multiplayer-like features, the data layer should move to the NestJS backend and PostgreSQL.
 
 ## Documentation
@@ -146,22 +150,27 @@ npm install
 npm run start:dev
 ```
 
-## Deployment Plan
+## Deployment
 
-The current frontend can be deployed as a static React/Vite application.
+The current frontend is deployed as a static React/Vite application on Vercel.
 
-Initial deployment target:
+Vercel settings:
 
-- Vercel
 - Root Directory: `client`
 - Build Command: `npm run build`
 - Output Directory: `dist`
 
 At the current phase, the deployed version allows each user to create and save their own character locally in their browser.
 
-## Next Planned Phase
+## Next Phase
 
 ### Phase 1.1 - Character Profile / Character Summary
+
+Status: In Progress
+
+Goal:
+
+Display the created character after character creation and prepare the transition into dungeon and combat systems.
 
 Planned features:
 
@@ -171,7 +180,24 @@ Planned features:
 - show base stats and derived stats
 - show current HP, MP, Energy, and Shield
 - show passive, starter skills, and starter gift
+- add a simple Start Adventure button
 - prepare transition toward dungeon and combat systems
+
+## Future Phase
+
+### Phase 2 - Dungeon and Basic Battle System
+
+Planned features:
+
+- dungeon entry screen
+- basic monster data
+- random encounter
+- turn order based on action speed
+- basic attack
+- starter skill usage
+- battle log
+- win / lose result
+- EXP and reward update
 
 ## Long-Term Planned Systems
 

@@ -34,7 +34,13 @@ function getSelectableCardClass(isSelected: boolean): string {
   return `${baseClass} ${isSelected ? selectedClass : normalClass}`;
 }
 
-export function CharacterCreationForm() {
+interface CharacterCreationFormProps{
+    onCharacterCreated?: () => void;
+}
+
+export function CharacterCreationForm({
+    onCharacterCreated,
+}: CharacterCreationFormProps) {
   const {
     name,
     setName,
@@ -74,7 +80,12 @@ export function CharacterCreationForm() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            handleCreateCharacter();
+
+            const createdCharacter = handleCreateCharacter();
+
+            if (createdCharacter) {
+                onCharacterCreated?.();
+            }
           }}
           className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]"
         >
