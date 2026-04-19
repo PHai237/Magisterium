@@ -33,6 +33,30 @@ Magisterium/
 └─ README.md
 ```
 
+## Architecture Note
+
+The current gameplay prototype is implemented mostly in the `client/` folder.
+
+Reason:
+
+- character creation is currently a frontend feature
+- character profile is currently a frontend feature
+- current save/load uses browser localStorage
+- the deployed Vercel version currently serves the React frontend
+
+The `server/` folder already exists as a NestJS backend foundation, but it is not yet deeply connected to gameplay.
+
+The backend will become important when the project needs:
+
+- real database persistence
+- PostgreSQL integration
+- accounts or guest sessions
+- shared progression
+- server-side validation
+- inventory persistence
+- battle result saving
+- chat, guild, or party systems
+
 ## Current Status
 
 ### Phase 1 - Character Creation
@@ -53,16 +77,37 @@ Implemented:
 - localStorage persistence
 - frontend deployment on Vercel
 
-## Phase 1 Character Creation Flow
+### Phase 1.1 - Character Profile / Character Summary
+
+Status: Completed
+
+Implemented:
+
+- load saved character from localStorage
+- display character profile
+- show class, level, EXP, and gold
+- show base stats and derived stats
+- show current HP, MP, Energy, and Shield
+- show passive, starter skills, and starter gift
+- create new character flow
+- profile flow after character creation
+
+## Current Gameplay Flow
 
 ```text
-Enter Name
-  -> Select Class
-  -> Apply Class Stat Bonus
-  -> Calculate Derived Stats
-  -> Select Starter Gift
-  -> Create Character Object
+No Saved Character
+  -> Character Creation
+
+Create Character
   -> Save to localStorage
+  -> Character Profile
+
+Saved Character Exists
+  -> Character Profile
+
+Create New Character
+  -> Clear current character
+  -> Character Creation
 ```
 
 ## Core Stats
@@ -77,7 +122,7 @@ The current character system uses 5 core stats:
 
 ## Character Data Structure
 
-The character system separates data into three main layers:
+The character system separates data into three main layers.
 
 ### Base Stats
 
@@ -131,6 +176,8 @@ Important documents:
 
 - `docs/project-overview.md`
 - `docs/character-creation-phase1.md`
+- `docs/character-profile-phase1-1.md`
+- `docs/dungeon-battle-phase2.md`
 
 ## Local Development
 
@@ -164,28 +211,13 @@ At the current phase, the deployed version allows each user to create and save t
 
 ## Next Phase
 
-### Phase 1.1 - Character Profile / Character Summary
+### Phase 2 - Dungeon and Basic Battle System
 
-Status: In Progress
+Status: Planning
 
 Goal:
 
-Display the created character after character creation and prepare the transition into dungeon and combat systems.
-
-Planned features:
-
-- load saved character from localStorage
-- display character profile
-- show class, level, EXP, and gold
-- show base stats and derived stats
-- show current HP, MP, Energy, and Shield
-- show passive, starter skills, and starter gift
-- add a simple Start Adventure button
-- prepare transition toward dungeon and combat systems
-
-## Future Phase
-
-### Phase 2 - Dungeon and Basic Battle System
+Build the first playable text-based battle loop.
 
 Planned features:
 
@@ -197,7 +229,7 @@ Planned features:
 - starter skill usage
 - battle log
 - win / lose result
-- EXP and reward update
+- simple EXP and gold reward update
 
 ## Long-Term Planned Systems
 
