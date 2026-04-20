@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import type { Character } from '../character-creation/types';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 
@@ -139,6 +141,20 @@ export function BattlePage({
     dungeon,
   });
 
+  useEffect(() => {
+    if (!isMonsterTurn) {
+        return;
+    }
+
+    const timerId = window.setTimeout(() => {
+        handleMonsterAction();
+    }, 700);
+
+    return () => {
+        window.clearTimeout(timerId);
+    };
+    }, [isMonsterTurn, handleMonsterAction]);
+
   const { player, monster } = battleState;
 
   return (
@@ -272,7 +288,7 @@ export function BattlePage({
               <p className="mt-2 text-sm text-slate-400">
                 {isPlayerTurn
                   ? 'Choose your action.'
-                  : 'Monster is ready to act.'}
+                  : 'Monster is acting...'}
               </p>
             )}
 
@@ -317,15 +333,11 @@ export function BattlePage({
                   );
                 })}
               </div>
-
-              <button
-                type="button"
-                onClick={handleMonsterAction}
-                disabled={!isMonsterTurn}
-                className="w-full rounded-xl border border-red-500/40 bg-red-500/10 px-5 py-3 font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Resolve Monster Turn
-              </button>
+                {isMonsterTurn && (
+                    <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                        {monster.name} is preparing an attack...
+                    </div>
+                )}
             </div>
 
             {battleState.status === 'won' && (
