@@ -12,6 +12,7 @@ interface BattlePageProps {
   dungeon: DungeonDefinition;
   onBackToDungeon: () => void;
   onBattleFinished: (updatedCharacter: Character) => void;
+  onContinueAdventure: (updatedCharacter: Character) => void;
 }
 
 function getPercent(currentValue: number, maxValue: number): number {
@@ -166,17 +167,16 @@ export function BattlePage({
   dungeon,
   onBackToDungeon,
   onBattleFinished,
+  onContinueAdventure,
 }: BattlePageProps) {
   const {
     battleState,
-    isBattleActive,
     isPlayerTurn,
     isMonsterTurn,
     playerSkills,
     handlePlayerBasicAttack,
     handlePlayerUseSkill,
     handleMonsterAction,
-    resetBattle,
   } = useBattle({
     character,
     dungeon,
@@ -395,32 +395,49 @@ export function BattlePage({
             </div>
 
             {battleState.status === 'won' && (
-              <div className="mt-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
-                <p className="font-semibold text-emerald-200">
-                  Victory!
-                </p>
+                <div className="mt-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
+                    <p className="font-semibold text-emerald-200">
+                    Victory!
+                    </p>
 
-                <p className="mt-2 text-sm text-emerald-100">
-                  You gained {battleState.reward.exp} EXP and{' '}
-                  {battleState.reward.gold} Gold.
-                </p>
+                    <p className="mt-2 text-sm text-emerald-100">
+                    You gained {battleState.reward.exp} EXP and{' '}
+                    {battleState.reward.gold} Gold.
+                    </p>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const updatedCharacter = buildCharacterAfterWin(
-                      character,
-                      battleState,
-                    );
+                    <div className="mt-4 space-y-3">
+                    <button
+                        type="button"
+                        onClick={() => {
+                        const updatedCharacter = buildCharacterAfterWin(
+                            character,
+                            battleState,
+                        );
 
-                    onBattleFinished(updatedCharacter);
-                  }}
-                  className="mt-4 w-full rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400"
-                >
-                  Claim Reward & Return
-                </button>
-              </div>
-            )}
+                        onBattleFinished(updatedCharacter);
+                        }}
+                        className="w-full rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400"
+                    >
+                        Claim Reward & Return
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                        const updatedCharacter = buildCharacterAfterWin(
+                            character,
+                            battleState,
+                        );
+
+                        onContinueAdventure(updatedCharacter);
+                        }}
+                        className="w-full rounded-xl border border-emerald-500/40 bg-slate-950 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-500/10"
+                    >
+                        Claim Reward & Continue Adventure
+                    </button>
+                    </div>
+                </div>
+                )}
 
             {battleState.status === 'lost' && (
               <div className="mt-5 rounded-xl border border-red-500/40 bg-red-500/10 p-4">
@@ -447,16 +464,6 @@ export function BattlePage({
                   Return to Profile
                 </button>
               </div>
-            )}
-
-            {!isBattleActive && (
-              <button
-                type="button"
-                onClick={resetBattle}
-                className="mt-4 w-full rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
-              >
-                Start Another Battle
-              </button>
             )}
           </article>
 

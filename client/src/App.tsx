@@ -15,6 +15,7 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('profile');
   const [selectedDungeon, setSelectedDungeon] =
     useState<DungeonDefinition | null>(null);
+  const [battleRunId, setBattleRunId] = useState(0);
 
   const {
     character,
@@ -33,6 +34,17 @@ function App() {
     loadCharacter();
     setSelectedDungeon(null);
     setCurrentScreen('profile');
+  }
+
+  function saveUpdatedCharacterAndContinue(updatedCharacter: Character) {
+    localStorage.setItem(
+      LOCAL_STORAGE_KEYS.currentCharacter,
+      JSON.stringify(updatedCharacter),
+    );
+
+    loadCharacter();
+    setBattleRunId((currentId) => currentId + 1);
+    setCurrentScreen('battle');
   }
 
   if (errorMessage) {
@@ -67,12 +79,14 @@ function App() {
     if (currentScreen === 'battle' && selectedDungeon) {
       return (
         <BattlePage
+          key={battleRunId}
           character={character}
           dungeon={selectedDungeon}
           onBackToDungeon={() => {
             setCurrentScreen('dungeon');
           }}
           onBattleFinished={saveUpdatedCharacter}
+          onContinueAdventure={saveUpdatedCharacterAndContinue}
         />
       );
     }
@@ -87,6 +101,7 @@ function App() {
           }}
           onEnterDungeon={(dungeon) => {
             setSelectedDungeon(dungeon);
+            setBattleRunId((currentId) => currentId + 1);
             setCurrentScreen('battle');
           }}
         />
@@ -99,6 +114,7 @@ function App() {
         onCreateNewCharacter={() => {
           clearCharacter();
           setSelectedDungeon(null);
+          setBattleRunId(0);
           setCurrentScreen('profile');
         }}
         onStartAdventure={() => {
