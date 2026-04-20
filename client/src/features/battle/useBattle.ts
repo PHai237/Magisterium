@@ -30,6 +30,29 @@ interface UseBattleParams {
   dungeon: DungeonDefinition;
 }
 
+function getResourceText(
+    player: BattleState['player'],
+    resourceType: string | null,
+): string {
+    if (!resourceType) {
+        return 'No resource required';
+    }
+
+    if (resourceType === 'MP') {
+        return `${player.currentMp} MP`;
+    }
+
+    if (resourceType === 'Energy') {
+        return `${player.currentEnergy} Energy`;
+    }
+
+    if (resourceType === 'HP') {
+        return `${player.currentHp} HP`;
+    }
+
+    return 'Unknown resource';
+}
+
 export function useBattle({ character, dungeon }: UseBattleParams) {
   const [battleState, setBattleState] = useState<BattleState>(() =>
     createInitialBattleState({
@@ -135,9 +158,12 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
 
       if (!canUseSkill(currentBattle.player, selectedSkill)) {
         const noResourceLog = createLogEntry({
-          turn: currentBattle.turn,
-          actor: 'system',
-          message: `${currentBattle.player.name} does not have enough ${selectedSkill.resourceType} to use ${selectedSkill.name}.`,
+            turn: currentBattle.turn,
+            actor: 'system',
+            message: `${currentBattle.player.name} cannot use ${selectedSkill.name}. Required: ${selectedSkill.resourceCost} ${selectedSkill.resourceType}. Current: ${getResourceText(
+                currentBattle.player,
+                selectedSkill.resourceType,
+            )}.`,
         });
 
         return {

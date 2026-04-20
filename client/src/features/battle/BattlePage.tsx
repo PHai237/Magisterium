@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import type { Character } from '../character-creation/types';
+import type { Character, SkillDefinition } from '../character-creation/types';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 
 import { useBattle } from './useBattle';
@@ -118,6 +118,40 @@ function canPlayerUseSkill(player: PlayerBattleState, skillId: string): boolean 
   }
 
   return false;
+}
+
+function getSkillCostText(skill: SkillDefinition): string {
+  if (!skill.resourceType || skill.resourceCost <= 0) {
+    return 'Free';
+  }
+
+  return `${skill.resourceCost} ${skill.resourceType}`;
+}
+
+function getSkillResourceWarning(
+  player: PlayerBattleState,
+  skill: SkillDefinition,
+): string {
+  if (!skill.resourceType || skill.resourceCost <= 0) {
+    return '';
+  }
+
+  if (skill.resourceType === 'MP' && player.currentMp < skill.resourceCost) {
+    return `Not enough MP. Current: ${player.currentMp}, Required: ${skill.resourceCost}.`;
+  }
+
+  if (
+    skill.resourceType === 'Energy' &&
+    player.currentEnergy < skill.resourceCost
+  ) {
+    return `Not enough Energy. Current: ${player.currentEnergy}, Required: ${skill.resourceCost}.`;
+  }
+
+  if (skill.resourceType === 'HP' && player.currentHp <= skill.resourceCost) {
+    return `Not enough HP. Current: ${player.currentHp}, Required: more than ${skill.resourceCost}.`;
+  }
+
+  return '';
 }
 
 export function BattlePage({
@@ -304,34 +338,47 @@ export function BattlePage({
 
               <div className="space-y-3">
                 {playerSkills.map((skill) => {
-                  const usable = canPlayerUseSkill(player, skill.id);
+                    const usable = canPlayerUseSkill(player, skill.id);
+                    const resourceWarning = getSkillResourceWarning(player, skill);
 
-                  return (
-                    <button
-                      key={skill.id}
-                      type="button"
-                      onClick={() => handlePlayerUseSkill(skill.id)}
-                      disabled={!isPlayerTurn || !usable}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-950 px-5 py-3 text-left transition hover:border-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-white">
-                            {skill.name}
-                          </p>
+                    return (
+                        <button
+                        key={skill.id}
+                        type="button"
+                        onClick={() => handlePlayerUseSkill(skill.id)}
+                        disabled={!isPlayerTurn || !usable}
+                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-5 py-3 text-left transition hover:border-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                            <p className="font-semibold text-white">
+                                {skill.name}
+                            </p>
 
-                          <p className="mt-1 text-sm text-slate-400">
-                            {skill.description}
-                          </p>
+                            <p className="mt-1 text-sm text-slate-400">
+                                {skill.description}
+                            </p>
+
+                            {resourceWarning && (
+                                <p className="mt-2 text-xs font-semibold text-red-300">
+                                {resourceWarning}
+                                </p>
+                            )}
+                            </div>
+
+                            <span
+                            className={
+                                usable
+                                ? 'rounded-full border border-violet-500/40 px-2 py-1 text-xs text-violet-300'
+                                : 'rounded-full border border-red-500/40 px-2 py-1 text-xs text-red-300'
+                            }
+                            >
+                            {getSkillCostText(skill)}
+                            </span>
                         </div>
-
-                        <span className="rounded-full border border-violet-500/40 px-2 py-1 text-xs text-violet-300">
-                          {skill.resourceCost} {skill.resourceType ?? ''}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
+                        </button>
+                    );
+                    })}
               </div>
                 {isMonsterTurn && (
                     <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
