@@ -4,6 +4,7 @@ import type { Character } from '../character-creation/types';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 
 import {
+  applyCriticalDamage,
   applyDamageToMonster,
   applyDamageToPlayer,
   applyHealToPlayer,
@@ -15,9 +16,11 @@ import {
   canUseSkill,
   createInitialBattleState,
   createLogEntry,
+  getCriticalLogText,
   isMonsterDefeated,
   isPlayerDefeated,
   spendSkillResource,
+  rollChance,
 } from './battleCalculations';
 
 import type { BattleState } from './battleTypes';
@@ -54,10 +57,13 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
         return currentBattle;
       }
 
-      const damage = calculatePlayerBasicAttackDamage(
+      const baseDamage = calculatePlayerBasicAttackDamage(
         currentBattle.player,
         currentBattle.monster,
       );
+
+      const isCritical = rollChance(currentBattle.player.derivedStats.critRate);
+      const damage = applyCriticalDamage(baseDamage, isCritical);
 
       const updatedMonster = applyDamageToMonster(
         currentBattle.monster,
@@ -67,7 +73,7 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
       const attackLog = createLogEntry({
         turn: currentBattle.turn,
         actor: 'player',
-        message: `${currentBattle.player.name} attacks ${currentBattle.monster.name} and deals ${damage} damage.`,
+        message: `${currentBattle.player.name} attacks ${currentBattle.monster.name} and deals ${damage} damage.${getCriticalLogText(isCritical)}`,
       });
 
       if (isMonsterDefeated(updatedMonster)) {
@@ -146,11 +152,14 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
       );
 
       if (selectedSkill.effectType === 'damage') {
-        const damage = calculatePlayerSkillDamage({
+        const baseDamage = calculatePlayerSkillDamage({
           player: currentBattle.player,
           monster: currentBattle.monster,
           skill: selectedSkill,
         });
+
+        const isCritical = rollChance(currentBattle.player.derivedStats.critRate);
+        const damage = applyCriticalDamage(baseDamage, isCritical);
 
         const updatedMonster = applyDamageToMonster(
           currentBattle.monster,
@@ -160,7 +169,7 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
         const skillLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'player',
-          message: `${currentBattle.player.name} uses ${selectedSkill.name} and deals ${damage} damage.`,
+          message: `${currentBattle.player.name} uses ${selectedSkill.name} and deals ${damage} damage.${getCriticalLogText(isCritical)}`,
         });
 
         if (isMonsterDefeated(updatedMonster)) {
@@ -269,10 +278,13 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
         return currentBattle;
       }
 
-      const damage = calculateMonsterBasicAttackDamage(
+      const baseDamage = calculateMonsterBasicAttackDamage(
         currentBattle.monster,
         currentBattle.player,
       );
+
+      const isCritical = rollChance(currentBattle.monster.critRate);
+      const damage = applyCriticalDamage(baseDamage, isCritical);
 
       const updatedPlayer = applyDamageToPlayer(
         currentBattle.player,
@@ -282,7 +294,7 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
       const monsterAttackLog = createLogEntry({
         turn: currentBattle.turn,
         actor: 'monster',
-        message: `${currentBattle.monster.name} attacks ${currentBattle.player.name} and deals ${damage} damage.`,
+        message: `${currentBattle.monster.name} attacks ${currentBattle.player.name} and deals ${damage} damage.${getCriticalLogText(isCritical)}`,
       });
 
       if (isPlayerDefeated(updatedPlayer)) {

@@ -321,3 +321,30 @@ export function isPlayerDefeated(player: PlayerBattleState): boolean {
 export function getNextActor(currentActor: 'player' | 'monster'): 'player' | 'monster' {
   return currentActor === 'player' ? 'monster' : 'player';
 }
+
+export function rollChance(percent: number): boolean {
+    if (percent <= 0) {
+        return false;
+    }
+
+    if (percent >= 100) {
+        return true;
+    }
+
+    return Math.random() * 100 < percent;
+}
+
+export function applyCriticalDamage(
+    damage: number,
+    isCritical: boolean,
+): number {
+    if (!isCritical) {
+        return damage;
+    }
+
+    return Math.max(1, Math.round(damage * 1.5));
+}
+
+export function getCriticalLogText(isCritical: boolean): string {
+    return isCritical ? ' Critical hit!' : '';
+}
