@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import type { Character, SkillDefinition } from '../character-creation/types';
+import { applyExpReward } from '../character-progression/progressionCalculations';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 
 import { useBattle } from './useBattle';
@@ -63,9 +64,8 @@ function buildCharacterAfterWin(
         )
       : 0;
 
-  return {
+  const characterAfterBattleState: Character = {
     ...character,
-    exp: character.exp + battleState.reward.exp,
     gold: character.gold + battleState.reward.gold,
     currentState: {
       hp: Math.min(
@@ -77,6 +77,13 @@ function buildCharacterAfterWin(
       shield: 0,
     },
   };
+
+  const expResult = applyExpReward(
+    characterAfterBattleState,
+    battleState.reward.exp,
+  );
+
+  return expResult.updatedCharacter;
 }
 
 function buildCharacterAfterLoss(

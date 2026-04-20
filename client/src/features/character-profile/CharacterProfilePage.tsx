@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import type { Character } from '../character-creation/types';
+import { getExpToNextLevel } from '../character-progression/progressionCalculations';
 
 interface CharacterProfilePageProps {
   character: Character;
@@ -47,6 +48,8 @@ export function CharacterProfilePage({
   onCreateNewCharacter,
   onStartAdventure,
 }: CharacterProfilePageProps) {
+  const expToNextLevel = getExpToNextLevel(character.level);
+    
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-7xl">
@@ -106,7 +109,9 @@ export function CharacterProfilePage({
 
                   <div className="rounded-xl bg-slate-950 p-3">
                     <p className="text-xs text-slate-400">EXP</p>
-                    <p className="mt-1 text-xl font-bold">{character.exp}</p>
+                    <p className="mt-1 text-xl font-bold">
+                        {character.exp} / {expToNextLevel}
+                    </p>
                   </div>
 
                   <div className="rounded-xl bg-slate-950 p-3">
