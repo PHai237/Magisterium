@@ -2,7 +2,7 @@
 
 Magisterium is a text-based anime-style RPG web game project.
 
-The project is inspired by anime RPG progression systems, dungeon fantasy, class-based identity, and stat-driven character growth.
+The project is inspired by anime RPG progression systems, dungeon fantasy, class-based identity, stat-driven character growth, and simple text-based battle loops.
 
 ## Current Direction
 
@@ -11,8 +11,11 @@ The project focuses on:
 - class-based character identity
 - stat-driven progression
 - text-based RPG systems
-- character growth and future combat mechanics
-- future expansion into equipment, quests, dungeons, guild/chat, and social features
+- dungeon exploration
+- monster encounters
+- basic battle loop
+- character progression
+- future expansion into inventory, equipment, quests, skills, mastery, backend persistence, and social features
 
 ## Tech Stack
 
@@ -27,9 +30,8 @@ The project focuses on:
 
 ```text
 Magisterium/
-├─ client/   # React frontend
-├─ server/   # NestJS backend
-├─ docs/     # Game design notes and phase documents
+├─ client/   # React frontend and current gameplay prototype
+├─ server/   # NestJS backend foundation
 └─ README.md
 ```
 
@@ -41,6 +43,8 @@ Reason:
 
 - character creation is currently a frontend feature
 - character profile is currently a frontend feature
+- dungeon entry is currently a frontend feature
+- battle logic is currently a frontend prototype
 - current save/load uses browser localStorage
 - the deployed Vercel version currently serves the React frontend
 
@@ -54,8 +58,10 @@ The backend will become important when the project needs:
 - shared progression
 - server-side validation
 - inventory persistence
+- equipment persistence
 - battle result saving
 - chat, guild, or party systems
+- anti-cheat / server-owned game state
 
 ## Current Status
 
@@ -92,6 +98,50 @@ Implemented:
 - create new character flow
 - profile flow after character creation
 
+### Phase 2 - Dungeon and Basic Battle Loop
+
+Status: Completed as Prototype
+
+Implemented:
+
+- dungeon entry screen
+- basic dungeon data
+- basic monster data
+- random monster encounter
+- turn order based on action speed
+- player basic attack
+- player starter skill usage
+- skill resource cost handling
+- damage skill handling
+- heal skill handling
+- shield skill handling
+- monster basic attack
+- battle log
+- victory state
+- defeat state
+- EXP reward update
+- gold reward update
+- post-battle character update
+- return to profile after battle
+
+### Phase 2.1 - Battle Polish
+
+Status: Completed as Prototype
+
+Implemented:
+
+- automatic monster turn after player action
+- critical hit chance
+- critical damage multiplier
+- clearer skill resource feedback
+- skill button disabled state when not enough resource
+- level up system
+- class-based stat growth on level up
+- EXP threshold system
+- continue adventure loop
+- reward claim flow
+- return to profile flow after battle
+
 ## Current Gameplay Flow
 
 ```text
@@ -104,6 +154,31 @@ Create Character
 
 Saved Character Exists
   -> Character Profile
+
+Start Adventure
+  -> Dungeon Entry
+
+Enter Dungeon
+  -> Random Monster Encounter
+  -> Battle
+
+Player Action
+  -> Monster Auto Action
+  -> Repeat Until Win or Lose
+
+Battle Won
+  -> Claim Reward
+  -> Gain EXP and Gold
+  -> Check Level Up
+  -> Update Character
+  -> Return to Profile
+  or
+  -> Continue Adventure
+
+Battle Lost
+  -> Return with Partial HP
+  -> Update Character
+  -> Return to Character Profile
 
 Create New Character
   -> Clear current character
@@ -158,6 +233,113 @@ Current character resources:
 
 This separation keeps the system easier to maintain when combat, equipment, buffs, and debuffs are added later.
 
+## Current Starter Classes
+
+The current starter classes are:
+
+- Warrior
+- Mage
+- Archer
+- Rogue
+- Healer
+
+Each class currently has:
+
+- class identity
+- stat bonus
+- passive metadata
+- two starter skills
+
+## Current Starter Gifts
+
+The current starter gifts are:
+
+- Stale Bread
+- Guide Book
+- Small Coin Pouch
+
+Current implemented gift behavior:
+
+- Stale Bread restores bonus HP after battle victory
+- Small Coin Pouch gives starting gold during character creation
+- Guide Book is stored as metadata for future weapon mastery systems
+
+## Current Monster System
+
+The current monster system includes basic monster data.
+
+Current monsters:
+
+- Training Slime
+- Wild Rat
+- Lesser Goblin
+
+Each monster currently has:
+
+- id
+- name
+- description
+- level
+- rank
+- damage type
+- stats
+- EXP reward
+- gold reward
+- tags
+
+## Current Dungeon System
+
+The current dungeon system includes one beginner dungeon.
+
+Current dungeon:
+
+- Verdant Outskirts
+
+The dungeon contains:
+
+- name
+- description
+- recommended level
+- difficulty
+- possible monster IDs
+- entry cost
+- tags
+
+## Current Battle System
+
+The current battle system supports a simple text-based battle loop.
+
+Current battle features:
+
+- player vs one monster
+- random monster selection from dungeon data
+- first actor determined by action speed
+- player basic attack
+- player skill usage
+- monster basic attack
+- automatic monster turn
+- skill resource cost checking
+- shield damage blocking
+- healing
+- critical hit chance
+- battle log
+- win / lose result
+- reward application after victory
+- level up check after gaining EXP
+- partial recovery after defeat
+- continue adventure after victory
+
+Current limitations:
+
+- battle balance is still rough
+- class identity still needs review
+- some utility skills are not fully implemented yet
+- buff / debuff / status effect systems are not fully implemented yet
+- inventory and item drops are not implemented yet
+- equipment is not implemented yet
+- backend validation is not implemented yet
+- all save data is still local to the browser
+
 ## Current Storage
 
 At the current stage, character data is saved in the browser using localStorage.
@@ -166,18 +348,7 @@ This is suitable for early prototyping, personal testing, and small-scale feedba
 
 Each user currently has their own local saved character in their own browser.
 
-Later, when the project adds accounts, shared progression, chat, inventory, or multiplayer-like features, the data layer should move to the NestJS backend and PostgreSQL.
-
-## Documentation
-
-More detailed design notes are stored in the `docs/` folder.
-
-Important documents:
-
-- `docs/project-overview.md`
-- `docs/character-creation-phase1.md`
-- `docs/character-profile-phase1-1.md`
-- `docs/dungeon-battle-phase2.md`
+Later, when the project adds inventory, equipment, accounts, shared progression, chat, or multiplayer-like features, the data layer should move to the NestJS backend and PostgreSQL.
 
 ## Local Development
 
@@ -207,44 +378,246 @@ Vercel settings:
 - Build Command: `npm run build`
 - Output Directory: `dist`
 
-At the current phase, the deployed version allows each user to create and save their own character locally in their browser.
+At the current phase, the deployed version allows each user to create, save, progress, and battle with their own character locally in their browser.
 
-## Next Phase
+## Roadmap
 
-### Phase 2 - Dungeon and Basic Battle System
+### Completed
 
-Status: Planning
+#### Phase 1 - Character Creation
 
 Goal:
 
-Build the first playable text-based battle loop.
+Create the first playable character foundation.
 
-Planned features:
+Completed:
 
+- character name input
+- class selection
+- starter gift selection
+- base stats
+- derived stats
+- current state
+- passive metadata
+- starter skills
+- localStorage save
+
+#### Phase 1.1 - Character Profile
+
+Goal:
+
+Display the created character and prepare the transition into dungeon and battle.
+
+Completed:
+
+- load character from localStorage
+- display character profile
+- display stats, skills, passive, and starter gift
+- create new character flow
+
+#### Phase 2 - Dungeon and Basic Battle Loop
+
+Goal:
+
+Create the first playable dungeon-to-battle loop.
+
+Completed:
+
+- monster data
+- dungeon data
 - dungeon entry screen
-- basic monster data
 - random encounter
-- turn order based on action speed
-- basic attack
-- starter skill usage
+- basic battle state
+- player action
+- monster action
 - battle log
-- win / lose result
-- simple EXP and gold reward update
+- win / lose state
+- reward update
 
-## Long-Term Planned Systems
+#### Phase 2.1 - Battle Polish
 
-Future systems may include:
+Goal:
 
-- battle system
-- monster system
-- dungeon exploration
+Improve battle flow and make the prototype feel smoother.
+
+Completed:
+
+- automatic monster turn
+- critical hit logic
+- better resource feedback
+- basic level up
+- continue adventure loop
+
+### Current Focus
+
+#### Phase 2.2 - Game Logic Review
+
+Goal:
+
+Review and adjust the current game rules before adding more systems.
+
+Planned work:
+
+- review stat balance
+- review damage formula
+- review defense formula
+- review crit formula
+- review class identity
+- review starter skills
+- review passive direction
+- review battle pacing
+- review post-battle recovery
+- review EXP and level up pacing
+- adjust monster stats
+- adjust dungeon rewards
+
+### Next
+
+#### Phase 2.3 - UI / UX Rework
+
+Goal:
+
+Improve the main player-facing screens before expanding the game.
+
+Planned work:
+
+- improve Character Profile UI
+- improve Battle Page UI
+- improve Dungeon Entry UI
+- improve Character Creation UI
+- make the layout more game-like
+- improve responsive behavior
+- improve battle log readability
+- improve action button clarity
+
+#### Phase 3 - Inventory and Item System
+
+Goal:
+
+Add the first loot and inventory foundation.
+
+Planned work:
+
+- item types
+- item rarity
+- consumable items
+- item drops from monsters
+- inventory screen
+- use item action
+- basic potion / mana item behavior
+- reward display after battle
+
+#### Phase 4 - Equipment System
+
+Goal:
+
+Allow character builds to grow through gear.
+
+Planned work:
+
+- weapon slots
+- armor slots
+- accessory slots
+- equip / unequip logic
+- equipment stat bonuses
+- derived stat recalculation
+- weapon scaling direction
+- future hybrid build support
+
+#### Phase 5 - Skill and Mastery Progression
+
+Goal:
+
+Expand long-term character progression.
+
+Planned work:
+
+- skill unlock by level
+- skill upgrade
+- class mastery
+- weapon mastery
+- starter gift Guide Book integration
+- passive upgrades
+- build specialization
+
+#### Phase 6 - Quest and Dungeon Progression
+
+Goal:
+
+Add longer-term RPG structure.
+
+Planned work:
+
+- quest data
+- beginner quests
+- kill quests
+- collection quests
+- dungeon clear progress
+- unlock new dungeons
+- simple story progression
+
+#### Phase 7 - Backend Persistence Foundation
+
+Goal:
+
+Move stable gameplay data from localStorage to backend persistence.
+
+Planned work:
+
+- NestJS API design
+- PostgreSQL setup
+- guest save system
+- character persistence
+- inventory persistence
+- equipment persistence
+- battle result persistence
+- frontend API integration
+- replace localStorage save/load with backend save/load
+
+#### Phase 8 - Account / Social Features
+
+Goal:
+
+Prepare for online RPG-style systems.
+
+Planned work:
+
+- account system
+- guest-to-account migration
+- chat
+- guild
+- party
+- shared progression features
+- server-side validation
+- anti-cheat direction
+
+## Backend Direction
+
+Backend will not be deeply implemented immediately.
+
+The current plan is to finish the core frontend gameplay prototype first, including:
+
+- battle logic review
+- UI rework
 - inventory
 - equipment
-- item rarity
-- quest system
-- skill upgrades
-- weapon mastery
-- guild/chat/social features
-- backend persistence
-- PostgreSQL database
-- user accounts or guest sessions
+- skill progression
+- quest and dungeon progression
+
+After the core gameplay structure feels stable, the project will return to backend development.
+
+When backend development starts, it should be rebuilt step-by-step from the foundation so the code remains understandable.
+
+Backend migration direction:
+
+```text
+Frontend localStorage prototype
+  -> Stable data model
+  -> NestJS API
+  -> PostgreSQL schema
+  -> Guest save system
+  -> Frontend API integration
+  -> Replace localStorage gradually
+```
+
+This approach keeps the early game flexible while still preparing for long-term backend persistence.
