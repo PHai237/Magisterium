@@ -1,4 +1,5 @@
 import type { BaseStats, Character, ClassId } from '../character-creation/types';
+import { PROGRESSION_BALANCE } from '../game-balance/balanceConstants';
 import {
   addStats,
   buildCurrentState,
@@ -12,7 +13,7 @@ export interface ExpRewardResult {
 }
 
 export function getExpToNextLevel(level: number): number {
-  return level * 100;
+  return level * PROGRESSION_BALANCE.expToNextLevelMultiplier;
 }
 
 export function getClassLevelUpBonus(classId: ClassId): BaseStats {

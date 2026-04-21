@@ -1,6 +1,7 @@
 import type { Character, SkillDefinition } from '../character-creation/types';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 import { MONSTERS } from '../monster/monsterConstants';
+import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
 import type {
   MonsterBattleState,
   MonsterDefinition,
@@ -147,8 +148,15 @@ export function calculatePlayerBasicAttackDamage(
   player: PlayerBattleState,
   monster: MonsterBattleState,
 ): number {
-  const rawDamage = Math.round(5 + player.baseStats.STR * 1.1);
-  const reducedDamage = rawDamage - Math.floor(monster.defense * 0.5);
+  const rawDamage = Math.round(
+    BATTLE_BALANCE.playerBasicAttackBaseDamage +
+    player.baseStats.STR * BATTLE_BALANCE.playerBasicAttackBaseDamage,
+  );
+  const reducedDamage = 
+    rawDamage -
+    Math.floor(
+        monster.defense * BATTLE_BALANCE.monsterDefenseDamageReductionFactor,
+    );
 
   return Math.max(1, reducedDamage);
 }
@@ -193,7 +201,11 @@ export function calculatePlayerSkillDamage(params: {
     return Math.max(1, rawDamage);
   }
 
-  const reducedDamage = rawDamage - Math.floor(monster.defense * 0.5);
+  const reducedDamage =
+    rawDamage -
+    Math.floor(
+        monster.defense * BATTLE_BALANCE.monsterDefenseDamageReductionFactor,
+  );
 
   return Math.max(1, reducedDamage);
 }
@@ -342,7 +354,9 @@ export function applyCriticalDamage(
         return damage;
     }
 
-    return Math.max(1, Math.round(damage * 1.5));
+    return Math.max(
+        1, 
+        Math.round(damage * BATTLE_BALANCE.criticalDamageMultiplier));
 }
 
 export function getCriticalLogText(isCritical: boolean): string {

@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { applyExpReward } from '../character-progression/progressionCalculations';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
+import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
 
 import { useBattle } from './useBattle';
 import type { BattleState, PlayerBattleState } from './battleTypes';
@@ -94,7 +95,12 @@ function buildCharacterAfterLoss(
   return {
     ...character,
     currentState: {
-      hp: Math.max(1, Math.ceil(character.derivedStats.maxHp * 0.3)),
+      hp: Math.max(
+        1,
+        Math.ceil(
+            character.derivedStats.maxHp * BATTLE_BALANCE.defeatRecoveryHpPercent,
+        ),
+      ),
       mp: battleState.player.currentMp,
       energy: battleState.player.currentEnergy,
       shield: 0,
@@ -189,7 +195,7 @@ export function BattlePage({
 
     const timerId = window.setTimeout(() => {
         handleMonsterAction();
-    }, 700);
+    }, BATTLE_BALANCE.autoMonsterTurnDelayMs);
 
     return () => {
         window.clearTimeout(timerId);
