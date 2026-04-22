@@ -144,21 +144,27 @@ export function createInitialBattleState(params: {
   };
 }
 
+
+
 export function calculatePlayerBasicAttackDamage(
   player: PlayerBattleState,
   monster: MonsterBattleState,
 ): number {
   const rawDamage = Math.round(
     BATTLE_BALANCE.playerBasicAttackBaseDamage +
-    player.baseStats.STR * BATTLE_BALANCE.playerBasicAttackBaseDamage,
+      player.baseStats.STR * BATTLE_BALANCE.playerBasicAttackStrMultiplier,
   );
-  const reducedDamage = 
-    rawDamage -
-    Math.floor(
-        monster.defense * BATTLE_BALANCE.monsterDefenseDamageReductionFactor,
-    );
 
-  return Math.max(1, reducedDamage);
+  const reducedDamage = reduceDamageByMonsterDefense(
+    rawDamage,
+    monster.defense,
+  );
+
+  return rollDamageVariance(
+    reducedDamage,
+    BATTLE_BALANCE.playerAttackVarianceMin,
+    BATTLE_BALANCE.playerAttackVarianceMax,
+  );
 }
 
 export function getSkillScalingStatValue(
@@ -201,13 +207,16 @@ export function calculatePlayerSkillDamage(params: {
     return Math.max(1, rawDamage);
   }
 
-  const reducedDamage =
-    rawDamage -
-    Math.floor(
-        monster.defense * BATTLE_BALANCE.monsterDefenseDamageReductionFactor,
+  const reducedDamage = reduceDamageByMonsterDefense(
+    rawDamage,
+    monster.defense,
   );
 
-  return Math.max(1, reducedDamage);
+  return rollDamageVariance(
+    reducedDamage,
+    BATTLE_BALANCE.playerAttackVarianceMin,
+    BATTLE_BALANCE.playerAttackVarianceMax,
+  );
 }
 
 export function calculateMonsterBasicAttackDamage(
@@ -217,7 +226,16 @@ export function calculateMonsterBasicAttackDamage(
   const reducedByPlayerDefense =
     monster.attack * (1 - player.derivedStats.damageReduction);
 
-  return Math.max(1, Math.round(reducedByPlayerDefense));
+  const damageBeforeVariance = Math.max(
+    BATTLE_BALANCE.minimumDamage,
+    Math.round(reducedByPlayerDefense),
+  );
+
+  return rollDamageVariance(
+    damageBeforeVariance,
+    BATTLE_BALANCE.monsterAttackVarianceMin,
+    BATTLE_BALANCE.monsterAttackVarianceMax,
+  );
 }
 
 export function canUseSkill(
@@ -355,10 +373,37 @@ export function applyCriticalDamage(
     }
 
     return Math.max(
-        1, 
+        BATTLE_BALANCE.minimumDamage, 
         Math.round(damage * BATTLE_BALANCE.criticalDamageMultiplier));
 }
 
 export function getCriticalLogText(isCritical: boolean): string {
     return isCritical ? ' Critical hit!' : '';
+}
+
+export function rollDamageVariance(
+  damage: number,
+  minMultiplier: number,
+  maxMultiplier: number,
+): number {
+  const multiplier =
+    minMultiplier + Math.random() * (maxMultiplier - minMultiplier);
+
+  return Math.max(
+    BATTLE_BALANCE.minimumDamage,
+    Math.round(damage * multiplier),
+  );
+}
+
+export function reduceDamageByMonsterDefense(
+  rawDamage: number,
+  monsterDefense: number,
+): number {
+  const reducedDamage =
+    rawDamage -
+    Math.floor(
+      monsterDefense * BATTLE_BALANCE.monsterDefenseDamageReductionFactor,
+    );
+
+  return Math.max(BATTLE_BALANCE.minimumDamage, reducedDamage);
 }
