@@ -34,6 +34,8 @@ export function createPlayerBattleState(
     currentMp: character.currentState.mp,
     currentEnergy: character.currentState.energy,
     shield: character.currentState.shield,
+    evasionChanceBonus: 0,
+    nextDamageReductionPercent: 0,
     skills: character.skills,
   };
 }

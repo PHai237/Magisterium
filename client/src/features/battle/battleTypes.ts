@@ -23,6 +23,8 @@ export interface PlayerBattleState {
   currentMp: number;
   currentEnergy: number;
   shield: number;
+  evasionChanceBonus: number;
+  nextDamageReductionPercent: number;
   skills: SkillDefinition[];
 }
 

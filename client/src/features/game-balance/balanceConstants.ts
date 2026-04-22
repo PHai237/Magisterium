@@ -16,6 +16,9 @@ export const BATTLE_BALANCE = {
   playerAttackVarianceMin: 0.95,
   playerAttackVarianceMax: 1.05,
 
+  utilitySkillEvasionChancePercent: 60,
+  utilitySkillHideDamageReductionPercent: 0.5,
+
   defeatRecoveryHpPercent: 0.3,
 } as const;
 

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import type { Character } from '../character-creation/types';
+import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 
 import {
@@ -279,6 +280,49 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
         };
       }
 
+      if (selectedSkill.effectType === 'buff') {
+        let buffedPlayer = playerAfterCost;
+        let buffMessage = `${currentBattle.player.name} uses ${selectedSkill.name}.`;
+
+        if (selectedSkill.id === 'evasion') {
+          buffedPlayer = {
+            ...playerAfterCost,
+            evasionChanceBonus: Math.max(
+              playerAfterCost.evasionChanceBonus,
+              BATTLE_BALANCE.utilitySkillEvasionChancePercent,
+            ),
+          };
+
+          buffMessage = `${currentBattle.player.name} uses ${selectedSkill.name} and prepares to evade the next attack.`;
+        }
+
+        if (selectedSkill.id === 'hide') {
+          buffedPlayer = {
+            ...playerAfterCost,
+            nextDamageReductionPercent: Math.max(
+              playerAfterCost.nextDamageReductionPercent,
+              BATTLE_BALANCE.utilitySkillHideDamageReductionPercent,
+            ),
+          };
+
+          buffMessage = `${currentBattle.player.name} uses ${selectedSkill.name} and reduces the next incoming damage.`;
+        }
+
+          const buffLog = createLogEntry({
+            turn: currentBattle.turn,
+            actor: 'player',
+            message: buffMessage,
+          });
+
+          return {
+            ...currentBattle,
+            player: buffedPlayer,
+            currentActor: 'monster',
+            turn: currentBattle.turn + 1,
+            logs: [...currentBattle.logs, buffLog],
+          };
+        }
+
       const unsupportedEffectLog = createLogEntry({
         turn: currentBattle.turn,
         actor: 'player',
@@ -304,23 +348,71 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
         return currentBattle;
       }
 
+      const didEvade = rollChance(currentBattle.player.evasionChanceBonus);
+
+      if (didEvade) {
+        const updatedPlayer = {
+          ...currentBattle.player,
+          evasionChanceBonus: 0,
+          nextDamageReductionPercent: 0,
+        };
+
+        const evadeLog = createLogEntry({
+          turn: currentBattle.turn,
+          actor: 'player',
+          message: `${currentBattle.player.name} evades ${currentBattle.monster.name}'s attack.`,
+        });
+
+        return {
+          ...currentBattle,
+          player: updatedPlayer,
+          currentActor: 'player',
+          turn: currentBattle.turn + 1,
+          logs: [...currentBattle.logs, evadeLog],
+        };
+      }
+
       const baseDamage = calculateMonsterBasicAttackDamage(
         currentBattle.monster,
         currentBattle.player,
       );
 
       const isCritical = rollChance(currentBattle.monster.critRate);
-      const damage = applyCriticalDamage(baseDamage, isCritical);
+      const criticalDamage = applyCriticalDamage(baseDamage, isCritical);
+
+      const damageReductionPercent =
+        currentBattle.player.nextDamageReductionPercent;
+
+      const damageAfterTemporaryReduction =
+        damageReductionPercent > 0
+          ? Math.max(
+              BATTLE_BALANCE.minimumDamage,
+              Math.round(criticalDamage * (1 - damageReductionPercent)),
+            )
+          : criticalDamage;
+
+      const playerBeforeDamage = {
+        ...currentBattle.player,
+        evasionChanceBonus: 0,
+        nextDamageReductionPercent: 0,
+      };
 
       const updatedPlayer = applyDamageToPlayer(
-        currentBattle.player,
-        damage,
+        playerBeforeDamage,
+        damageAfterTemporaryReduction,
       );
+
+      const temporaryReductionText =
+        damageReductionPercent > 0
+          ? ` ${currentBattle.player.name}'s defensive effect reduces the incoming damage.`
+          : '';
 
       const monsterAttackLog = createLogEntry({
         turn: currentBattle.turn,
         actor: 'monster',
-        message: `${currentBattle.monster.name} attacks ${currentBattle.player.name} and deals ${damage} damage.${getCriticalLogText(isCritical)}`,
+        message: `${currentBattle.monster.name} attacks ${currentBattle.player.name} and deals ${damageAfterTemporaryReduction} damage.${getCriticalLogText(
+          isCritical,
+        )}${temporaryReductionText}`,
       });
 
       if (isPlayerDefeated(updatedPlayer)) {

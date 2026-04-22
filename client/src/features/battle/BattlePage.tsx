@@ -271,6 +271,29 @@ export function BattlePage({
                   {player.shield}
                 </p>
               </div>
+              {(player.evasionChanceBonus > 0 ||
+              player.nextDamageReductionPercent > 0) && (
+              <div className="rounded-xl border border-violet-500/40 bg-violet-500/10 p-4">
+                <p className="text-sm font-semibold text-violet-300">
+                  Temporary Effects
+                </p>
+
+                <div className="mt-2 space-y-1 text-sm text-slate-200">
+                  {player.evasionChanceBonus > 0 && (
+                    <p>
+                      Evasion Chance: {player.evasionChanceBonus}%
+                    </p>
+                  )}
+
+                  {player.nextDamageReductionPercent > 0 && (
+                    <p>
+                      Next Damage Reduction:{' '}
+                      {Math.round(player.nextDamageReductionPercent * 100)}%
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             </div>
           </article>
 
