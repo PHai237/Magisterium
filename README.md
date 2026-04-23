@@ -2,7 +2,7 @@
 
 Magisterium is a text-based anime-style RPG web game project.
 
-The project is inspired by anime RPG progression systems, dungeon fantasy, class-based identity, stat-driven character growth, and simple text-based battle loops.
+The project is inspired by anime RPG progression systems, dungeon fantasy, class-based identity, stat-driven character growth, world travel, risk-based exploration, and simple text-based battle loops.
 
 ## Current Direction
 
@@ -11,11 +11,10 @@ The project focuses on:
 - class-based character identity
 - stat-driven progression
 - text-based RPG systems
-- dungeon exploration
-- monster encounters
-- basic battle loop
-- character progression
-- future expansion into inventory, equipment, quests, skills, mastery, backend persistence, and social features
+- battle and progression loops
+- explorable farming zones
+- boss-oriented dungeon content
+- future expansion into inventory, consumables, equipment, achievements, travel events, life skills, backend persistence, and social features
 
 ## Tech Stack
 
@@ -60,6 +59,7 @@ The backend will become important when the project needs:
 - inventory persistence
 - equipment persistence
 - battle result saving
+- achievement persistence
 - chat, guild, or party systems
 - anti-cheat / server-owned game state
 
@@ -135,12 +135,15 @@ Implemented:
 - critical damage multiplier
 - clearer skill resource feedback
 - skill button disabled state when not enough resource
-- level up system
+- basic level up system
 - class-based stat growth on level up
 - EXP threshold system
 - continue adventure loop
 - reward claim flow
 - return to profile flow after battle
+- basic utility skill effects
+- improved battle log readability
+- centralized balance constants
 
 ## Current Gameplay Flow
 
@@ -193,7 +196,7 @@ The current character system uses 5 core stats:
 - INT: magical power and Max MP
 - VIT: Max HP and defense
 - DEX: action speed and turn priority
-- LUK: crit rate and drop rate bonus
+- LUK: crit rate, drop rate bonus, and future flee scaling
 
 ## Character Data Structure
 
@@ -231,7 +234,7 @@ Current character resources:
 - Energy
 - Shield
 
-This separation keeps the system easier to maintain when combat, equipment, buffs, and debuffs are added later.
+This separation keeps the system easier to maintain when combat, equipment, buffs, debuffs, and progression systems are expanded later.
 
 ## Current Starter Classes
 
@@ -289,13 +292,13 @@ Each monster currently has:
 
 ## Current Dungeon System
 
-The current dungeon system includes one beginner dungeon.
+The current dungeon system currently includes one beginner dungeon.
 
 Current dungeon:
 
 - Verdant Outskirts
 
-The dungeon contains:
+The dungeon currently contains:
 
 - name
 - description
@@ -328,12 +331,13 @@ Current battle features:
 - level up check after gaining EXP
 - partial recovery after defeat
 - continue adventure after victory
+- basic utility skill effects such as evasion and temporary damage reduction
 
 Current limitations:
 
 - battle balance is still rough
 - class identity still needs review
-- some utility skills are not fully implemented yet
+- some utility skills are still prototype-level
 - buff / debuff / status effect systems are not fully implemented yet
 - inventory and item drops are not implemented yet
 - equipment is not implemented yet
@@ -447,6 +451,8 @@ Completed:
 - better resource feedback
 - basic level up
 - continue adventure loop
+- utility skill prototype effects
+- improved battle log
 
 ### Current Focus
 
@@ -470,8 +476,8 @@ Planned work:
 - review EXP and level up pacing
 - adjust monster stats
 - adjust dungeon rewards
-
-### Next
+- review flee direction using LUK
+- review long-term currency and economy direction
 
 #### Phase 2.3 - UI / UX Rework
 
@@ -489,23 +495,122 @@ Planned work:
 - improve responsive behavior
 - improve battle log readability
 - improve action button clarity
+- prepare the UI for future animation support
 
-#### Phase 3 - Inventory and Item System
+### Next
+
+#### Phase 2.4 - Recovery / Place Systems
 
 Goal:
 
-Add the first loot and inventory foundation.
+Add non-combat recovery and place-based progression flow.
 
 Planned work:
 
-- item types
-- item rarity
-- consumable items
-- item drops from monsters
+- town / place structure
+- return to town flow
+- tavern rest
+- HP / MP recovery at a place
+- possible rest cost
+- support for future healing animation / value animation
+- prepare non-combat loop between battles
+
+#### Phase 2.5 - Death, Recovery, and Item Retrieval System
+
+Goal:
+
+Turn death into a meaningful risk loop instead of a simple reset.
+
+Planned work:
+
+- hospital as a fixed respawn point
+- partial recovery after respawn
+- item loss grouping after death
+- NPC retrieval system
+- monster looter retrieval system
+- permanent item loss chance
+- ransom / reclaim cost
+- future insurance system
+- connect death flow to economy and zone risk
+
+Planned item loss groups:
+
+- Group 1: Retrieved by NPC
+- Group 2: Retrieved by monsters
+- Group 3: Permanently lost
+
+Planned balance directions:
+
+- equipped gear should have lower drop chance than inventory items
+- ransom cost should scale with item value and player level
+- town services such as hospital and lost-and-found should become important recovery locations
+
+#### Phase 3 - Zone / Farming System
+
+Goal:
+
+Move regular mob farming into explorable zones instead of boss-style dungeons.
+
+Planned work:
+
+- explorable zones / areas
+- farm mobs in different areas
+- deeper area progression
+- repeated grinding loop
+- zone-based encounter design
+- prepare area progression before dungeon boss content
+
+#### Phase 3.1 - Travel / Road Event System
+
+Goal:
+
+Add events during travel and movement between areas.
+
+Planned work:
+
+- road events during movement
+- positive events
+- risky events
+- merchants, robbers, accident events, and help events
+- future life skill integration
+- event frequency setting
+- low / normal / high encounter mode
+
+#### Phase 3.2 - Inventory and Consumables
+
+Goal:
+
+Add the first inventory foundation and consumable support.
+
+Planned work:
+
 - inventory screen
+- consumable items
+- healing potion
+- MP potion
+- reward drops from battle
 - use item action
-- basic potion / mana item behavior
-- reward display after battle
+- reward preview after battle
+
+#### Phase 3.3 - Currency System
+
+Goal:
+
+Expand the economy into multiple coin tiers.
+
+Planned work:
+
+- Bronze Coin
+- Silver Coin
+- Gold Coin
+- coin conversion rules
+- economy formatting in UI
+- future shop / tavern / repair / ransom integration
+
+Planned currency rule:
+
+- 100 Bronze = 1 Silver
+- 100 Silver = 1 Gold
 
 #### Phase 4 - Equipment System
 
@@ -524,27 +629,86 @@ Planned work:
 - weapon scaling direction
 - future hybrid build support
 
-#### Phase 5 - Skill and Mastery Progression
+#### Phase 4.1 - Weapon Mastery and Durability
 
 Goal:
 
-Expand long-term character progression.
+Expand long-term gear progression.
+
+Planned work:
+
+- weapon mastery
+- weapon-type progression
+- mastery bonuses
+- weapon durability
+- repair systems
+- future Guide Book integration
+
+#### Phase 4.2 - Flee / Escape System
+
+Goal:
+
+Add escape decisions during battle.
+
+Planned work:
+
+- flee option in combat
+- flee success chance based on LUK
+- fail / success outcome
+- low HP escape loop
+- future travel and survival integration
+
+#### Phase 5 - Achievement System
+
+Goal:
+
+Reward long-term milestones with light thematic bonuses.
+
+Planned work:
+
+- achievement tracking
+- titles
+- small thematic buffs
+- monster-specific achievements
+- example: slime-related kill achievements and slime damage bonus
+
+#### Phase 5.1 - Skill / Mastery / Life Skill Expansion
+
+Goal:
+
+Expand non-basic progression systems.
 
 Planned work:
 
 - skill unlock by level
 - skill upgrade
 - class mastery
-- weapon mastery
-- starter gift Guide Book integration
+- weapon mastery expansion
+- life skills
+- event interaction with life skills
 - passive upgrades
 - build specialization
 
-#### Phase 6 - Quest and Dungeon Progression
+#### Phase 6 - Key-Gated Boss Dungeon System
 
 Goal:
 
-Add longer-term RPG structure.
+Redefine dungeons as boss-focused milestone content.
+
+Planned work:
+
+- dungeons require keys or access conditions
+- dungeon as boss challenge content
+- non-farming dungeon structure
+- milestone reward direction
+- progression gates
+- boss preparation loop
+
+#### Phase 7 - Quest and Progression Structure
+
+Goal:
+
+Add longer-term RPG structure around the world.
 
 Planned work:
 
@@ -553,10 +717,10 @@ Planned work:
 - kill quests
 - collection quests
 - dungeon clear progress
-- unlock new dungeons
+- unlock new zones and new boss dungeons
 - simple story progression
 
-#### Phase 7 - Backend Persistence Foundation
+#### Phase 8 - Backend Persistence Foundation
 
 Goal:
 
@@ -570,11 +734,14 @@ Planned work:
 - character persistence
 - inventory persistence
 - equipment persistence
+- progression persistence
 - battle result persistence
+- achievement persistence
+- currency persistence
 - frontend API integration
 - replace localStorage save/load with backend save/load
 
-#### Phase 8 - Account / Social Features
+#### Phase 9 - Account / Social Features
 
 Goal:
 
@@ -591,6 +758,66 @@ Planned work:
 - server-side validation
 - anti-cheat direction
 
+## World Structure Direction
+
+The world is planned to evolve into three main layers.
+
+### Zones
+
+Used for:
+
+- regular mob farming
+- repeated grinding
+- travel events
+- risk-based exploration
+
+### Dungeons
+
+Used for:
+
+- key-gated boss content
+- milestone encounters
+- progression gates
+- major challenge content
+
+### Places / Town Structures
+
+Used for:
+
+- recovery
+- tavern rest
+- hospital respawn
+- reclaiming lost items
+- future repair and economy services
+
+## Death and Recovery Direction
+
+Death is planned to become part of the gameplay loop, not just a simple reset.
+
+Planned death loop:
+
+```text
+Death
+  -> Respawn at Hospital
+  -> Recover partial HP
+  -> Review lost items
+  -> Decide between paying ransom or recovering items manually
+  -> Return to exploration
+```
+
+Planned retrieval categories:
+
+- items recovered by NPC
+- items stolen by monsters
+- items permanently lost
+
+This direction is intended to make:
+
+- towns more meaningful
+- money more valuable
+- death more memorable
+- risk and preparation more important
+
 ## Backend Direction
 
 Backend will not be deeply implemented immediately.
@@ -599,10 +826,18 @@ The current plan is to finish the core frontend gameplay prototype first, includ
 
 - battle logic review
 - UI rework
+- recovery / place systems
+- death and retrieval loop
+- zone farming
+- travel events
 - inventory
+- consumables
+- currency
 - equipment
-- skill progression
-- quest and dungeon progression
+- weapon mastery
+- achievements
+- key-gated boss dungeons
+- quest and progression structure
 
 After the core gameplay structure feels stable, the project will return to backend development.
 
