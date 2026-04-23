@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { applyExpReward } from '../character-progression/progressionCalculations';
@@ -134,6 +134,42 @@ function canPlayerUseSkill(player: PlayerBattleState, skillId: string): boolean 
   return false;
 }
 
+function getLogActorLabel(actor: BattleState['logs'][number]['actor']): string {
+  if (actor === 'player') {
+    return 'Player';
+  }
+
+  if (actor === 'monster') {
+    return 'Monster';
+  }
+
+  return 'System';
+}
+
+function getLogCardClass(actor: BattleState['logs'][number]['actor']): string {
+  if (actor === 'player') {
+    return 'border-violet-500/30 bg-violet-500/10';
+  }
+
+  if (actor === 'monster') {
+    return 'border-red-500/30 bg-red-500/10';
+  }
+
+  return 'border-slate-800 bg-slate-950';
+}
+
+function getLogBadgeClass(actor: BattleState['logs'][number]['actor']): string {
+  if (actor === 'player') {
+    return 'border-violet-500/40 bg-violet-500/10 text-violet-300';
+  }
+
+  if (actor === 'monster') {
+    return 'border-red-500/40 bg-red-500/10 text-red-300';
+  }
+
+  return 'border-slate-700 bg-slate-900 text-slate-300';
+}
+
 function getSkillCostText(skill: SkillDefinition): string {
   if (!skill.resourceType || skill.resourceCost <= 0) {
     return 'Free';
@@ -203,6 +239,16 @@ export function BattlePage({
     }, [isMonsterTurn, handleMonsterAction]);
 
   const { player, monster } = battleState;
+  const logContainerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const logContainer = logContainerRef.current;
+
+    if (!logContainer) {
+      return;
+    }
+
+    logContainer.scrollTop = logContainer.scrollHeight;
+  }, [battleState.logs.length]);
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
@@ -499,18 +545,30 @@ export function BattlePage({
           <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <h2 className="text-xl font-semibold text-white">Battle Log</h2>
 
-            <div className="mt-4 max-h-[520px] space-y-3 overflow-auto pr-1">
+            <div
+              ref={logContainerRef}
+              className="mt-4 max-h-[520px] space-y-3 overflow-auto pr-1"
+            >
               {battleState.logs.map((log) => (
                 <div
                   key={log.id}
-                  className="rounded-xl border border-slate-800 bg-slate-950 p-3"
+                  className={`rounded-xl border p-3 ${getLogCardClass(log.actor)}`}
                 >
-                  <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
-                    <span>Turn {log.turn}</span>
-                    <span>{log.actor}</span>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span
+                      className={`rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${getLogBadgeClass(
+                        log.actor,
+                      )}`}
+                    >
+                      {getLogActorLabel(log.actor)}
+                    </span>
+
+                    <span className="text-[11px] text-slate-500">
+                      Turn {log.turn}
+                    </span>
                   </div>
 
-                  <p className="text-sm text-slate-200">
+                  <p className="text-sm leading-6 text-slate-100">
                     {log.message}
                   </p>
                 </div>
