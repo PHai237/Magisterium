@@ -147,7 +147,7 @@ export function DungeonEntryPage({
           }
         />
 
-        <section className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
+        <section className="ui-card-enter mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <div className="flex flex-wrap items-center gap-3">
@@ -236,10 +236,12 @@ export function DungeonEntryPage({
           </div>
         </section>
 
-        <SectionIntro
-          title="Available Dungeons"
-          subtitle="Choose a destination and begin your next combat route."
-        />
+        <div className="ui-card-enter">
+          <SectionIntro
+            title="Available Dungeons"
+            subtitle="Choose a destination and begin your next combat route."
+          />
+        </div>
 
         <section className="grid gap-5 lg:grid-cols-2">
           {DUNGEONS.map((dungeon) => {
@@ -251,7 +253,7 @@ export function DungeonEntryPage({
             return (
               <article
                 key={dungeon.id}
-                className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-violet-500/40"
+                className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition duration-200 hover:-translate-y-0.5 hover:border-violet-500/40"
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
@@ -322,7 +324,7 @@ export function DungeonEntryPage({
                     {monsterNames.map((monsterName) => (
                       <span
                         key={monsterName}
-                        className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-sm text-slate-200"
+                        className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-sm text-slate-200 transition duration-200 hover:border-violet-500/40"
                       >
                         {monsterName}
                       </span>
@@ -344,7 +346,7 @@ export function DungeonEntryPage({
                 <button
                   type="button"
                   onClick={() => onEnterDungeon(dungeon)}
-                  className="mt-6 w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
+                  className="mt-6 w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-violet-400 active:scale-[0.99]"
                 >
                   Enter Dungeon
                 </button>

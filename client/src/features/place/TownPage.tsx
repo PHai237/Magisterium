@@ -127,7 +127,7 @@ export function TownPage({
             }
         />
 
-        <section className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
+        <section className="ui-card-enter mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <div className="flex flex-wrap items-center gap-3">
@@ -218,7 +218,7 @@ export function TownPage({
         </section>
 
         <section className="mb-6 grid gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Current Town
             </p>
@@ -227,7 +227,7 @@ export function TownPage({
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Available Services
             </p>
@@ -236,7 +236,7 @@ export function TownPage({
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Recovery Cost
             </p>
@@ -245,7 +245,7 @@ export function TownPage({
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Current Shield
             </p>
@@ -255,18 +255,20 @@ export function TownPage({
           </div>
         </section>
 
-        <SectionIntro
-            title="Town Services"
-            subtitle="Recover, prepare, and review future support systems before returning to danger."
-        />
+        <div className="ui-card-enter">
+            <SectionIntro
+                title="Town Services"
+                subtitle="Recover, prepare, and review future support systems before returning to danger."
+            />
+        </div>
 
         <section className="grid gap-5 lg:grid-cols-2">
           {servicePlaces.map((place) => (
             <article
-              key={place.id}
-              className={`rounded-2xl border p-5 transition ${
+                key={place.id}
+                className={`ui-card-enter rounded-2xl border p-5 transition duration-200 ${
                 place.unlocked
-                  ? 'border-slate-800 bg-slate-900/60 hover:border-violet-500/40'
+                  ? 'border-slate-800 bg-slate-900/60 hover:-translate-y-0.5 hover:border-violet-500/40'
                   : 'border-slate-800 bg-slate-900/30 opacity-60'
               }`}
             >
@@ -316,7 +318,7 @@ export function TownPage({
                       const updatedCharacter = recoverAtTavern(character);
                       onRecoverAtTavern(updatedCharacter);
                     }}
-                    className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+                    className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-violet-400 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-700"
                   >
                     Rest at Tavern
                   </button>

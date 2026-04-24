@@ -151,7 +151,7 @@ export function CharacterProfilePage({
           }
         />
 
-        <section className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
+        <section className="ui-card-enter mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <div className="flex flex-wrap items-center gap-3">
@@ -211,7 +211,7 @@ export function CharacterProfilePage({
 
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-800">
                 <div
-                  className="h-full rounded-full bg-sky-500 transition-all duration-500"
+                  className="ui-soft-pulse h-full rounded-full bg-sky-500 transition-all duration-500"
                   style={{ width: `${expPercent}%` }}
                 />
               </div>
@@ -254,6 +254,7 @@ export function CharacterProfilePage({
             <SectionCard
               title="Current State"
               subtitle="Your current combat resources and defensive state."
+              className="ui-card-enter"
             >
               <div className="space-y-4">
                 <ResourceBar
@@ -289,6 +290,7 @@ export function CharacterProfilePage({
             <SectionCard
               title="Starter Gift"
               subtitle="Your current beginning bonus and long-term flavor."
+              className="ui-card-enter"
             >
               <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
                 <div className="flex items-start justify-between gap-4">
@@ -316,6 +318,7 @@ export function CharacterProfilePage({
             <SectionCard
               title="Passive"
               subtitle="Your class identity currently active on this character."
+              className="ui-card-enter"
             >
               <div className="rounded-2xl border border-violet-500/20 bg-violet-500/10 p-4">
                 <p className="text-lg font-semibold text-violet-200">
@@ -334,6 +337,7 @@ export function CharacterProfilePage({
               <SectionCard
                 title="Base Stats"
                 subtitle="Raw stat values that define your build foundation."
+                className="ui-card-enter"
               >
                 <div className="space-y-2">
                   <StatRow label="STR" value={character.baseStats.STR} />
@@ -347,6 +351,7 @@ export function CharacterProfilePage({
               <SectionCard
                 title="Derived Stats"
                 subtitle="Calculated values based on your current stats."
+                className="ui-card-enter"
               >
                 <div className="space-y-2">
                   <StatRow label="Max HP" value={character.derivedStats.maxHp} />
@@ -384,12 +389,13 @@ export function CharacterProfilePage({
             <SectionCard
               title="Starter Skills"
               subtitle="Your current combat options and starting role identity."
+              className="ui-card-enter"
             >
               <div className="grid gap-4 md:grid-cols-2">
                 {character.skills.map((skill) => (
                   <article
                     key={skill.id}
-                    className="rounded-2xl border border-slate-800 bg-slate-950 p-4"
+                    className="rounded-2xl border border-slate-800 bg-slate-950 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-violet-500/40"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
