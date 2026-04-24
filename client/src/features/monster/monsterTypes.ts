@@ -1,6 +1,11 @@
 import type { DamageType } from '../character-creation/types';
 
-export type MonsterId = 'training_dummy' | 'slime' | 'wolf';
+export type MonsterId =
+  | 'green_slime'
+  | 'wild_rat'
+  | 'lesser_goblin'
+  | 'slime_king'
+  | 'goblin_chief';
 
 export type MonsterRank = 'normal' | 'elite' | 'boss';
 

@@ -129,7 +129,7 @@ export function CharacterProfilePage({
                 onClick={onStartAdventure}
                 className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
               >
-                Start Adventure
+                Enter Dungeons
               </button>
 
               <button

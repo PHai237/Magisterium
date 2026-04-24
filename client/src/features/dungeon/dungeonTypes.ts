@@ -1,6 +1,6 @@
 import type { MonsterId } from '../monster/monsterTypes';
 
-export type DungeonId = 'training_ground' | 'forest_cave';
+export type DungeonId = 'slime_nest' | 'goblin_den';
 
 export type DungeonDifficulty = 'beginner' | 'normal' | 'hard';
 
@@ -10,7 +10,7 @@ export interface DungeonDefinition {
     description: string;
     recommendedLevel: number;
     difficulty: DungeonDifficulty;
-    possibleMonsterIds: MonsterId[];
+    bossMonsterId: MonsterId;
     entryCostGold: number;
     tags: string[];
 }

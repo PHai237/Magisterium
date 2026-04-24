@@ -1,9 +1,9 @@
 import type { Character } from '../character-creation/types';
-import { MONSTERS } from '../monster/monsterConstants';
-
+import { getMonsterById } from '../monster/monsterConstants';
 import { OverviewStatCard } from '../../components/ui/OverviewStatCard';
-import { SectionIntro } from '../../components/ui/SectionIntro';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { SectionIntro } from '../../components/ui/SectionIntro';
+
 import { DUNGEONS } from './dungeonConstants';
 import type { DungeonDefinition } from './dungeonTypes';
 
@@ -87,41 +87,48 @@ function getDifficultyDescription(
   difficulty: DungeonDefinition['difficulty'],
 ): string {
   if (difficulty === 'beginner') {
-    return 'Safe for early adventurers.';
+    return 'An early boss challenge suitable for prepared beginners.';
   }
 
   if (difficulty === 'normal') {
-    return 'A balanced challenge for prepared players.';
+    return 'A more dangerous boss route that demands better preparation.';
   }
 
-  return 'A dangerous challenge with higher risk.';
+  return 'A severe boss challenge with high risk and stronger enemies.';
 }
 
-function getMonsterNames(monsterIds: string[]): string[] {
-  return monsterIds
-    .map((monsterId) => MONSTERS.find((monster) => monster.id === monsterId))
-    .filter(Boolean)
-    .map((monster) => monster!.name);
+function getDungeonBossMonster(dungeon: DungeonDefinition) {
+  return getMonsterById(dungeon.bossMonsterId);
 }
 
-function getStrongestMonsterLabel(monsterIds: string[]): string {
-  const monsters = monsterIds
-    .map((monsterId) => MONSTERS.find((monster) => monster.id === monsterId))
-    .filter((monster): monster is (typeof MONSTERS)[number] => Boolean(monster));
+function getDungeonBossLabel(dungeon: DungeonDefinition): string {
+  const bossMonster = getDungeonBossMonster(dungeon);
 
-  if (monsters.length === 0) {
-    return 'Unknown Threat';
+  if (!bossMonster) {
+    return 'Unknown Boss';
   }
 
-  let strongestMonster = monsters[0];
+  return `${bossMonster.name} (Lv.${bossMonster.level})`;
+}
 
-  for (const monster of monsters.slice(1)) {
-    if (monster.level > strongestMonster.level) {
-      strongestMonster = monster;
-    }
+function getDungeonBossDescription(dungeon: DungeonDefinition): string {
+  const bossMonster = getDungeonBossMonster(dungeon);
+
+  if (!bossMonster) {
+    return 'Boss data unavailable.';
   }
 
-  return `${strongestMonster.name} (Lv.${strongestMonster.level})`;
+  return bossMonster.description;
+}
+
+function getDungeonBossRank(dungeon: DungeonDefinition): string {
+  const bossMonster = getDungeonBossMonster(dungeon);
+
+  if (!bossMonster) {
+    return 'unknown';
+  }
+
+  return bossMonster.rank;
 }
 
 export function DungeonEntryPage({
@@ -135,7 +142,7 @@ export function DungeonEntryPage({
         <PageHeader
           eyebrow="Magisterium"
           title="Dungeon Entry"
-          description="Prepare for combat, review your current condition, and choose where your next adventure begins."
+          description="Dungeons are now boss-focused challenges. Review your current condition and choose which boss route to confront."
           actions={
             <button
               type="button"
@@ -165,9 +172,9 @@ export function DungeonEntryPage({
               </h2>
 
               <p className="mt-2 max-w-2xl text-slate-400">
-                Your current adventuring condition before entering a combat
-                area. Review your resources carefully before moving deeper into
-                dangerous territory.
+                Dungeons are intended as boss encounters and progression
+                milestones, not as your main farming route. Regular monster
+                farming belongs to zones.
               </p>
 
               <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -187,7 +194,7 @@ export function DungeonEntryPage({
 
             <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5">
               <p className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-                Adventure Readiness
+                Boss Challenge Readiness
               </p>
 
               <div className="mt-5 space-y-4">
@@ -239,16 +246,15 @@ export function DungeonEntryPage({
         <div className="ui-card-enter">
           <SectionIntro
             title="Available Dungeons"
-            subtitle="Choose a destination and begin your next combat route."
+            subtitle="Choose a boss-focused dungeon challenge. These routes are intended for direct confrontation rather than regular farming."
           />
         </div>
 
         <section className="grid gap-5 lg:grid-cols-2">
           {DUNGEONS.map((dungeon) => {
-            const monsterNames = getMonsterNames(dungeon.possibleMonsterIds);
-            const strongestThreat = getStrongestMonsterLabel(
-              dungeon.possibleMonsterIds,
-            );
+            const dungeonBossLabel = getDungeonBossLabel(dungeon);
+            const dungeonBossDescription = getDungeonBossDescription(dungeon);
+            const dungeonBossRank = getDungeonBossRank(dungeon);
 
             return (
               <article
@@ -298,38 +304,41 @@ export function DungeonEntryPage({
 
                   <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
                     <p className="text-xs uppercase tracking-wide text-slate-400">
+                      Dungeon Boss
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-red-200">
+                      {dungeonBossLabel}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">
                       Threat Note
                     </p>
                     <p className="mt-2 text-sm font-semibold text-slate-200">
                       {getDifficultyDescription(dungeon.difficulty)}
                     </p>
                   </div>
-
-                  <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">
-                      Strongest Known Threat
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-slate-200">
-                      {strongestThreat}
-                    </p>
-                  </div>
                 </div>
 
                 <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950 p-4">
                   <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Possible Monsters
+                    Boss Profile
                   </p>
 
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {monsterNames.map((monsterName) => (
-                      <span
-                        key={monsterName}
-                        className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-sm text-slate-200 transition duration-200 hover:border-violet-500/40"
-                      >
-                        {monsterName}
-                      </span>
-                    ))}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-sm text-red-200">
+                      {dungeonBossLabel}
+                    </span>
+
+                    <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs uppercase tracking-wide text-slate-300">
+                      Rank: {dungeonBossRank}
+                    </span>
                   </div>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-400">
+                    {dungeonBossDescription}
+                  </p>
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
@@ -348,7 +357,7 @@ export function DungeonEntryPage({
                   onClick={() => onEnterDungeon(dungeon)}
                   className="mt-6 w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-violet-400 active:scale-[0.99]"
                 >
-                  Enter Dungeon
+                  Challenge Boss Dungeon
                 </button>
               </article>
             );

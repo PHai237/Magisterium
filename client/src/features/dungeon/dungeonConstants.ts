@@ -2,25 +2,27 @@ import type { DungeonDefinition } from "./dungeonTypes";
 
 export const DUNGEONS: DungeonDefinition[] = [
     {
-        id: 'training_ground',
-        name: 'Training Ground',
-        description: 'A safe area where adventurers can practice their skills and prepare for real dungeons. It is filled with training dummies and weak monsters.',
-        recommendedLevel: 1,
+        id: 'slime_nest',
+        name: 'Slime Nest',
+        description:
+            'A corrupted slime chamber where the Slime King rules over lesser slime creatures. This dungeon is designed as a boss-focused challenge rather than a farming route.',
+        recommendedLevel: 2,
         difficulty: 'beginner',
-        possibleMonsterIds: ['training_dummy'],
+        bossMonsterId: 'slime_king',
         entryCostGold: 0,
-        tags: ['beginner', 'safe_zone'],
+        tags: ['boss', 'slime', 'early-dungeon'],
     },
     {
-        id: 'forest_cave',
-        name: 'Forest Cave',
-        description: 'A dark and damp cave located in the heart of the forest. It is home to various low-level monsters and serves as a good starting point for new adventurers.',
-        recommendedLevel: 1,
+        id: 'goblin_den',
+        name: 'Goblin Den',
+        description:
+            'A hostile underground nest led by the Goblin Chief. It is an early boss dungeon meant for direct challenge, not regular mob farming.',
+        recommendedLevel: 3,
         difficulty: 'normal',
-        possibleMonsterIds: ['slime', 'wolf'],
+        bossMonsterId: 'goblin_chief',
         entryCostGold: 10,
-        tags: ['beginner', 'nature', 'cave'],
-    }
+        tags: ['boss', 'goblin', 'danger'],
+    },
 ];
 
 export function getDungeonById(dungeonId: string): DungeonDefinition | null {
