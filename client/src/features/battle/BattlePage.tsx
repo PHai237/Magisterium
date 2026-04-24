@@ -24,14 +24,30 @@ function getPercent(currentValue: number, maxValue: number): number {
   return Math.max(0, Math.min(100, (currentValue / maxValue) * 100));
 }
 
+type ResourceBarVariant = 'hp' | 'mp' | 'energy';
+
+function getResourceBarFillClass(variant: ResourceBarVariant): string {
+  if (variant === 'hp') {
+    return 'bg-emerald-500';
+  }
+
+  if (variant === 'mp') {
+    return 'bg-sky-500';
+  }
+
+  return 'bg-amber-500';
+}
+
 function ResourceBar({
   label,
   current,
   max,
+  variant,
 }: {
   label: string;
   current: number;
   max: number;
+  variant: ResourceBarVariant;
 }) {
   const percent = getPercent(current, max);
 
@@ -46,12 +62,58 @@ function ResourceBar({
 
       <div className="h-3 overflow-hidden rounded-full bg-slate-800">
         <div
-          className="h-full rounded-full bg-violet-500 transition-all"
+          className={`h-full rounded-full transition-all duration-500 ${getResourceBarFillClass(
+            variant,
+          )}`}
           style={{ width: `${percent}%` }}
         />
       </div>
     </div>
   );
+}
+
+function getBattleStatusText(battleState: BattleState): string {
+  if (battleState.status === 'won') {
+    return 'Victory';
+  }
+
+  if (battleState.status === 'lost') {
+    return 'Defeat';
+  }
+
+  return battleState.currentActor === 'player' ? 'Your Turn' : 'Enemy Turn';
+}
+
+function getBattleStatusClass(battleState: BattleState): string {
+  if (battleState.status === 'won') {
+    return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
+  }
+
+  if (battleState.status === 'lost') {
+    return 'border-red-500/40 bg-red-500/10 text-red-300';
+  }
+
+  return battleState.currentActor === 'player'
+    ? 'border-violet-500/40 bg-violet-500/10 text-violet-300'
+    : 'border-amber-500/40 bg-amber-500/10 text-amber-300';
+}
+
+function getSkillEffectBadgeClass(
+  effectType: SkillDefinition['effectType'],
+): string {
+  if (effectType === 'damage') {
+    return 'border-red-500/40 bg-red-500/10 text-red-300';
+  }
+
+  if (effectType === 'heal') {
+    return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
+  }
+
+  if (effectType === 'shield') {
+    return 'border-sky-500/40 bg-sky-500/10 text-sky-300';
+  }
+
+  return 'border-violet-500/40 bg-violet-500/10 text-violet-300';
 }
 
 function buildCharacterAfterWin(
@@ -277,6 +339,46 @@ export function BattlePage({
             Back to Dungeon
           </button>
         </header>
+        
+        <section className="mb-6 grid gap-4 md:grid-cols-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+              Dungeon
+            </p>
+            <p className="mt-2 text-lg font-bold text-white">
+              {dungeon.name}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+              Enemy
+            </p>
+            <p className="mt-2 text-lg font-bold text-white">
+              {monster.name}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+              Reward
+            </p>
+            <p className="mt-2 text-lg font-bold text-white">
+              {battleState.reward.exp} EXP / {battleState.reward.gold} Gold
+            </p>
+          </div>
+
+          <div
+            className={`rounded-2xl border p-4 ${getBattleStatusClass(battleState)}`}
+          >
+            <p className="text-xs uppercase tracking-wide">
+              Battle Status
+            </p>
+            <p className="mt-2 text-lg font-bold">
+              {getBattleStatusText(battleState)}
+            </p>
+          </div>
+        </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
           <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
@@ -297,18 +399,21 @@ export function BattlePage({
                 label="HP"
                 current={player.currentHp}
                 max={player.derivedStats.maxHp}
+                variant="hp"
               />
 
               <ResourceBar
                 label="MP"
                 current={player.currentMp}
                 max={player.derivedStats.maxMp}
+                variant="mp"
               />
 
               <ResourceBar
                 label="Energy"
                 current={player.currentEnergy}
                 max={player.derivedStats.maxEnergy}
+                variant="energy"
               />
 
               <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
@@ -361,6 +466,7 @@ export function BattlePage({
                 label="HP"
                 current={monster.currentHp}
                 max={monster.maxHp}
+                variant="hp"
               />
 
               <div className="grid grid-cols-2 gap-3">
@@ -401,11 +507,17 @@ export function BattlePage({
             <h2 className="text-xl font-semibold text-white">Actions</h2>
 
             {battleState.status === 'active' && (
-              <p className="mt-2 text-sm text-slate-400">
+              <div
+                className={`mt-3 rounded-xl border px-4 py-3 text-sm ${
+                  isPlayerTurn
+                    ? 'border-violet-500/30 bg-violet-500/10 text-violet-200'
+                    : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                }`}
+              >
                 {isPlayerTurn
-                  ? 'Choose your action.'
-                  : 'Monster is acting...'}
-              </p>
+                  ? 'It is currently your turn. Choose an action.'
+                  : `${monster.name} is preparing to act...`}
+              </div>
             )}
 
             <div className="mt-5 space-y-3">
@@ -425,39 +537,53 @@ export function BattlePage({
 
                     return (
                         <button
-                        key={skill.id}
-                        type="button"
-                        onClick={() => handlePlayerUseSkill(skill.id)}
-                        disabled={!isPlayerTurn || !usable}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-5 py-3 text-left transition hover:border-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
+                          key={skill.id}
+                          type="button"
+                          onClick={() => handlePlayerUseSkill(skill.id)}
+                          disabled={!isPlayerTurn || !usable}
+                          className="w-full rounded-xl border border-slate-700 bg-slate-950 px-5 py-4 text-left transition hover:border-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start justify-between gap-3">
                             <div>
-                            <p className="font-semibold text-white">
-                                {skill.name}
-                            </p>
-
-                            <p className="mt-1 text-sm text-slate-400">
-                                {skill.description}
-                            </p>
-
-                            {resourceWarning && (
-                                <p className="mt-2 text-xs font-semibold text-red-300">
-                                {resourceWarning}
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-semibold text-white">
+                                  {skill.name}
                                 </p>
-                            )}
-                            </div>
 
-                            <span
-                            className={
-                                usable
-                                ? 'rounded-full border border-violet-500/40 px-2 py-1 text-xs text-violet-300'
-                                : 'rounded-full border border-red-500/40 px-2 py-1 text-xs text-red-300'
-                            }
-                            >
-                            {getSkillCostText(skill)}
-                            </span>
-                        </div>
+                                <span
+                                  className={`rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${getSkillEffectBadgeClass(
+                                    skill.effectType,
+                                  )}`}
+                                >
+                                  {skill.effectType}
+                                </span>
+                              </div>
+
+                              <p className="mt-2 text-sm text-slate-400">
+                                {skill.description}
+                              </p>
+
+                              <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-300">
+                                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
+                                  Cost: {getSkillCostText(skill)}
+                                </span>
+
+                                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
+                                  Type: {skill.actionType}
+                                </span>
+
+                                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
+                                  Scale: {skill.scalingStat ?? 'none'}
+                                </span>
+                              </div>
+
+                              {resourceWarning && (
+                                <p className="mt-3 text-xs font-semibold text-red-300">
+                                  {resourceWarning}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </button>
                     );
                     })}
