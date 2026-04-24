@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { OverviewStatCard } from '../../components/ui/OverviewStatCard';
+import { SectionCard } from '../../components/ui/SectionCard';
 import { PageHeader } from '../../components/ui/PageHeader';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { getExpToNextLevel } from '../character-progression/progressionCalculations';
@@ -39,31 +41,6 @@ function getSkillEffectBadgeClass(
   }
 
   return 'border-violet-500/40 bg-violet-500/10 text-violet-300';
-}
-
-function SectionCard({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-100">{title}</h2>
-          {subtitle && (
-            <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4">{children}</div>
-    </section>
-  );
 }
 
 function StatRow({
@@ -125,25 +102,6 @@ function ResourceBar({
           style={{ width: `${percent}%` }}
         />
       </div>
-    </div>
-  );
-}
-
-function OverviewStatCard({
-  label,
-  value,
-  accentClass,
-}: {
-  label: string;
-  value: ReactNode;
-  accentClass?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-      <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-      <p className={`mt-2 text-xl font-bold text-white ${accentClass ?? ''}`}>
-        {value}
-      </p>
     </div>
   );
 }

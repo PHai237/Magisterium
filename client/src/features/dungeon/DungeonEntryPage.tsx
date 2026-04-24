@@ -1,6 +1,8 @@
 import type { Character } from '../character-creation/types';
 import { MONSTERS } from '../monster/monsterConstants';
 
+import { OverviewStatCard } from '../../components/ui/OverviewStatCard';
+import { SectionIntro } from '../../components/ui/SectionIntro';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { DUNGEONS } from './dungeonConstants';
 import type { DungeonDefinition } from './dungeonTypes';
@@ -122,25 +124,6 @@ function getStrongestMonsterLabel(monsterIds: string[]): string {
   return `${strongestMonster.name} (Lv.${strongestMonster.level})`;
 }
 
-function OverviewStatCard({
-  label,
-  value,
-  accentClass,
-}: {
-  label: string;
-  value: string | number;
-  accentClass?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-      <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-      <p className={`mt-2 text-xl font-bold text-white ${accentClass ?? ''}`}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
 export function DungeonEntryPage({
   character,
   onBackToProfile,
@@ -253,16 +236,10 @@ export function DungeonEntryPage({
           </div>
         </section>
 
-        <section className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-white">
-              Available Dungeons
-            </h2>
-            <p className="mt-1 text-sm text-slate-400">
-              Choose a destination and begin your next combat route.
-            </p>
-          </div>
-        </section>
+        <SectionIntro
+          title="Available Dungeons"
+          subtitle="Choose a destination and begin your next combat route."
+        />
 
         <section className="grid gap-5 lg:grid-cols-2">
           {DUNGEONS.map((dungeon) => {

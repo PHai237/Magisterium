@@ -99,6 +99,10 @@ function getBattleStatusClass(battleState: BattleState): string {
     : 'border-amber-500/40 bg-amber-500/10 text-amber-300';
 }
 
+function getBattleStatusAnimationClass(battleState: BattleState): string {
+  return battleState.status === 'active' ? 'ui-soft-pulse' : '';
+}
+
 function getSkillEffectBadgeClass(
   effectType: SkillDefinition['effectType'],
 ): string {
@@ -337,7 +341,7 @@ export function BattlePage({
         />
         
         <section className="mb-6 grid gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Dungeon
             </p>
@@ -346,7 +350,7 @@ export function BattlePage({
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Enemy
             </p>
@@ -355,7 +359,7 @@ export function BattlePage({
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
               Reward
             </p>
@@ -365,7 +369,9 @@ export function BattlePage({
           </div>
 
           <div
-            className={`rounded-2xl border p-4 ${getBattleStatusClass(battleState)}`}
+            className={`ui-card-enter rounded-2xl border p-4 ${getBattleStatusClass(
+              battleState,
+            )} ${getBattleStatusAnimationClass(battleState)}`}
           >
             <p className="text-xs uppercase tracking-wide">
               Battle Status
@@ -377,7 +383,7 @@ export function BattlePage({
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <article className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <p className="text-sm uppercase tracking-wide text-violet-300">
               Player
             </p>
@@ -444,7 +450,7 @@ export function BattlePage({
             </div>
           </article>
 
-          <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <article className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <p className="text-sm uppercase tracking-wide text-red-300">
               Monster
             </p>
@@ -499,7 +505,7 @@ export function BattlePage({
         </section>
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-          <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <article className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <h2 className="text-xl font-semibold text-white">Actions</h2>
 
             {battleState.status === 'active' && (
@@ -521,7 +527,7 @@ export function BattlePage({
                 type="button"
                 onClick={handlePlayerBasicAttack}
                 disabled={!isPlayerTurn}
-                className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+                className="w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-violet-400 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-700"
               >
                 Basic Attack
               </button>
@@ -537,7 +543,7 @@ export function BattlePage({
                           type="button"
                           onClick={() => handlePlayerUseSkill(skill.id)}
                           disabled={!isPlayerTurn || !usable}
-                          className="w-full rounded-xl border border-slate-700 bg-slate-950 px-5 py-4 text-left transition hover:border-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="w-full rounded-xl border border-slate-700 bg-slate-950 px-5 py-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
@@ -585,9 +591,9 @@ export function BattlePage({
                     })}
               </div>
                 {isMonsterTurn && (
-                    <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                        {monster.name} is preparing an attack...
-                    </div>
+                  <div className="ui-soft-pulse rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                    {monster.name} is preparing an attack...
+                  </div>
                 )}
             </div>
 
@@ -664,7 +670,7 @@ export function BattlePage({
             )}
           </article>
 
-          <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <article className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <h2 className="text-xl font-semibold text-white">Battle Log</h2>
 
             <div
@@ -674,7 +680,9 @@ export function BattlePage({
               {battleState.logs.map((log) => (
                 <div
                   key={log.id}
-                  className={`rounded-xl border p-3 ${getLogCardClass(log.actor)}`}
+                  className={`ui-log-entry rounded-xl border p-3 ${getLogCardClass(
+                    log.actor,
+                  )}`}
                 >
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <span

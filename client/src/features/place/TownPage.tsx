@@ -1,5 +1,6 @@
 import type { Character } from '../character-creation/types';
 
+import { SectionIntro } from '../../components/ui/SectionIntro';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { PLACES, TAVERN_REST_COST } from './placeConstants';
 import {
@@ -254,13 +255,10 @@ export function TownPage({
           </div>
         </section>
 
-        <section className="mb-4">
-          <h2 className="text-2xl font-bold text-white">Town Services</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Recover, prepare, and review future support systems before returning
-            to danger.
-          </p>
-        </section>
+        <SectionIntro
+            title="Town Services"
+            subtitle="Recover, prepare, and review future support systems before returning to danger."
+        />
 
         <section className="grid gap-5 lg:grid-cols-2">
           {servicePlaces.map((place) => (
