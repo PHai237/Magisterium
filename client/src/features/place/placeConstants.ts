@@ -24,4 +24,11 @@ export const PLACES: PlaceDefinition[] = [
       'A future recovery and respawn point for more advanced death and retrieval systems.',
     unlocked: false,
   },
+  {
+    id: 'lost_and_found',
+    name: 'Lost & Found Office',
+    description:
+      'A future service point for reclaiming items recovered after death.',
+    unlocked: false,
+  }
 ];

@@ -1,5 +1,6 @@
 import type { Character } from '../character-creation/types';
 
+import { PageHeader } from '../../components/ui/PageHeader';
 import { PLACES, TAVERN_REST_COST } from './placeConstants';
 import {
   canAffordTavernRest,
@@ -68,6 +69,36 @@ function ResourceBar({
   );
 }
 
+function getPlaceStatusClass(unlocked: boolean): string {
+  return unlocked
+    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+    : 'border-slate-700 bg-slate-900 text-slate-400';
+}
+
+function getPlaceRoleClass(placeId: string): string {
+  if (placeId === 'tavern') {
+    return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
+  }
+
+  if (placeId === 'clinic') {
+    return 'border-sky-500/40 bg-sky-500/10 text-sky-300';
+  }
+
+  return 'border-violet-500/40 bg-violet-500/10 text-violet-300';
+}
+
+function getPlaceRoleLabel(placeId: string): string {
+  if (placeId === 'tavern') {
+    return 'Recovery';
+  }
+
+  if (placeId === 'clinic') {
+    return 'Medical';
+  }
+
+  return 'Service';
+}
+
 export function TownPage({
   character,
   onBackToProfile,
@@ -75,31 +106,25 @@ export function TownPage({
 }: TownPageProps) {
   const canRest = canAffordTavernRest(character);
 
+  const servicePlaces = PLACES.filter((place) => place.id !== 'town');
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-violet-300">
-              Magisterium
-            </p>
-
-            <h1 className="mt-2 text-4xl font-bold">Town</h1>
-
-            <p className="mt-3 max-w-2xl text-slate-400">
-              A safe place to recover, regroup, and prepare for the next
-              adventure.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onBackToProfile}
-            className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
-          >
-            Back to Profile
-          </button>
-        </header>
+        <PageHeader
+            eyebrow="Magisterium"
+            title="Town"
+            description="A safe place to recover, regroup, and prepare for the next adventure."
+            actions={
+                <button
+                type="button"
+                onClick={onBackToProfile}
+                className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
+                >
+                Back to Profile
+                </button>
+            }
+        />
 
         <section className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -119,7 +144,7 @@ export function TownPage({
               </h2>
 
               <p className="mt-2 max-w-2xl text-slate-400">
-                Review your current condition, recover your resources, and head
+                Review your current condition, restore your resources, and head
                 back out when you are ready.
               </p>
 
@@ -191,33 +216,85 @@ export function TownPage({
           </div>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-3">
-          {PLACES.map((place) => (
+        <section className="mb-6 grid gap-4 md:grid-cols-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+              Current Town
+            </p>
+            <p className="mt-2 text-lg font-bold text-white">
+              Ravenhold Town
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+              Available Services
+            </p>
+            <p className="mt-2 text-lg font-bold text-white">
+              {servicePlaces.filter((place) => place.unlocked).length}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+              Recovery Cost
+            </p>
+            <p className="mt-2 text-lg font-bold text-yellow-300">
+              {TAVERN_REST_COST} Gold
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-400">
+              Current Shield
+            </p>
+            <p className="mt-2 text-lg font-bold text-white">
+              {character.currentState.shield}
+            </p>
+          </div>
+        </section>
+
+        <section className="mb-4">
+          <h2 className="text-2xl font-bold text-white">Town Services</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Recover, prepare, and review future support systems before returning
+            to danger.
+          </p>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-2">
+          {servicePlaces.map((place) => (
             <article
               key={place.id}
-              className={`rounded-2xl border p-5 ${
+              className={`rounded-2xl border p-5 transition ${
                 place.unlocked
-                  ? 'border-slate-800 bg-slate-900/60'
+                  ? 'border-slate-800 bg-slate-900/60 hover:border-violet-500/40'
                   : 'border-slate-800 bg-slate-900/30 opacity-60'
               }`}
             >
-              <h2 className="text-2xl font-bold text-white">{place.name}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-2xl font-bold text-white">{place.name}</h2>
+
+                <span
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${getPlaceStatusClass(
+                    place.unlocked,
+                  )}`}
+                >
+                  {place.unlocked ? 'Available' : 'Future'}
+                </span>
+
+                <span
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${getPlaceRoleClass(
+                    place.id,
+                  )}`}
+                >
+                  {getPlaceRoleLabel(place.id)}
+                </span>
+              </div>
 
               <p className="mt-3 text-sm leading-6 text-slate-400">
                 {place.description}
               </p>
-
-              <div className="mt-4">
-                <span
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
-                    place.unlocked
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                      : 'border-slate-700 bg-slate-900 text-slate-400'
-                  }`}
-                >
-                  {place.unlocked ? 'Available' : 'Future'}
-                </span>
-              </div>
 
               {place.id === 'tavern' && place.unlocked && (
                 <div className="mt-5 space-y-3">
@@ -245,6 +322,13 @@ export function TownPage({
                   >
                     Rest at Tavern
                   </button>
+                </div>
+              )}
+
+              {place.id === 'clinic' && (
+                <div className="mt-5 rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+                  Future service: recovery support, respawn support, and death
+                  loop systems will be connected here later.
                 </div>
               )}
             </article>

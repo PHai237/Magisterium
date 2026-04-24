@@ -1,6 +1,7 @@
 import type { Character } from '../character-creation/types';
 import { MONSTERS } from '../monster/monsterConstants';
 
+import { PageHeader } from '../../components/ui/PageHeader';
 import { DUNGEONS } from './dungeonConstants';
 import type { DungeonDefinition } from './dungeonTypes';
 
@@ -148,28 +149,20 @@ export function DungeonEntryPage({
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-violet-300">
-              Magisterium
-            </p>
-
-            <h1 className="mt-2 text-4xl font-bold">Dungeon Entry</h1>
-
-            <p className="mt-3 max-w-2xl text-slate-400">
-              Prepare for combat, review your current condition, and choose
-              where your next adventure begins.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onBackToProfile}
-            className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
-          >
-            Back to Profile
-          </button>
-        </header>
+        <PageHeader
+          eyebrow="Magisterium"
+          title="Dungeon Entry"
+          description="Prepare for combat, review your current condition, and choose where your next adventure begins."
+          actions={
+            <button
+              type="button"
+              onClick={onBackToProfile}
+              className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
+            >
+              Back to Profile
+            </button>
+          }
+        />
 
         <section className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

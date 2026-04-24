@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { PageHeader } from '../../components/ui/PageHeader';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { getExpToNextLevel } from '../character-progression/progressionCalculations';
 
@@ -159,46 +160,38 @@ export function CharacterProfilePage({
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-violet-300">
-              Magisterium
-            </p>
+        <PageHeader
+          eyebrow="Magisterium"
+          title="Character Profile"
+          description="Review your character sheet, monitor your current combat state, and prepare for the next adventure."
+          actions={
+            <>
+              <button
+                type="button"
+                onClick={onStartAdventure}
+                className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
+              >
+                Start Adventure
+              </button>
 
-            <h1 className="mt-2 text-4xl font-bold">Character Profile</h1>
+              <button
+                type="button"
+                onClick={onVisitTown}
+                className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-5 py-3 font-semibold text-sky-200 transition hover:bg-sky-500/20"
+              >
+                Visit Town
+              </button>
 
-            <p className="mt-3 max-w-2xl text-slate-400">
-              Review your character sheet, monitor your current combat state,
-              and prepare for the next adventure.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={onStartAdventure}
-              className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
-            >
-              Start Adventure
-            </button>
-
-            <button
-              type="button"
-              onClick={onVisitTown}
-              className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-5 py-3 font-semibold text-sky-200 transition hover:bg-sky-500/20"
-            >
-              Visit Town
-            </button>
-
-            <button
-              type="button"
-              onClick={onCreateNewCharacter}
-              className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
-            >
-              Create New Character
-            </button>
-          </div>
-        </header>
+              <button
+                type="button"
+                onClick={onCreateNewCharacter}
+                className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
+              >
+                Create New Character
+              </button>
+            </>
+          }
+        />
 
         <section className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

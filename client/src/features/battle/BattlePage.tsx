@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 
+import { PageHeader } from '../../components/ui/PageHeader';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { applyExpReward } from '../character-progression/progressionCalculations';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
@@ -315,30 +316,25 @@ export function BattlePage({
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-violet-300">
-              Magisterium
-            </p>
-
-            <h1 className="mt-2 text-4xl font-bold">Battle</h1>
-
-            <p className="mt-3 max-w-2xl text-slate-400">
-              {dungeon.name} — {battleState.status === 'active'
-                ? `Current turn: ${battleState.currentActor}`
-                : `Battle result: ${battleState.status}`}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onBackToDungeon}
-            disabled={battleState.status === 'active'}
-            className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Back to Dungeon
-          </button>
-        </header>
+        <PageHeader
+          eyebrow="Magisterium"
+          title="Battle"
+          description={`${dungeon.name} — ${
+            battleState.status === 'active'
+              ? `Current turn: ${battleState.currentActor}`
+              : `Battle result: ${battleState.status}`
+          }`}
+          actions={
+            <button
+              type="button"
+              onClick={onBackToDungeon}
+              disabled={battleState.status === 'active'}
+              className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Back to Dungeon
+            </button>
+          }
+        />
         
         <section className="mb-6 grid gap-4 md:grid-cols-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { PageHeader } from '../../components/ui/PageHeader';
 import { CHARACTER_CLASSES, STARTER_GIFTS } from './constants';
 import { useCharacterCreation } from './useCharacterCreation';
 
@@ -74,19 +75,11 @@ export function CharacterCreationForm({
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-violet-300">
-            Magisterium
-          </p>
-
-          <h1 className="mt-2 text-4xl font-bold">Character Creation</h1>
-
-          <p className="mt-3 max-w-2xl text-slate-400">
-            Shape your first adventurer, choose a class identity, select a
-            starter gift, and prepare for the first step into the world of
-            Magisterium.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Magisterium"
+          title="Character Creation"
+          description="Shape your first adventurer, choose a class identity, select a starter gift, and prepare for the first step into the world of Magisterium."
+        />
 
         <section className="mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
