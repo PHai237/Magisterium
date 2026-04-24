@@ -6,10 +6,11 @@ import type { Character } from './features/character-creation/types';
 import { CharacterProfilePage } from './features/character-profile/CharacterProfilePage';
 import { useCurrentCharacter } from './features/character-profile/useCurrentCharacter';
 import { BattlePage } from './features/battle/BattlePage';
+import { TownPage } from './features/place/TownPage';
 import { DungeonEntryPage } from './features/dungeon/DungeonEntryPage';
 import type { DungeonDefinition } from './features/dungeon/dungeonTypes';
 
-type AppScreen = 'profile' | 'dungeon' | 'battle';
+type AppScreen = 'profile' | 'town' | 'dungeon' | 'battle';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('profile');
@@ -91,6 +92,18 @@ function App() {
       );
     }
 
+    if (currentScreen === 'town') {
+      return (
+        <TownPage
+          character={character}
+          onBackToProfile={() => {
+            setCurrentScreen('profile');
+          }}
+          onRecoverAtTavern={saveUpdatedCharacter}
+        />
+      );
+    }
+
     if (currentScreen === 'dungeon') {
       return (
         <DungeonEntryPage
@@ -119,6 +132,9 @@ function App() {
         }}
         onStartAdventure={() => {
           setCurrentScreen('dungeon');
+        }}
+        onVisitTown={() => {
+          setCurrentScreen('town');
         }}
       />
     );

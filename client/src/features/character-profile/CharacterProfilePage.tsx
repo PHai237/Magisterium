@@ -7,6 +7,7 @@ interface CharacterProfilePageProps {
   character: Character;
   onCreateNewCharacter: () => void;
   onStartAdventure?: () => void;
+  onVisitTown?: () => void;
 }
 
 function formatPercent(value: number): string {
@@ -150,6 +151,7 @@ export function CharacterProfilePage({
   character,
   onCreateNewCharacter,
   onStartAdventure,
+  onVisitTown,
 }: CharacterProfilePageProps) {
   const expToNextLevel = getExpToNextLevel(character.level);
   const expPercent = getPercent(character.exp, expToNextLevel);
@@ -178,6 +180,14 @@ export function CharacterProfilePage({
               className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
             >
               Start Adventure
+            </button>
+
+            <button
+              type="button"
+              onClick={onVisitTown}
+              className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-5 py-3 font-semibold text-sky-200 transition hover:bg-sky-500/20"
+            >
+              Visit Town
             </button>
 
             <button
