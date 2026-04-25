@@ -1,6 +1,6 @@
 import type { PlaceDefinition } from './placeTypes';
 
-export const TAVERN_REST_COST_BRONZE = 40;
+export const TAVERN_REST_COST_BRONZE = 20;
 
 export const PLACES: PlaceDefinition[] = [
   {

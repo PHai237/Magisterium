@@ -210,6 +210,9 @@ function App() {
           onArriveAtZone={() => {
             setCurrentScreen('zone_explore');
           }}
+          onTravelEventResult={(updatedCharacter) => {
+            persistCharacter(updatedCharacter);
+          }}
         />
       );
     }
