@@ -241,32 +241,42 @@ export function RoadEventPage({
         </section>
 
         <section className="grid gap-5 lg:grid-cols-2">
-          {roadEvent.choices.map((choice) => (
-            <button
-              key={choice.id}
-              type="button"
-              onClick={() => handleChoose(choice)}
-              className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:border-amber-400"
-            >
-              <p className="text-xl font-semibold text-white">
-                {choice.label}
-              </p>
+            {roadEvent.choices.map((choice) => (
+                <button
+                key={choice.id}
+                type="button"
+                onClick={() => handleChoose(choice)}
+                className="ui-card-enter flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:border-amber-400"
+                >
+                <div>
+                    <p className="text-xl font-semibold text-white">
+                    {choice.label}
+                    </p>
 
-              <p className="mt-3 text-sm leading-6 text-slate-400">
-                {choice.description}
-              </p>
-
-              <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-300">
-                {getChoiceOutcomePreview(choice)}
-              </div>
-
-              {choice.outcome.futureHook && (
-                <div className="mt-3 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-xs font-semibold text-violet-200">
-                  Future Hook: {choice.outcome.futureHook}
+                    <p className="mt-3 text-sm leading-6 text-slate-400">
+                    {choice.description}
+                    </p>
                 </div>
-              )}
-            </button>
-          ))}
+
+                <div className="mt-auto pt-5 space-y-3">
+                    <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-300">
+                    {getChoiceOutcomePreview(choice)}
+                    </div>
+
+                    <div className="min-h-[52px]">
+                    {choice.outcome.futureHook ? (
+                        <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-xs font-semibold text-violet-200">
+                        Future Hook: {choice.outcome.futureHook}
+                        </div>
+                    ) : (
+                        <div className="invisible rounded-xl border border-transparent px-4 py-3 text-xs font-semibold">
+                        Placeholder
+                        </div>
+                    )}
+                    </div>
+                </div>
+                </button>
+            ))}
         </section>
       </div>
     </main>
