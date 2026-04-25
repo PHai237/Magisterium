@@ -1,6 +1,6 @@
 import type { PlaceDefinition } from './placeTypes';
 
-export const TAVERN_REST_COST = 5;
+export const TAVERN_REST_COST_BRONZE = 40;
 
 export const PLACES: PlaceDefinition[] = [
   {
@@ -19,7 +19,7 @@ export const PLACES: PlaceDefinition[] = [
   },
   {
     id: 'clinic',
-    name: 'Saint Vale Hospital',
+    name: 'Saint Vale Clinic',
     description:
       'A future recovery and respawn point for more advanced death and retrieval systems.',
     unlocked: false,
@@ -30,5 +30,5 @@ export const PLACES: PlaceDefinition[] = [
     description:
       'A future service point for reclaiming items recovered after death.',
     unlocked: false,
-  }
+  },
 ];

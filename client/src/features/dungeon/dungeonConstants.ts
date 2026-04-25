@@ -9,7 +9,7 @@ export const DUNGEONS: DungeonDefinition[] = [
         recommendedLevel: 2,
         difficulty: 'beginner',
         bossMonsterId: 'slime_king',
-        entryCostGold: 0,
+        entryCostBronze: 0,
         tags: ['boss', 'slime', 'early-dungeon'],
     },
     {
@@ -20,7 +20,7 @@ export const DUNGEONS: DungeonDefinition[] = [
         recommendedLevel: 3,
         difficulty: 'normal',
         bossMonsterId: 'goblin_chief',
-        entryCostGold: 10,
+        entryCostBronze: 10,
         tags: ['boss', 'goblin', 'danger'],
     },
 ];

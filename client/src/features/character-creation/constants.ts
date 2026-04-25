@@ -283,8 +283,8 @@ export const STARTER_GIFTS: StarterGiftDefinition[] = [
   {
     id: 'small_pouch',
     name: 'Small Coin Pouch',
-    description: 'Start your journey with 100 gold.',
-    effectType: 'starting_gold',
+    description: 'Start your journey with 100 bronze coins.',
+    effectType: 'starting_money',
     effectValue: 100,
   },
 ];

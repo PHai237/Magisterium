@@ -1,8 +1,11 @@
 import type { Character } from '../character-creation/types';
+import { canAffordBronze } from '../economy/currencyUtils';
 import { getMonsterById } from '../monster/monsterConstants';
 import { OverviewStatCard } from '../../components/ui/OverviewStatCard';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SectionIntro } from '../../components/ui/SectionIntro';
+import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
+import { formatCurrency } from '../economy/currencyUtils';
 
 import { DUNGEONS } from './dungeonConstants';
 import type { DungeonDefinition } from './dungeonTypes';
@@ -131,6 +134,17 @@ function getDungeonBossRank(dungeon: DungeonDefinition): string {
   return bossMonster.rank;
 }
 
+function getEnterButtonClass(canEnter: boolean): string {
+  const baseClass =
+    'mt-6 w-full rounded-xl px-5 py-3 font-semibold transition duration-200';
+
+  if (!canEnter) {
+    return `${baseClass} cursor-not-allowed bg-slate-700 text-slate-300`;
+  }
+
+  return `${baseClass} bg-violet-500 text-white hover:-translate-y-0.5 hover:bg-violet-400 active:scale-[0.99]`;
+}
+
 export function DungeonEntryPage({
   character,
   onBackToProfile,
@@ -180,9 +194,8 @@ export function DungeonEntryPage({
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <OverviewStatCard label="Level" value={character.level} />
                 <OverviewStatCard
-                  label="Gold"
-                  value={character.gold}
-                  accentClass="text-yellow-300"
+                  label="Currency"
+                  value={<MoneyDisplay totalBronze={character.moneyBronze} compact />}
                 />
                 <OverviewStatCard
                   label="Passive"
@@ -239,6 +252,16 @@ export function DungeonEntryPage({
                   </p>
                 </div>
               </div>
+
+              <div className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+                <p className="text-sm font-semibold text-amber-200">
+                  Entry Fee Rule
+                </p>
+                <p className="mt-2 text-sm text-amber-100">
+                  Dungeon entry cost is deducted immediately when you begin a
+                  boss challenge.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -255,6 +278,10 @@ export function DungeonEntryPage({
             const dungeonBossLabel = getDungeonBossLabel(dungeon);
             const dungeonBossDescription = getDungeonBossDescription(dungeon);
             const dungeonBossRank = getDungeonBossRank(dungeon);
+            const canEnterDungeon = canAffordBronze(
+              character.moneyBronze,
+              dungeon.entryCostBronze,
+            );
 
             return (
               <article
@@ -298,7 +325,7 @@ export function DungeonEntryPage({
                       Entry Cost
                     </p>
                     <p className="mt-2 text-lg font-bold text-white">
-                      {dungeon.entryCostGold} Gold
+                      {formatCurrency(dungeon.entryCostBronze)}
                     </p>
                   </div>
 
@@ -352,12 +379,21 @@ export function DungeonEntryPage({
                   ))}
                 </div>
 
+                {!canEnterDungeon && (
+                  <div className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                    You do not have enough money for this dungeon entry fee.
+                  </div>
+                )}
+
                 <button
                   type="button"
+                  disabled={!canEnterDungeon}
                   onClick={() => onEnterDungeon(dungeon)}
-                  className="mt-6 w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-violet-400 active:scale-[0.99]"
+                  className={getEnterButtonClass(canEnterDungeon)}
                 >
-                  Challenge Boss Dungeon
+                  {canEnterDungeon
+                    ? 'Challenge Boss Dungeon'
+                    : 'Not Enough Money'}
                 </button>
               </article>
             );

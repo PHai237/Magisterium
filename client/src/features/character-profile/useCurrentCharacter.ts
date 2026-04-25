@@ -8,6 +8,39 @@ interface CurrentCharacterState {
   errorMessage: string;
 }
 
+function normalizeStoredCharacter(rawCharacter: unknown): Character {
+  const parsedCharacter = rawCharacter as Character & {
+    gold?: number;
+    moneyBronze?: number;
+    starterGift?: Character['starterGift'] & {
+      effectType?: string;
+    };
+  };
+
+  const normalizedMoneyBronze =
+    typeof parsedCharacter.moneyBronze === 'number'
+      ? parsedCharacter.moneyBronze
+      : typeof parsedCharacter.gold === 'number'
+      ? parsedCharacter.gold
+      : 0;
+
+  const normalizedStarterGift =
+    parsedCharacter.starterGift &&
+    parsedCharacter.starterGift.effectType === 'starting_gold'
+      ? {
+          ...parsedCharacter.starterGift,
+          effectType: 'starting_money' as const,
+        }
+      : parsedCharacter.starterGift;
+
+  return {
+    ...parsedCharacter,
+    version: Math.max(parsedCharacter.version ?? 1, 2),
+    moneyBronze: normalizedMoneyBronze,
+    starterGift: normalizedStarterGift ?? parsedCharacter.starterGift,
+  };
+}
+
 function readCurrentCharacterFromStorage(): CurrentCharacterState {
   const rawCharacter = localStorage.getItem(
     LOCAL_STORAGE_KEYS.currentCharacter,
@@ -21,10 +54,18 @@ function readCurrentCharacterFromStorage(): CurrentCharacterState {
   }
 
   try {
-    const parsedCharacter = JSON.parse(rawCharacter) as Character;
+    const parsedCharacter = JSON.parse(rawCharacter);
+    const normalizedCharacter = normalizeStoredCharacter(parsedCharacter);
+
+    if (JSON.stringify(parsedCharacter) !== JSON.stringify(normalizedCharacter)) {
+      localStorage.setItem(
+        LOCAL_STORAGE_KEYS.currentCharacter,
+        JSON.stringify(normalizedCharacter),
+      );
+    }
 
     return {
-      character: parsedCharacter,
+      character: normalizedCharacter,
       errorMessage: '',
     };
   } catch {

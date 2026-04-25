@@ -3,6 +3,7 @@ import { MONSTERS } from '../monster/monsterConstants';
 import { OverviewStatCard } from '../../components/ui/OverviewStatCard';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SectionIntro } from '../../components/ui/SectionIntro';
+import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
 
 import { ZONES } from './zoneConstants';
 import type { ZoneDefinition } from './zoneTypes';
@@ -171,9 +172,8 @@ export function ZoneEntryPage({
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <OverviewStatCard label="Level" value={character.level} />
                 <OverviewStatCard
-                  label="Gold"
-                  value={character.gold}
-                  accentClass="text-yellow-300"
+                  label="Currency"
+                  value={<MoneyDisplay totalBronze={character.moneyBronze} compact />}
                 />
                 <OverviewStatCard
                   label="Action Speed"

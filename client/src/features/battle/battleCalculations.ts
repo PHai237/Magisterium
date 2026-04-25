@@ -151,7 +151,7 @@ export function createInitialBattleState(params: {
     currentActor: firstActor,
     reward: {
       exp: monster.reward.exp,
-      gold: monster.reward.gold,
+      bronze: monster.reward.bronze,
     },
     logs: [
       createLogEntry({

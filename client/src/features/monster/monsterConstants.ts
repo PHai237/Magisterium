@@ -17,7 +17,7 @@ export const MONSTERS: MonsterDefinition[] = [
         },
         reward: {
         exp: 12,
-        gold: 5,
+        bronze: 3,
         },
         tags: ['beginner', 'soft-body'],
     },
@@ -37,7 +37,7 @@ export const MONSTERS: MonsterDefinition[] = [
         },
         reward: {
         exp: 14,
-        gold: 6,
+        bronze: 5,
         },
         tags: ['beginner', 'fast'],
     },
@@ -57,7 +57,7 @@ export const MONSTERS: MonsterDefinition[] = [
         },
         reward: {
         exp: 20,
-        gold: 9,
+        bronze: 9,
         },
         tags: ['beginner', 'humanoid'],
     },
@@ -77,7 +77,7 @@ export const MONSTERS: MonsterDefinition[] = [
         },
         reward: {
             exp: 45,
-            gold: 20,
+            bronze: 20,
         },
         tags: ['boss', 'slime', 'crown'],
     },
@@ -97,7 +97,7 @@ export const MONSTERS: MonsterDefinition[] = [
         },
         reward: {
             exp: 65,
-            gold: 32,
+            bronze: 32,
         },
         tags: ['boss', 'goblin', 'leader'],
     },

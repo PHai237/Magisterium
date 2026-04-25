@@ -11,6 +11,6 @@ export interface DungeonDefinition {
     recommendedLevel: number;
     difficulty: DungeonDifficulty;
     bossMonsterId: MonsterId;
-    entryCostGold: number;
+    entryCostBronze: number;
     tags: string[];
 }

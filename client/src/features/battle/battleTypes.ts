@@ -43,7 +43,7 @@ export interface PlayerBattleState {
 
 export interface BattleReward {
   exp: number;
-  gold: number;
+  bronze: number;
 }
 
 export interface BattleLogEntry {

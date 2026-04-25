@@ -5,6 +5,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { SectionCard } from '../../components/ui/SectionCard';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { getExpToNextLevel } from '../character-progression/progressionCalculations';
+import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
 
 interface CharacterProfilePageProps {
   character: Character;
@@ -191,9 +192,8 @@ export function CharacterProfilePage({
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <OverviewStatCard label="Level" value={character.level} />
                 <OverviewStatCard
-                  label="Gold"
-                  value={character.gold}
-                  accentClass="text-yellow-300"
+                  label="Currency"
+                  value={<MoneyDisplay totalBronze={character.moneyBronze} compact />}
                 />
                 <OverviewStatCard
                   label="Passive"

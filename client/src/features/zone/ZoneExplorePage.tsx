@@ -2,6 +2,7 @@ import { OverviewStatCard } from '../../components/ui/OverviewStatCard';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SectionIntro } from '../../components/ui/SectionIntro';
 import type { Character } from '../character-creation/types';
+import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
 
 import type { ZoneDefinition } from './zoneTypes';
 
@@ -177,9 +178,8 @@ export function ZoneExplorePage({
                   value={`Lv. ${zone.recommendedLevel}`}
                 />
                 <OverviewStatCard
-                  label="Gold"
-                  value={character.gold}
-                  accentClass="text-yellow-300"
+                    label="Currency"
+                    value={<MoneyDisplay totalBronze={character.moneyBronze} compact />}
                 />
                 <OverviewStatCard
                   label="Action Speed"

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import type { Character } from '../character-creation/types';
+import { formatCurrency } from '../economy/currencyUtils';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
-// import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 
 import {
   applyCriticalDamage,
@@ -33,26 +33,26 @@ interface UseBattleParams {
 }
 
 function getResourceText(
-    player: BattleState['player'],
-    resourceType: string | null,
+  player: BattleState['player'],
+  resourceType: string | null,
 ): string {
-    if (!resourceType) {
-        return 'No resource required';
-    }
+  if (!resourceType) {
+    return 'No resource required';
+  }
 
-    if (resourceType === 'MP') {
-        return `${player.currentMp} MP`;
-    }
+  if (resourceType === 'MP') {
+    return `${player.currentMp} MP`;
+  }
 
-    if (resourceType === 'Energy') {
-        return `${player.currentEnergy} Energy`;
-    }
+  if (resourceType === 'Energy') {
+    return `${player.currentEnergy} Energy`;
+  }
 
-    if (resourceType === 'HP') {
-        return `${player.currentHp} HP`;
-    }
+  if (resourceType === 'HP') {
+    return `${player.currentHp} HP`;
+  }
 
-    return 'Unknown resource';
+  return 'Unknown resource';
 }
 
 export function useBattle({ character, source }: UseBattleParams) {
@@ -98,7 +98,9 @@ export function useBattle({ character, source }: UseBattleParams) {
       const attackLog = createLogEntry({
         turn: currentBattle.turn,
         actor: 'player',
-        message: `${currentBattle.player.name} attacks ${currentBattle.monster.name} and deals ${damage} damage.${getCriticalLogText(isCritical)}`,
+        message: `${currentBattle.player.name} attacks ${currentBattle.monster.name} and deals ${damage} damage.${getCriticalLogText(
+          isCritical,
+        )}`,
       });
 
       if (isMonsterDefeated(updatedMonster)) {
@@ -111,7 +113,9 @@ export function useBattle({ character, source }: UseBattleParams) {
         const rewardLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'system',
-          message: `Gained ${currentBattle.reward.exp} EXP and ${currentBattle.reward.gold} Gold.`,
+          message: `Gained ${currentBattle.reward.exp} EXP and ${formatCurrency(
+            currentBattle.reward.bronze,
+          )}.`,
         });
 
         return {
@@ -160,12 +164,12 @@ export function useBattle({ character, source }: UseBattleParams) {
 
       if (!canUseSkill(currentBattle.player, selectedSkill)) {
         const noResourceLog = createLogEntry({
-            turn: currentBattle.turn,
-            actor: 'system',
-            message: `${currentBattle.player.name} cannot use ${selectedSkill.name}. Required: ${selectedSkill.resourceCost} ${selectedSkill.resourceType}. Current: ${getResourceText(
-                currentBattle.player,
-                selectedSkill.resourceType,
-            )}.`,
+          turn: currentBattle.turn,
+          actor: 'system',
+          message: `${currentBattle.player.name} cannot use ${selectedSkill.name}. Required: ${selectedSkill.resourceCost} ${selectedSkill.resourceType}. Current: ${getResourceText(
+            currentBattle.player,
+            selectedSkill.resourceType,
+          )}.`,
         });
 
         return {
@@ -197,7 +201,9 @@ export function useBattle({ character, source }: UseBattleParams) {
         const skillLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'player',
-          message: `${currentBattle.player.name} uses ${selectedSkill.name} and deals ${damage} damage.${getCriticalLogText(isCritical)}`,
+          message: `${currentBattle.player.name} uses ${selectedSkill.name} and deals ${damage} damage.${getCriticalLogText(
+            isCritical,
+          )}`,
         });
 
         if (isMonsterDefeated(updatedMonster)) {
@@ -210,7 +216,9 @@ export function useBattle({ character, source }: UseBattleParams) {
           const rewardLog = createLogEntry({
             turn: currentBattle.turn,
             actor: 'system',
-            message: `Gained ${currentBattle.reward.exp} EXP and ${currentBattle.reward.gold} Gold.`,
+            message: `Gained ${currentBattle.reward.exp} EXP and ${formatCurrency(
+              currentBattle.reward.bronze,
+            )}.`,
           });
 
           return {
@@ -309,20 +317,20 @@ export function useBattle({ character, source }: UseBattleParams) {
           buffMessage = `${currentBattle.player.name} uses ${selectedSkill.name} and reduces the next incoming damage.`;
         }
 
-          const buffLog = createLogEntry({
-            turn: currentBattle.turn,
-            actor: 'player',
-            message: buffMessage,
-          });
+        const buffLog = createLogEntry({
+          turn: currentBattle.turn,
+          actor: 'player',
+          message: buffMessage,
+        });
 
-          return {
-            ...currentBattle,
-            player: buffedPlayer,
-            currentActor: 'monster',
-            turn: currentBattle.turn + 1,
-            logs: [...currentBattle.logs, buffLog],
-          };
-        }
+        return {
+          ...currentBattle,
+          player: buffedPlayer,
+          currentActor: 'monster',
+          turn: currentBattle.turn + 1,
+          logs: [...currentBattle.logs, buffLog],
+        };
+      }
 
       const unsupportedEffectLog = createLogEntry({
         turn: currentBattle.turn,
@@ -340,59 +348,59 @@ export function useBattle({ character, source }: UseBattleParams) {
     });
   }, []);
 
-    const handlePlayerFlee = useCallback(() => {
-      setBattleState((currentBattle) => {
-        if (
-          currentBattle.status !== 'active' ||
-          currentBattle.currentActor !== 'player'
-        ) {
-          return currentBattle;
-        }
+  const handlePlayerFlee = useCallback(() => {
+    setBattleState((currentBattle) => {
+      if (
+        currentBattle.status !== 'active' ||
+        currentBattle.currentActor !== 'player'
+      ) {
+        return currentBattle;
+      }
 
-        if (source.type !== 'zone') {
-          const blockedLog = createLogEntry({
-            turn: currentBattle.turn,
-            actor: 'system',
-            message: 'Escape is currently only available in zone battles.',
-          });
-
-          return {
-            ...currentBattle,
-            logs: [...currentBattle.logs, blockedLog],
-          };
-        }
-
-        const fleeChance = calculateZoneFleeChance(currentBattle.player);
-        const escaped = rollChance(fleeChance);
-
-        if (escaped) {
-          const fleeLog = createLogEntry({
-            turn: currentBattle.turn,
-            actor: 'player',
-            message: `${currentBattle.player.name} escapes from ${currentBattle.monster.name} successfully (${fleeChance}% chance).`,
-          });
-
-          return {
-            ...currentBattle,
-            status: 'escaped',
-            logs: [...currentBattle.logs, fleeLog],
-          };
-        }
-
-        const failedFleeLog = createLogEntry({
+      if (source.type !== 'zone') {
+        const blockedLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'system',
-          message: `${currentBattle.player.name} fails to escape from ${currentBattle.monster.name} (${fleeChance}% chance).`,
+          message: 'Escape is currently only available in zone battles.',
         });
 
         return {
           ...currentBattle,
-          currentActor: 'monster',
-          turn: currentBattle.turn + 1,
-          logs: [...currentBattle.logs, failedFleeLog],
+          logs: [...currentBattle.logs, blockedLog],
         };
+      }
+
+      const fleeChance = calculateZoneFleeChance(currentBattle.player);
+      const escaped = rollChance(fleeChance);
+
+      if (escaped) {
+        const fleeLog = createLogEntry({
+          turn: currentBattle.turn,
+          actor: 'player',
+          message: `${currentBattle.player.name} escapes from ${currentBattle.monster.name} successfully (${fleeChance}% chance).`,
+        });
+
+        return {
+          ...currentBattle,
+          status: 'escaped',
+          logs: [...currentBattle.logs, fleeLog],
+        };
+      }
+
+      const failedFleeLog = createLogEntry({
+        turn: currentBattle.turn,
+        actor: 'system',
+        message: `${currentBattle.player.name} fails to escape from ${currentBattle.monster.name} (${fleeChance}% chance).`,
       });
-    }, [source.type]);
+
+      return {
+        ...currentBattle,
+        currentActor: 'monster',
+        turn: currentBattle.turn + 1,
+        logs: [...currentBattle.logs, failedFleeLog],
+      };
+    });
+  }, [source.type]);
 
   const handleMonsterAction = useCallback(() => {
     setBattleState((currentBattle) => {

@@ -2,7 +2,9 @@ import type { Character } from '../character-creation/types';
 
 import { SectionIntro } from '../../components/ui/SectionIntro';
 import { PageHeader } from '../../components/ui/PageHeader';
-import { PLACES, TAVERN_REST_COST } from './placeConstants';
+import { PLACES, TAVERN_REST_COST_BRONZE } from './placeConstants';
+import { formatCurrency } from '../economy/currencyUtils';
+import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
 import {
   canAffordTavernRest,
   recoverAtTavern,
@@ -113,18 +115,18 @@ export function TownPage({
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-7xl">
         <PageHeader
-            eyebrow="Magisterium"
-            title="Town"
-            description="A safe place to recover, regroup, and prepare for the next adventure."
-            actions={
-                <button
-                type="button"
-                onClick={onBackToProfile}
-                className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
-                >
-                Back to Profile
-                </button>
-            }
+          eyebrow="Magisterium"
+          title="Town"
+          description="A safe place to recover, regroup, and prepare for the next adventure."
+          actions={
+            <button
+              type="button"
+              onClick={onBackToProfile}
+              className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
+            >
+              Back to Profile
+            </button>
+          }
         />
 
         <section className="ui-card-enter mb-6 rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-slate-900/80 to-slate-950 p-6">
@@ -152,11 +154,11 @@ export function TownPage({
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
                   <p className="text-xs uppercase tracking-wide text-slate-400">
-                    Gold
+                    Currency
                   </p>
-                  <p className="mt-2 text-xl font-bold text-yellow-300">
-                    {character.gold}
-                  </p>
+                  <div className="mt-2">
+                    <MoneyDisplay totalBronze={character.moneyBronze} compact />
+                  </div>
                 </div>
 
                 <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
@@ -241,7 +243,7 @@ export function TownPage({
               Recovery Cost
             </p>
             <p className="mt-2 text-lg font-bold text-yellow-300">
-              {TAVERN_REST_COST} Gold
+              {formatCurrency(TAVERN_REST_COST_BRONZE)}
             </p>
           </div>
 
@@ -256,17 +258,17 @@ export function TownPage({
         </section>
 
         <div className="ui-card-enter">
-            <SectionIntro
-                title="Town Services"
-                subtitle="Recover, prepare, and review future support systems before returning to danger."
-            />
+          <SectionIntro
+            title="Town Services"
+            subtitle="Recover, prepare, and review future support systems before returning to danger."
+          />
         </div>
 
         <section className="grid gap-5 lg:grid-cols-2">
           {servicePlaces.map((place) => (
             <article
-                key={place.id}
-                className={`ui-card-enter rounded-2xl border p-5 transition duration-200 ${
+              key={place.id}
+              className={`ui-card-enter rounded-2xl border p-5 transition duration-200 ${
                 place.unlocked
                   ? 'border-slate-800 bg-slate-900/60 hover:-translate-y-0.5 hover:border-violet-500/40'
                   : 'border-slate-800 bg-slate-900/30 opacity-60'
@@ -301,13 +303,13 @@ export function TownPage({
                   <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
                     <p className="text-sm text-slate-400">Rest Cost</p>
                     <p className="mt-1 text-lg font-bold text-white">
-                      {TAVERN_REST_COST} Gold
+                      {formatCurrency(TAVERN_REST_COST_BRONZE)}
                     </p>
                   </div>
 
                   {!canRest && (
                     <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                      Not enough Gold to rest at the tavern.
+                      Not enough money to rest at the tavern.
                     </div>
                   )}
 

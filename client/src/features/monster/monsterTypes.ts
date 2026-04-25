@@ -19,7 +19,7 @@ export interface MonsterStats {
 
 export interface MonsterReward {
     exp: number;
-    gold: number;
+    bronze: number;
 }
 
 export interface MonsterDefinition {

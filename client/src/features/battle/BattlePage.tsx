@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { applyExpReward } from '../character-progression/progressionCalculations';
+import { addBronze, formatCurrency } from '../economy/currencyUtils';
+// import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
 // import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
 
@@ -149,7 +151,10 @@ function buildCharacterAfterWin(
 
   const characterAfterBattleState: Character = {
     ...character,
-    gold: character.gold + battleState.reward.gold,
+    moneyBronze: addBronze(
+      character.moneyBronze,
+      battleState.reward.bronze,
+    ),
     currentState: {
       hp: Math.min(
         character.derivedStats.maxHp,
@@ -408,7 +413,7 @@ export function BattlePage({
               Reward
             </p>
             <p className="mt-2 text-lg font-bold text-white">
-              {battleState.reward.exp} EXP / {battleState.reward.gold} Gold
+              {battleState.reward.exp} EXP / {formatCurrency(battleState.reward.bronze)}
             </p>
           </div>
 
@@ -659,8 +664,7 @@ export function BattlePage({
                     </p>
 
                     <p className="mt-2 text-sm text-emerald-100">
-                    You gained {battleState.reward.exp} EXP and{' '}
-                    {battleState.reward.gold} Gold.
+                    You gained {battleState.reward.exp} EXP and {formatCurrency(battleState.reward.bronze)}.
                     </p>
 
                     <div className="mt-4 space-y-3">

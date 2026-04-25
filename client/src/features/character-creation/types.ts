@@ -23,6 +23,7 @@ export type GiftId = 'stale_bread' | 'guide_book' | 'small_pouch';
 export type StarterGiftEffectType =
   | 'post_battle_heal_percent'
   | 'weapon_mastery_bonus'
+  | 'starting_money'
   | 'starting_gold';
 
 export interface BaseStats {
@@ -98,7 +99,7 @@ export interface Character {
   className: string;
   level: number;
   exp: number;
-  gold: number;
+  moneyBronze: number;
   baseStats: BaseStats;
   derivedStats: DerivedStats;
   currentState: CurrentState;

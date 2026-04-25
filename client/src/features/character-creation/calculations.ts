@@ -5,14 +5,14 @@ import {
 } from './constants';
 
 import type {
-    BaseStats,
-    Character,
-    ClassDefinition,
-    ClassId,
-    CurrentState,
-    DerivedStats,
-    GiftId,
-    StarterGiftDefinition,
+  BaseStats,
+  Character,
+  ClassDefinition,
+  ClassId,
+  CurrentState,
+  DerivedStats,
+  GiftId,
+  StarterGiftDefinition,
 } from './types';
 
 export function clamp(value: number, min: number, max: number): number {
@@ -107,18 +107,21 @@ export function createCharacter(params: {
   const derivedStats = buildDerivedStats(baseStats);
   const currentState = buildCurrentState(derivedStats);
 
-  const startingGold =
-    giftDef.effectType === 'starting_gold' ? giftDef.effectValue : 0;
+  const startingMoneyBronze =
+    giftDef.effectType === 'starting_money' ||
+    giftDef.effectType === 'starting_gold'
+      ? giftDef.effectValue
+      : 0;
 
   return {
     id: crypto.randomUUID(),
-    version: 1,
+    version: 2,
     name: params.name.trim(),
     classId: classDef.id,
     className: classDef.name,
     level: 1,
     exp: 0,
-    gold: startingGold,
+    moneyBronze: startingMoneyBronze,
     baseStats,
     derivedStats,
     currentState,

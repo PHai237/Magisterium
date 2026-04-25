@@ -8,6 +8,11 @@ import type { Character } from './features/character-creation/types';
 import { CharacterProfilePage } from './features/character-profile/CharacterProfilePage';
 import { useCurrentCharacter } from './features/character-profile/useCurrentCharacter';
 import { DungeonEntryPage } from './features/dungeon/DungeonEntryPage';
+import type { DungeonDefinition } from './features/dungeon/dungeonTypes';
+import {
+  canAffordBronze,
+  subtractBronze,
+} from './features/economy/currencyUtils';
 import { TownPage } from './features/place/TownPage';
 import { ZoneEntryPage } from './features/zone/ZoneEntryPage';
 import { ZoneExplorePage } from './features/zone/ZoneExplorePage';
@@ -36,16 +41,20 @@ function App() {
     clearCharacter,
   } = useCurrentCharacter();
 
-  function saveUpdatedCharacterToScreen(
-    updatedCharacter: Character,
-    nextScreen: AppScreen,
-  ) {
+  function persistCharacter(updatedCharacter: Character) {
     localStorage.setItem(
       LOCAL_STORAGE_KEYS.currentCharacter,
       JSON.stringify(updatedCharacter),
     );
 
     loadCharacter();
+  }
+
+  function saveUpdatedCharacterToScreen(
+    updatedCharacter: Character,
+    nextScreen: AppScreen,
+  ) {
+    persistCharacter(updatedCharacter);
     setCurrentScreen(nextScreen);
   }
 
@@ -67,13 +76,46 @@ function App() {
     saveUpdatedCharacterToScreen(updatedCharacter, 'dungeon');
   }
 
-  function saveUpdatedCharacterAndContinue(updatedCharacter: Character) {
-    localStorage.setItem(
-      LOCAL_STORAGE_KEYS.currentCharacter,
-      JSON.stringify(updatedCharacter),
-    );
+  function startDungeonBattle(
+    dungeon: DungeonDefinition,
+    baseCharacter: Character,
+  ) {
+    if (!canAffordBronze(baseCharacter.moneyBronze, dungeon.entryCostBronze)) {
+      saveUpdatedCharacterToScreen(baseCharacter, 'dungeon');
+      setSelectedBattleSource(null);
+      return;
+    }
 
-    loadCharacter();
+    const preparedCharacter: Character = {
+      ...baseCharacter,
+      moneyBronze: subtractBronze(
+        baseCharacter.moneyBronze,
+        dungeon.entryCostBronze,
+      ),
+    };
+
+    persistCharacter(preparedCharacter);
+
+    setSelectedBattleSource({
+      type: 'dungeon',
+      data: dungeon,
+    });
+    setBattleRunId((currentId) => currentId + 1);
+    setCurrentScreen('battle');
+  }
+
+  function saveUpdatedCharacterAndContinue(updatedCharacter: Character) {
+    if (!selectedBattleSource) {
+      saveUpdatedCharacterToProfile(updatedCharacter);
+      return;
+    }
+
+    if (selectedBattleSource.type === 'dungeon') {
+      startDungeonBattle(selectedBattleSource.data, updatedCharacter);
+      return;
+    }
+
+    persistCharacter(updatedCharacter);
     setBattleRunId((currentId) => currentId + 1);
     setCurrentScreen('battle');
   }
@@ -187,12 +229,7 @@ function App() {
             setCurrentScreen('profile');
           }}
           onEnterDungeon={(dungeon) => {
-            setSelectedBattleSource({
-              type: 'dungeon',
-              data: dungeon,
-            });
-            setBattleRunId((currentId) => currentId + 1);
-            setCurrentScreen('battle');
+            startDungeonBattle(dungeon, character);
           }}
         />
       );
