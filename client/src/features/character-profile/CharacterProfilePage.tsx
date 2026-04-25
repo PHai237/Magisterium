@@ -125,39 +125,43 @@ export function CharacterProfilePage({
           title="Character Profile"
           description="Review your character sheet, monitor your current combat state, and prepare for the next adventure."
           actions={
-            <>
-              <button
-                type="button"
-                onClick={onStartAdventure}
-                className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
-              >
-                Enter Dungeons
-              </button>
+            <div className="flex flex-col gap-3 lg:items-end">
+              <div className="flex flex-wrap gap-3 lg:justify-end">
+                <button
+                  type="button"
+                  onClick={onStartAdventure}
+                  className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
+                >
+                  Enter Dungeons
+                </button>
 
-              <button
-                type="button"
-                onClick={onExploreZones}
-                className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
-              >
-                Explore Zones
-              </button>
+                <button
+                  type="button"
+                  onClick={onExploreZones}
+                  className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
+                >
+                  Explore Zones
+                </button>
 
-              <button
-                type="button"
-                onClick={onVisitTown}
-                className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-5 py-3 font-semibold text-sky-200 transition hover:bg-sky-500/20"
-              >
-                Visit Town
-              </button>
+                <button
+                  type="button"
+                  onClick={onVisitTown}
+                  className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-5 py-3 font-semibold text-sky-200 transition hover:bg-sky-500/20"
+                >
+                  Visit Town
+                </button>
+              </div>
 
-              <button
-                type="button"
-                onClick={onCreateNewCharacter}
-                className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
-              >
-                Create New Character
-              </button>
-            </>
+              <div className="flex lg:justify-end">
+                <button
+                  type="button"
+                  onClick={onCreateNewCharacter}
+                  className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500"
+                >
+                  Create New Character
+                </button>
+              </div>
+            </div>
           }
         />
 
