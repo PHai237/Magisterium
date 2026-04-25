@@ -6,19 +6,15 @@ import {
 } from '../economy/currencyUtils';
 import type { ZoneDefinition } from '../zone/zoneTypes';
 
-import { ROAD_EVENTS } from './roadEventConstants';
+import {
+  ROAD_EVENTS,
+  ROAD_EVENT_TRIGGER_SETTINGS,
+} from './roadEventConstants';
 import type {
-  RoadEventDefinition,
-  RoadEventFrequency,
-  RoadEventRarity,
   RoadEventChoiceOutcome,
+  RoadEventDefinition,
+  RoadEventRarity,
 } from './roadEventTypes';
-
-const ROAD_EVENT_CHANCE_BY_FREQUENCY: Record<RoadEventFrequency, number> = {
-  low: 14,
-  normal: 28,
-  high: 44,
-};
 
 function rollChance(percent: number): boolean {
   if (percent <= 0) {
@@ -44,40 +40,12 @@ function getRarityWeight(rarity: RoadEventRarity): number {
   return 10;
 }
 
-function getZoneRoadEventModifier(zone: ZoneDefinition): number {
-  let modifier = 0;
-
-  if (zone.difficulty === 'normal') {
-    modifier += 4;
-  }
-
-  if (zone.difficulty === 'dangerous') {
-    modifier += 8;
-  }
-
-  if (zone.encounterDensity === 'low') {
-    modifier -= 3;
-  }
-
-  if (zone.encounterDensity === 'high') {
-    modifier += 5;
-  }
-
-  if (zone.tags.includes('road')) {
-    modifier += 5;
-  }
-
-  return modifier;
-}
-
-export function getRoadEventChancePercent(
-  zone: ZoneDefinition,
-  frequency: RoadEventFrequency,
-): number {
-  const baseChance = ROAD_EVENT_CHANCE_BY_FREQUENCY[frequency];
-  const zoneModifier = getZoneRoadEventModifier(zone);
-
-  return clamp(baseChance + zoneModifier, 0, 80);
+export function getRoadEventChancePercent(): number {
+  return clamp(
+    ROAD_EVENT_TRIGGER_SETTINGS.eventChancePercent,
+    0,
+    100,
+  );
 }
 
 function getEligibleRoadEvents(zone: ZoneDefinition): RoadEventDefinition[] {
@@ -116,9 +84,8 @@ function pickWeightedRoadEvent(
 
 export function rollRoadEventForZone(
   zone: ZoneDefinition,
-  frequency: RoadEventFrequency = 'normal',
 ): RoadEventDefinition | null {
-  const eventChance = getRoadEventChancePercent(zone, frequency);
+  const eventChance = getRoadEventChancePercent();
 
   if (!rollChance(eventChance)) {
     return null;

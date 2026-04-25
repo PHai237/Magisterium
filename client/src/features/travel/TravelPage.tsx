@@ -10,10 +10,10 @@ import {
   getRoadEventChancePercent,
   rollRoadEventForZone,
 } from '../road-event/roadEventCalculations';
+import { ROAD_EVENT_TRIGGER_SETTINGS } from '../road-event/roadEventConstants';
 import type {
   RoadEventChoiceDefinition,
   RoadEventDefinition,
-  RoadEventFrequency,
 } from '../road-event/roadEventTypes';
 import type { ZoneDefinition } from '../zone/zoneTypes';
 
@@ -23,12 +23,10 @@ interface TravelPageProps {
   onCancelTravel: () => void;
   onArriveAtZone: () => void;
   onTravelEventResult: (updatedCharacter: Character) => void;
-  roadEventFrequency?: RoadEventFrequency;
 }
 
 const TRAVEL_PROGRESS_STEP = 8;
 const TRAVEL_TICK_MS = 180;
-const ROAD_EVENT_CHECKPOINTS = [32, 64, 88];
 
 function getPercent(currentValue: number, maxValue: number): number {
   if (maxValue <= 0) {
@@ -261,13 +259,14 @@ export function TravelPage({
   onCancelTravel,
   onArriveAtZone,
   onTravelEventResult,
-  roadEventFrequency = 'normal',
 }: TravelPageProps) {
   const [travelCharacter, setTravelCharacter] = useState(character);
   const [travelProgress, setTravelProgress] = useState(0);
   const [activeRoadEvent, setActiveRoadEvent] =
     useState<RoadEventDefinition | null>(null);
-  const [checkedCheckpoints, setCheckedCheckpoints] = useState<number[]>([]);
+
+  const progressRef = useRef(0);
+  const checkedCheckpointsRef = useRef<number[]>([]);
   const [resolvedRoadEventIds, setResolvedRoadEventIds] = useState<string[]>([]);
   const [travelLog, setTravelLog] = useState<string[]>([
     `Started traveling toward ${zone.name}.`,
@@ -276,8 +275,8 @@ export function TravelPage({
   const hasCompletedRef = useRef(false);
 
   const roadEventChance = useMemo(() => {
-    return getRoadEventChancePercent(zone, roadEventFrequency);
-  }, [zone, roadEventFrequency]);
+    return getRoadEventChancePercent();
+  }, []);
 
   const currentTravelLine = useMemo(() => {
     if (activeRoadEvent) {
@@ -289,61 +288,47 @@ export function TravelPage({
 
   useEffect(() => {
     if (hasCompletedRef.current || activeRoadEvent) {
-      return;
+        return;
     }
 
     const intervalId = window.setInterval(() => {
-      setTravelProgress((currentProgress) => {
+        const currentProgress = progressRef.current;
+
         if (currentProgress >= 100) {
-          window.clearInterval(intervalId);
-          return 100;
+        window.clearInterval(intervalId);
+        return;
         }
 
         const nextProgress = Math.min(
-          100,
-          currentProgress + TRAVEL_PROGRESS_STEP,
+        100,
+        currentProgress + TRAVEL_PROGRESS_STEP,
         );
 
+        progressRef.current = nextProgress;
+        setTravelProgress(nextProgress);
+
         if (nextProgress >= 100) {
-          window.clearInterval(intervalId);
+        window.clearInterval(intervalId);
+        return;
         }
 
-        return nextProgress;
-      });
-    }, TRAVEL_TICK_MS);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [activeRoadEvent]);
-
-  useEffect(() => {
-    if (
-        hasCompletedRef.current ||
-        activeRoadEvent ||
-        travelProgress >= 100
-    ) {
-        return;
-    }
-
-    const checkpoint = ROAD_EVENT_CHECKPOINTS.find((item) => {
-        return travelProgress >= item && !checkedCheckpoints.includes(item);
-    });
-
-    if (!checkpoint) {
-        return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-        setCheckedCheckpoints((currentCheckpoints) => {
-        if (currentCheckpoints.includes(checkpoint)) {
-            return currentCheckpoints;
-        }
-
-        return [...currentCheckpoints, checkpoint];
+        const checkpoint = ROAD_EVENT_TRIGGER_SETTINGS.checkpoints.find((item) => {
+        return (
+            nextProgress >= item &&
+            !checkedCheckpointsRef.current.includes(item)
+        );
         });
 
-        const roadEvent = rollRoadEventForZone(zone, roadEventFrequency);
+        if (!checkpoint) {
+        return;
+        }
+
+        checkedCheckpointsRef.current = [
+        ...checkedCheckpointsRef.current,
+        checkpoint,
+        ];
+
+        const roadEvent = rollRoadEventForZone(zone);
 
         if (!roadEvent) {
         setTravelLog((currentLog) => [
@@ -358,18 +343,12 @@ export function TravelPage({
         ...currentLog,
         `Checkpoint ${checkpoint}%: ${roadEvent.triggerText}`,
         ]);
-    }, 0);
+    }, TRAVEL_TICK_MS);
 
     return () => {
-        window.clearTimeout(timeoutId);
+        window.clearInterval(intervalId);
     };
-    }, [
-    activeRoadEvent,
-    checkedCheckpoints,
-    roadEventFrequency,
-    travelProgress,
-    zone,
-    ]);
+    }, [activeRoadEvent, zone]);
 
   useEffect(() => {
     if (travelProgress < 100 || hasCompletedRef.current) {

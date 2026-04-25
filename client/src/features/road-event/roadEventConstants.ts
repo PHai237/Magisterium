@@ -1,5 +1,10 @@
 import type { RoadEventDefinition } from './roadEventTypes';
 
+export const ROAD_EVENT_TRIGGER_SETTINGS = {
+  eventChancePercent: 100,
+  checkpoints: [32, 64, 88],
+} as const;
+
 export const ROAD_EVENTS: RoadEventDefinition[] = [
   {
     id: 'broken_wagon_merchant',
