@@ -10,13 +10,22 @@ import { useCurrentCharacter } from './features/character-profile/useCurrentChar
 import { DungeonEntryPage } from './features/dungeon/DungeonEntryPage';
 import { TownPage } from './features/place/TownPage';
 import { ZoneEntryPage } from './features/zone/ZoneEntryPage';
+import { ZoneExplorePage } from './features/zone/ZoneExplorePage';
+import type { ZoneDefinition } from './features/zone/zoneTypes';
 
-type AppScreen = 'profile' | 'town' | 'zone' | 'dungeon' | 'battle';
+type AppScreen =
+  | 'profile'
+  | 'town'
+  | 'zone'
+  | 'zone_explore'
+  | 'dungeon'
+  | 'battle';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('profile');
   const [selectedBattleSource, setSelectedBattleSource] =
     useState<BattleContentSource | null>(null);
+  const [selectedZone, setSelectedZone] = useState<ZoneDefinition | null>(null);
   const [battleRunId, setBattleRunId] = useState(0);
 
   const {
@@ -50,10 +59,12 @@ function App() {
       return;
     }
 
-    saveUpdatedCharacterToScreen(
-      updatedCharacter,
-      selectedBattleSource.type === 'dungeon' ? 'dungeon' : 'zone',
-    );
+    if (selectedBattleSource.type === 'zone') {
+      saveUpdatedCharacterToScreen(updatedCharacter, 'zone_explore');
+      return;
+    }
+
+    saveUpdatedCharacterToScreen(updatedCharacter, 'dungeon');
   }
 
   function saveUpdatedCharacterAndContinue(updatedCharacter: Character) {
@@ -82,6 +93,7 @@ function App() {
             onClick={() => {
               clearCharacter();
               setSelectedBattleSource(null);
+              setSelectedZone(null);
               setBattleRunId(0);
               setCurrentScreen('profile');
             }}
@@ -103,7 +115,9 @@ function App() {
           source={selectedBattleSource}
           onBackToSource={() => {
             setCurrentScreen(
-              selectedBattleSource.type === 'dungeon' ? 'dungeon' : 'zone',
+              selectedBattleSource.type === 'dungeon'
+                ? 'dungeon'
+                : 'zone_explore',
             );
           }}
           onReturnToSourceAfterWin={saveUpdatedCharacterToSource}
@@ -134,9 +148,28 @@ function App() {
             setCurrentScreen('profile');
           }}
           onEnterZone={(zone) => {
+            setSelectedZone(zone);
+            setCurrentScreen('zone_explore');
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === 'zone_explore' && selectedZone) {
+      return (
+        <ZoneExplorePage
+          character={character}
+          zone={selectedZone}
+          onBackToZoneList={() => {
+            setCurrentScreen('zone');
+          }}
+          onReturnToProfile={() => {
+            setCurrentScreen('profile');
+          }}
+          onSearchEncounter={() => {
             setSelectedBattleSource({
               type: 'zone',
-              data: zone,
+              data: selectedZone,
             });
             setBattleRunId((currentId) => currentId + 1);
             setCurrentScreen('battle');
@@ -171,6 +204,7 @@ function App() {
         onCreateNewCharacter={() => {
           clearCharacter();
           setSelectedBattleSource(null);
+          setSelectedZone(null);
           setBattleRunId(0);
           setCurrentScreen('profile');
         }}
@@ -192,6 +226,7 @@ function App() {
       onCharacterCreated={() => {
         loadCharacter();
         setSelectedBattleSource(null);
+        setSelectedZone(null);
         setBattleRunId(0);
         setCurrentScreen('profile');
       }}
