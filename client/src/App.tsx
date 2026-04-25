@@ -14,6 +14,7 @@ import {
   subtractBronze,
 } from './features/economy/currencyUtils';
 import { TownPage } from './features/place/TownPage';
+import { TravelPage } from './features/travel/TravelPage';
 import { ZoneEntryPage } from './features/zone/ZoneEntryPage';
 import { ZoneExplorePage } from './features/zone/ZoneExplorePage';
 import type { ZoneDefinition } from './features/zone/zoneTypes';
@@ -22,6 +23,7 @@ type AppScreen =
   | 'profile'
   | 'town'
   | 'zone'
+  | 'travel'
   | 'zone_explore'
   | 'dungeon'
   | 'battle';
@@ -191,6 +193,21 @@ function App() {
           }}
           onEnterZone={(zone) => {
             setSelectedZone(zone);
+            setCurrentScreen('travel');
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === 'travel' && selectedZone) {
+      return (
+        <TravelPage
+          character={character}
+          zone={selectedZone}
+          onCancelTravel={() => {
+            setCurrentScreen('zone');
+          }}
+          onArriveAtZone={() => {
             setCurrentScreen('zone_explore');
           }}
         />
