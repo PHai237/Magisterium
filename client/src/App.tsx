@@ -9,7 +9,7 @@ import { CharacterProfilePage } from './features/character-profile/CharacterProf
 import { useCurrentCharacter } from './features/character-profile/useCurrentCharacter';
 import { DungeonEntryPage } from './features/dungeon/DungeonEntryPage';
 import { TownPage } from './features/place/TownPage';
-import { ZoneEntryPage } from './features/zone/ZoneEntryPage';
+import { ZoneEntryPage } from './features/zone/zoneEntryPage';
 
 type AppScreen = 'profile' | 'town' | 'zone' | 'dungeon' | 'battle';
 
