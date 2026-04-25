@@ -6,23 +6,26 @@ import { SectionIntro } from '../../components/ui/SectionIntro';
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
 import type { Character } from '../character-creation/types';
 import {
-  applyRoadEventChoice,
   getRoadEventChancePercent,
   rollRoadEventForZone,
 } from '../road-event/roadEventCalculations';
 import { ROAD_EVENT_TRIGGER_SETTINGS } from '../road-event/roadEventConstants';
-import type {
-  RoadEventChoiceDefinition,
-  RoadEventDefinition,
-} from '../road-event/roadEventTypes';
+import type { RoadEventDefinition } from '../road-event/roadEventTypes';
 import type { ZoneDefinition } from '../zone/zoneTypes';
 
 interface TravelPageProps {
   character: Character;
   zone: ZoneDefinition;
+  initialProgress: number;
+  checkedRoadEventCheckpoints: number[];
   onCancelTravel: () => void;
   onArriveAtZone: () => void;
-  onTravelEventResult: (updatedCharacter: Character) => void;
+  onRoadEventCheckpointChecked: (checkpoint: number) => void;
+  onRoadEventTriggered: (params: {
+    roadEvent: RoadEventDefinition;
+    progress: number;
+    checkpoint: number;
+  }) => void;
 }
 
 const TRAVEL_PROGRESS_STEP = 8;
@@ -126,229 +129,112 @@ function getZoneDifficultyClass(difficulty: ZoneDefinition['difficulty']): strin
   return 'border-red-500/40 bg-red-500/10 text-red-300';
 }
 
-function getRoadEventCategoryClass(
-  category: RoadEventDefinition['category'],
-): string {
-  if (category === 'merchant') {
-    return 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300';
-  }
-
-  if (category === 'reward') {
-    return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
-  }
-
-  if (category === 'recovery') {
-    return 'border-sky-500/40 bg-sky-500/10 text-sky-300';
-  }
-
-  if (category === 'danger' || category === 'future_combat') {
-    return 'border-red-500/40 bg-red-500/10 text-red-300';
-  }
-
-  return 'border-violet-500/40 bg-violet-500/10 text-violet-300';
-}
-
-function formatSignedValue(value: number, label: string): string {
-  if (value > 0) {
-    return `+${value} ${label}`;
-  }
-
-  if (value < 0) {
-    return `${value} ${label}`;
-  }
-
-  return '';
-}
-
-function getChoiceOutcomePreview(choice: RoadEventChoiceDefinition): string {
-  const parts = [
-    formatSignedValue(choice.outcome.bronzeChange ?? 0, 'Bronze'),
-    formatSignedValue(choice.outcome.hpChange ?? 0, 'HP'),
-    formatSignedValue(choice.outcome.mpChange ?? 0, 'MP'),
-    formatSignedValue(choice.outcome.energyChange ?? 0, 'Energy'),
-  ].filter(Boolean);
-
-  if (parts.length === 0) {
-    return 'No immediate resource change';
-  }
-
-  return parts.join(' • ');
-}
-
-function RoadEventPanel({
-  event,
-  onChoose,
-}: {
-  event: RoadEventDefinition;
-  onChoose: (choice: RoadEventChoiceDefinition) => void;
-}) {
-  return (
-    <section className="ui-card-enter mb-6 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-slate-900/90 to-slate-950 p-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${getRoadEventCategoryClass(
-            event.category,
-          )}`}
-        >
-          {event.category}
-        </span>
-
-        <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-300">
-          {event.rarity}
-        </span>
-
-        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-300">
-          Road Event
-        </span>
-      </div>
-
-      <h2 className="mt-4 text-3xl font-bold text-white">
-        {event.title}
-      </h2>
-
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-        {event.description}
-      </p>
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        {event.choices.map((choice) => (
-          <button
-            key={choice.id}
-            type="button"
-            onClick={() => onChoose(choice)}
-            className="rounded-2xl border border-slate-800 bg-slate-950 p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:border-amber-400"
-          >
-            <p className="text-lg font-semibold text-white">
-              {choice.label}
-            </p>
-
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              {choice.description}
-            </p>
-
-            <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-xs font-semibold text-slate-300">
-              {getChoiceOutcomePreview(choice)}
-            </div>
-
-            {choice.outcome.futureHook && (
-              <div className="mt-3 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-xs text-violet-200">
-                Future Hook: {choice.outcome.futureHook}
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-5 flex flex-wrap gap-2">
-        {event.tags.map((tag) => (
-          <span
-            key={tag}
-            className="rounded-full bg-slate-950 px-3 py-1 text-xs text-slate-400"
-          >
-            #{tag}
-          </span>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export function TravelPage({
   character,
   zone,
+  initialProgress,
+  checkedRoadEventCheckpoints,
   onCancelTravel,
   onArriveAtZone,
-  onTravelEventResult,
+  onRoadEventCheckpointChecked,
+  onRoadEventTriggered,
 }: TravelPageProps) {
-  const [travelCharacter, setTravelCharacter] = useState(character);
-  const [travelProgress, setTravelProgress] = useState(0);
-  const [activeRoadEvent, setActiveRoadEvent] =
-    useState<RoadEventDefinition | null>(null);
-
-  const progressRef = useRef(0);
-  const checkedCheckpointsRef = useRef<number[]>([]);
-  const [resolvedRoadEventIds, setResolvedRoadEventIds] = useState<string[]>([]);
+  const [travelProgress, setTravelProgress] = useState(initialProgress);
   const [travelLog, setTravelLog] = useState<string[]>([
-    `Started traveling toward ${zone.name}.`,
+    initialProgress > 0
+      ? `Resumed traveling toward ${zone.name}.`
+      : `Started traveling toward ${zone.name}.`,
   ]);
 
+  const progressRef = useRef(initialProgress);
+  const checkedCheckpointsRef = useRef<number[]>(checkedRoadEventCheckpoints);
   const hasCompletedRef = useRef(false);
+  const hasTriggeredRoadEventRef = useRef(false);
 
   const roadEventChance = useMemo(() => {
     return getRoadEventChancePercent();
   }, []);
 
   const currentTravelLine = useMemo(() => {
-    if (activeRoadEvent) {
-      return activeRoadEvent.triggerText;
-    }
-
     return getCurrentTravelLine(travelProgress, zone);
-  }, [activeRoadEvent, travelProgress, zone]);
+  }, [travelProgress, zone]);
 
   useEffect(() => {
-    if (hasCompletedRef.current || activeRoadEvent) {
-        return;
+    checkedCheckpointsRef.current = checkedRoadEventCheckpoints;
+  }, [checkedRoadEventCheckpoints]);
+
+  useEffect(() => {
+    if (hasCompletedRef.current || hasTriggeredRoadEventRef.current) {
+      return;
     }
 
     const intervalId = window.setInterval(() => {
-        const currentProgress = progressRef.current;
+      const currentProgress = progressRef.current;
 
-        if (currentProgress >= 100) {
+      if (currentProgress >= 100) {
         window.clearInterval(intervalId);
         return;
-        }
+      }
 
-        const nextProgress = Math.min(
+      const nextProgress = Math.min(
         100,
         currentProgress + TRAVEL_PROGRESS_STEP,
-        );
+      );
 
-        progressRef.current = nextProgress;
-        setTravelProgress(nextProgress);
+      progressRef.current = nextProgress;
+      setTravelProgress(nextProgress);
 
-        if (nextProgress >= 100) {
+      if (nextProgress >= 100) {
         window.clearInterval(intervalId);
         return;
-        }
+      }
 
-        const checkpoint = ROAD_EVENT_TRIGGER_SETTINGS.checkpoints.find((item) => {
+      const checkpoint = ROAD_EVENT_TRIGGER_SETTINGS.checkpoints.find((item) => {
         return (
-            nextProgress >= item &&
-            !checkedCheckpointsRef.current.includes(item)
+          nextProgress >= item &&
+          !checkedCheckpointsRef.current.includes(item)
         );
-        });
+      });
 
-        if (!checkpoint) {
+      if (!checkpoint) {
         return;
-        }
+      }
 
-        checkedCheckpointsRef.current = [
+      checkedCheckpointsRef.current = [
         ...checkedCheckpointsRef.current,
         checkpoint,
-        ];
+      ];
 
-        const roadEvent = rollRoadEventForZone(zone);
+      onRoadEventCheckpointChecked(checkpoint);
 
-        if (!roadEvent) {
+      const roadEvent = rollRoadEventForZone(zone);
+
+      if (!roadEvent) {
         setTravelLog((currentLog) => [
-            ...currentLog,
-            `Checkpoint ${checkpoint}%: The road stays quiet.`,
+          ...currentLog,
+          `Checkpoint ${checkpoint}%: The road stays quiet.`,
         ]);
         return;
-        }
+      }
 
-        setActiveRoadEvent(roadEvent);
-        setTravelLog((currentLog) => [
-        ...currentLog,
-        `Checkpoint ${checkpoint}%: ${roadEvent.triggerText}`,
-        ]);
+      hasTriggeredRoadEventRef.current = true;
+      window.clearInterval(intervalId);
+
+      onRoadEventTriggered({
+        roadEvent,
+        progress: nextProgress,
+        checkpoint,
+      });
     }, TRAVEL_TICK_MS);
 
     return () => {
-        window.clearInterval(intervalId);
+      window.clearInterval(intervalId);
     };
-    }, [activeRoadEvent, zone]);
+  }, [
+    onRoadEventCheckpointChecked,
+    onRoadEventTriggered,
+    zone,
+  ]);
 
   useEffect(() => {
     if (travelProgress < 100 || hasCompletedRef.current) {
@@ -370,41 +256,12 @@ export function TravelPage({
   }, [travelProgress, onArriveAtZone]);
 
   function handleSkipTravel() {
-    if (hasCompletedRef.current || activeRoadEvent) {
+    if (hasCompletedRef.current || hasTriggeredRoadEventRef.current) {
       return;
     }
 
     hasCompletedRef.current = true;
     onArriveAtZone();
-  }
-
-  function handleRoadEventChoice(choice: RoadEventChoiceDefinition) {
-    if (!activeRoadEvent) {
-      return;
-    }
-
-    const updatedCharacter = applyRoadEventChoice(
-      travelCharacter,
-      choice.outcome,
-    );
-
-    setTravelCharacter(updatedCharacter);
-    onTravelEventResult(updatedCharacter);
-
-    setResolvedRoadEventIds((currentIds) => {
-      if (currentIds.includes(activeRoadEvent.id)) {
-        return currentIds;
-      }
-
-      return [...currentIds, activeRoadEvent.id];
-    });
-
-    setTravelLog((currentLog) => [
-      ...currentLog,
-      choice.outcome.message,
-    ]);
-
-    setActiveRoadEvent(null);
   }
 
   return (
@@ -413,15 +270,14 @@ export function TravelPage({
         <PageHeader
           eyebrow="Magisterium"
           title="Traveling"
-          description={`You are currently moving toward ${zone.name}. Road events can now interrupt travel before you reach the zone.`}
+          description={`You are currently moving toward ${zone.name}. Road events can interrupt travel before you reach the zone.`}
           actions={
             <div className="flex flex-col gap-3 lg:items-end">
               <div className="flex flex-wrap gap-3 lg:justify-end">
                 <button
                   type="button"
                   onClick={handleSkipTravel}
-                  disabled={Boolean(activeRoadEvent)}
-                  className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+                  className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
                 >
                   Skip Travel
                 </button>
@@ -472,18 +328,20 @@ export function TravelPage({
                   label="Recommended Level"
                   value={`Lv. ${zone.recommendedLevel}`}
                 />
+
                 <OverviewStatCard
                   label="Currency"
                   value={
                     <MoneyDisplay
-                      totalBronze={travelCharacter.moneyBronze}
+                      totalBronze={character.moneyBronze}
                       compact
                     />
                   }
                 />
+
                 <OverviewStatCard
-                  label="Road Events Resolved"
-                  value={resolvedRoadEventIds.length}
+                    label="Checked Events"
+                    value={`${checkedRoadEventCheckpoints.length} / ${ROAD_EVENT_TRIGGER_SETTINGS.checkpoints.length}`}
                 />
               </div>
             </div>
@@ -496,22 +354,22 @@ export function TravelPage({
               <div className="mt-5 space-y-4">
                 <ResourceBar
                   label="HP"
-                  current={travelCharacter.currentState.hp}
-                  max={travelCharacter.derivedStats.maxHp}
+                  current={character.currentState.hp}
+                  max={character.derivedStats.maxHp}
                   variant="hp"
                 />
 
                 <ResourceBar
                   label="MP"
-                  current={travelCharacter.currentState.mp}
-                  max={travelCharacter.derivedStats.maxMp}
+                  current={character.currentState.mp}
+                  max={character.derivedStats.maxMp}
                   variant="mp"
                 />
 
                 <ResourceBar
                   label="Energy"
-                  current={travelCharacter.currentState.energy}
-                  max={travelCharacter.derivedStats.maxEnergy}
+                  current={character.currentState.energy}
+                  max={character.derivedStats.maxEnergy}
                   variant="energy"
                 />
               </div>
@@ -524,14 +382,8 @@ export function TravelPage({
                     {travelProgress}%
                   </p>
 
-                  <span
-                    className={`rounded-full border px-3 py-1 text-sm font-semibold ${
-                      activeRoadEvent
-                        ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                        : 'border-violet-500/40 bg-violet-500/10 text-violet-300'
-                    }`}
-                  >
-                    {activeRoadEvent ? 'Road Event' : 'In Transit'}
+                  <span className="rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1 text-sm font-semibold text-violet-300">
+                    In Transit
                   </span>
                 </div>
 
@@ -554,38 +406,34 @@ export function TravelPage({
           </div>
         </section>
 
-        {activeRoadEvent && (
-          <RoadEventPanel
-            event={activeRoadEvent}
-            onChoose={handleRoadEventChoice}
-          />
-        )}
-
         <div className="ui-card-enter">
           <SectionIntro
-            title="Road Event Foundation"
-            subtitle="Travel can now pause, show a road event, let the player choose an action, apply the result, then continue moving."
+            title="Travel Layer"
+            subtitle="This page now only handles movement and road event triggering. Road event choices are handled on the dedicated RoadEventPage."
           />
         </div>
 
         <section className="grid gap-5 lg:grid-cols-2">
           <article className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <h3 className="text-xl font-semibold text-white">
-              Current Road Event System
+              Current Travel Flow
             </h3>
 
             <div className="mt-4 space-y-3 text-sm text-slate-300">
               <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
-                1. Travel has event checkpoints at 32%, 64%, and 88%
+                1. Travel progress increases over time
               </div>
+
               <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
-                2. Event chance depends on event frequency and zone danger
+                2. Checkpoints are read from road event settings
               </div>
+
               <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
-                3. Event choices can change HP, MP, Energy, or Bronze
+                3. If a road event triggers, App switches to RoadEventPage
               </div>
+
               <div className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
-                4. Future hooks are prepared for inventory, quest, merchant, ambush, and rare enemy systems
+                4. After resolving the event, travel resumes from the saved progress
               </div>
             </div>
           </article>

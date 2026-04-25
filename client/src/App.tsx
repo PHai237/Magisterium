@@ -14,6 +14,8 @@ import {
   subtractBronze,
 } from './features/economy/currencyUtils';
 import { TownPage } from './features/place/TownPage';
+import { RoadEventPage } from './features/road-event/RoadEventPage';
+import type { RoadEventDefinition } from './features/road-event/roadEventTypes';
 import { TravelPage } from './features/travel/TravelPage';
 import { ZoneEntryPage } from './features/zone/ZoneEntryPage';
 import { ZoneExplorePage } from './features/zone/ZoneExplorePage';
@@ -24,15 +26,27 @@ type AppScreen =
   | 'town'
   | 'zone'
   | 'travel'
+  | 'road_event'
   | 'zone_explore'
   | 'dungeon'
   | 'battle';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('profile');
+
   const [selectedBattleSource, setSelectedBattleSource] =
     useState<BattleContentSource | null>(null);
+
   const [selectedZone, setSelectedZone] = useState<ZoneDefinition | null>(null);
+
+  const [selectedRoadEvent, setSelectedRoadEvent] =
+    useState<RoadEventDefinition | null>(null);
+
+  const [travelProgressSnapshot, setTravelProgressSnapshot] = useState(0);
+
+  const [checkedRoadEventCheckpoints, setCheckedRoadEventCheckpoints] =
+    useState<number[]>([]);
+
   const [battleRunId, setBattleRunId] = useState(0);
 
   const {
@@ -78,6 +92,21 @@ function App() {
     saveUpdatedCharacterToScreen(updatedCharacter, 'dungeon');
   }
 
+  function resetTravelState() {
+    setSelectedRoadEvent(null);
+    setTravelProgressSnapshot(0);
+    setCheckedRoadEventCheckpoints([]);
+  }
+
+  function resetRunState() {
+    setSelectedBattleSource(null);
+    setSelectedZone(null);
+    setSelectedRoadEvent(null);
+    setTravelProgressSnapshot(0);
+    setCheckedRoadEventCheckpoints([]);
+    setBattleRunId(0);
+  }
+
   function startDungeonBattle(
     dungeon: DungeonDefinition,
     baseCharacter: Character,
@@ -102,6 +131,7 @@ function App() {
       type: 'dungeon',
       data: dungeon,
     });
+
     setBattleRunId((currentId) => currentId + 1);
     setCurrentScreen('battle');
   }
@@ -136,9 +166,7 @@ function App() {
             type="button"
             onClick={() => {
               clearCharacter();
-              setSelectedBattleSource(null);
-              setSelectedZone(null);
-              setBattleRunId(0);
+              resetRunState();
               setCurrentScreen('profile');
             }}
             className="mt-5 rounded-xl bg-red-500 px-5 py-3 font-semibold text-white transition hover:bg-red-400"
@@ -189,10 +217,32 @@ function App() {
         <ZoneEntryPage
           character={character}
           onBackToProfile={() => {
+            resetTravelState();
             setCurrentScreen('profile');
           }}
           onEnterZone={(zone) => {
             setSelectedZone(zone);
+            setSelectedBattleSource(null);
+            resetTravelState();
+            setCurrentScreen('travel');
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === 'road_event' && selectedZone && selectedRoadEvent) {
+      return (
+        <RoadEventPage
+          character={character}
+          zone={selectedZone}
+          roadEvent={selectedRoadEvent}
+          onCancelTravel={() => {
+            resetTravelState();
+            setCurrentScreen('zone');
+          }}
+          onResolveRoadEvent={(updatedCharacter) => {
+            persistCharacter(updatedCharacter);
+            setSelectedRoadEvent(null);
             setCurrentScreen('travel');
           }}
         />
@@ -204,14 +254,38 @@ function App() {
         <TravelPage
           character={character}
           zone={selectedZone}
+          initialProgress={travelProgressSnapshot}
+          checkedRoadEventCheckpoints={checkedRoadEventCheckpoints}
           onCancelTravel={() => {
+            resetTravelState();
             setCurrentScreen('zone');
           }}
           onArriveAtZone={() => {
+            resetTravelState();
             setCurrentScreen('zone_explore');
           }}
-          onTravelEventResult={(updatedCharacter) => {
-            persistCharacter(updatedCharacter);
+          onRoadEventCheckpointChecked={(checkpoint) => {
+            setCheckedRoadEventCheckpoints((currentCheckpoints) => {
+              if (currentCheckpoints.includes(checkpoint)) {
+                return currentCheckpoints;
+              }
+
+              return [...currentCheckpoints, checkpoint];
+            });
+          }}
+          onRoadEventTriggered={({ roadEvent, progress, checkpoint }) => {
+            setTravelProgressSnapshot(progress);
+            setSelectedRoadEvent(roadEvent);
+
+            setCheckedRoadEventCheckpoints((currentCheckpoints) => {
+              if (currentCheckpoints.includes(checkpoint)) {
+                return currentCheckpoints;
+              }
+
+              return [...currentCheckpoints, checkpoint];
+            });
+
+            setCurrentScreen('road_event');
           }}
         />
       );
@@ -223,9 +297,11 @@ function App() {
           character={character}
           zone={selectedZone}
           onBackToZoneList={() => {
+            resetTravelState();
             setCurrentScreen('zone');
           }}
           onReturnToProfile={() => {
+            resetTravelState();
             setCurrentScreen('profile');
           }}
           onSearchEncounter={() => {
@@ -233,6 +309,7 @@ function App() {
               type: 'zone',
               data: selectedZone,
             });
+
             setBattleRunId((currentId) => currentId + 1);
             setCurrentScreen('battle');
           }}
@@ -260,18 +337,19 @@ function App() {
         character={character}
         onCreateNewCharacter={() => {
           clearCharacter();
-          setSelectedBattleSource(null);
-          setSelectedZone(null);
-          setBattleRunId(0);
+          resetRunState();
           setCurrentScreen('profile');
         }}
         onStartAdventure={() => {
+          resetTravelState();
           setCurrentScreen('dungeon');
         }}
         onVisitTown={() => {
+          resetTravelState();
           setCurrentScreen('town');
         }}
         onExploreZones={() => {
+          resetTravelState();
           setCurrentScreen('zone');
         }}
       />
@@ -282,9 +360,7 @@ function App() {
     <CharacterCreationForm
       onCharacterCreated={() => {
         loadCharacter();
-        setSelectedBattleSource(null);
-        setSelectedZone(null);
-        setBattleRunId(0);
+        resetRunState();
         setCurrentScreen('profile');
       }}
     />
