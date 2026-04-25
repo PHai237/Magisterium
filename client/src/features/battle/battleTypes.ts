@@ -4,10 +4,23 @@ import type {
   SkillDefinition,
 } from '../character-creation/types';
 
-import type { DungeonId } from '../dungeon/dungeonTypes';
+import type { DungeonDefinition } from '../dungeon/dungeonTypes';
+import type { ZoneDefinition } from '../zone/zoneTypes';
 import type { MonsterBattleState } from '../monster/monsterTypes';
 
 export type BattleStatus = 'active' | 'won' | 'lost';
+
+export type BattleSourceType = 'dungeon' | 'zone';
+
+export type BattleContentSource =
+  | {
+      type: 'dungeon';
+      data: DungeonDefinition;
+    }
+  | {
+      type: 'zone';
+      data: ZoneDefinition;
+    };
 
 export type BattleActor = 'player' | 'monster' | 'system';
 
@@ -42,8 +55,9 @@ export interface BattleLogEntry {
 
 export interface BattleState {
   id: string;
-  dungeonId: DungeonId;
-  dungeonName: string;
+  sourceType: BattleSourceType;
+  sourceId: string;
+  sourceName: string;
   player: PlayerBattleState;
   monster: MonsterBattleState;
   status: BattleStatus;

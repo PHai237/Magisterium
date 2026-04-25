@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
 import { OverviewStatCard } from '../../components/ui/OverviewStatCard';
-import { SectionCard } from '../../components/ui/SectionCard';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { SectionCard } from '../../components/ui/SectionCard';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { getExpToNextLevel } from '../character-progression/progressionCalculations';
 
@@ -11,6 +11,7 @@ interface CharacterProfilePageProps {
   onCreateNewCharacter: () => void;
   onStartAdventure?: () => void;
   onVisitTown?: () => void;
+  onExploreZones?: () => void;
 }
 
 function formatPercent(value: number): string {
@@ -111,6 +112,7 @@ export function CharacterProfilePage({
   onCreateNewCharacter,
   onStartAdventure,
   onVisitTown,
+  onExploreZones,
 }: CharacterProfilePageProps) {
   const expToNextLevel = getExpToNextLevel(character.level);
   const expPercent = getPercent(character.exp, expToNextLevel);
@@ -130,6 +132,14 @@ export function CharacterProfilePage({
                 className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
               >
                 Enter Dungeons
+              </button>
+
+              <button
+                type="button"
+                onClick={onExploreZones}
+                className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
+              >
+                Explore Zones
               </button>
 
               <button

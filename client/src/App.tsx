@@ -1,21 +1,22 @@
 import { useState } from 'react';
 
+import type { BattleContentSource } from './features/battle/battleTypes';
+import { BattlePage } from './features/battle/BattlePage';
 import { LOCAL_STORAGE_KEYS } from './features/character-creation/constants';
 import { CharacterCreationForm } from './features/character-creation/CharacterCreationForm';
 import type { Character } from './features/character-creation/types';
 import { CharacterProfilePage } from './features/character-profile/CharacterProfilePage';
 import { useCurrentCharacter } from './features/character-profile/useCurrentCharacter';
-import { BattlePage } from './features/battle/BattlePage';
-import { TownPage } from './features/place/TownPage';
 import { DungeonEntryPage } from './features/dungeon/DungeonEntryPage';
-import type { DungeonDefinition } from './features/dungeon/dungeonTypes';
+import { TownPage } from './features/place/TownPage';
+import { ZoneEntryPage } from './features/zone/ZoneEntryPage';
 
-type AppScreen = 'profile' | 'town' | 'dungeon' | 'battle';
+type AppScreen = 'profile' | 'town' | 'zone' | 'dungeon' | 'battle';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('profile');
-  const [selectedDungeon, setSelectedDungeon] =
-    useState<DungeonDefinition | null>(null);
+  const [selectedBattleSource, setSelectedBattleSource] =
+    useState<BattleContentSource | null>(null);
   const [battleRunId, setBattleRunId] = useState(0);
 
   const {
@@ -33,7 +34,7 @@ function App() {
     );
 
     loadCharacter();
-    setSelectedDungeon(null);
+    setSelectedBattleSource(null);
     setCurrentScreen('profile');
   }
 
@@ -56,15 +57,14 @@ function App() {
             Saved Character Error
           </h1>
 
-          <p className="mt-3 text-red-100">
-            {errorMessage}
-          </p>
+          <p className="mt-3 text-red-100">{errorMessage}</p>
 
           <button
             type="button"
             onClick={() => {
               clearCharacter();
-              setSelectedDungeon(null);
+              setSelectedBattleSource(null);
+              setBattleRunId(0);
               setCurrentScreen('profile');
             }}
             className="mt-5 rounded-xl bg-red-500 px-5 py-3 font-semibold text-white transition hover:bg-red-400"
@@ -77,14 +77,16 @@ function App() {
   }
 
   if (hasCharacter && character) {
-    if (currentScreen === 'battle' && selectedDungeon) {
+    if (currentScreen === 'battle' && selectedBattleSource) {
       return (
         <BattlePage
           key={battleRunId}
           character={character}
-          dungeon={selectedDungeon}
-          onBackToDungeon={() => {
-            setCurrentScreen('dungeon');
+          source={selectedBattleSource}
+          onBackToSource={() => {
+            setCurrentScreen(
+              selectedBattleSource.type === 'dungeon' ? 'dungeon' : 'zone',
+            );
           }}
           onBattleFinished={saveUpdatedCharacter}
           onContinueAdventure={saveUpdatedCharacterAndContinue}
@@ -104,16 +106,38 @@ function App() {
       );
     }
 
+    if (currentScreen === 'zone') {
+      return (
+        <ZoneEntryPage
+          character={character}
+          onBackToProfile={() => {
+            setCurrentScreen('profile');
+          }}
+          onEnterZone={(zone) => {
+            setSelectedBattleSource({
+              type: 'zone',
+              data: zone,
+            });
+            setBattleRunId((currentId) => currentId + 1);
+            setCurrentScreen('battle');
+          }}
+        />
+      );
+    }
+
     if (currentScreen === 'dungeon') {
       return (
         <DungeonEntryPage
           character={character}
           onBackToProfile={() => {
-            setSelectedDungeon(null);
+            setSelectedBattleSource(null);
             setCurrentScreen('profile');
           }}
           onEnterDungeon={(dungeon) => {
-            setSelectedDungeon(dungeon);
+            setSelectedBattleSource({
+              type: 'dungeon',
+              data: dungeon,
+            });
             setBattleRunId((currentId) => currentId + 1);
             setCurrentScreen('battle');
           }}
@@ -126,7 +150,7 @@ function App() {
         character={character}
         onCreateNewCharacter={() => {
           clearCharacter();
-          setSelectedDungeon(null);
+          setSelectedBattleSource(null);
           setBattleRunId(0);
           setCurrentScreen('profile');
         }}
@@ -136,6 +160,9 @@ function App() {
         onVisitTown={() => {
           setCurrentScreen('town');
         }}
+        onExploreZones={() => {
+          setCurrentScreen('zone');
+        }}
       />
     );
   }
@@ -144,7 +171,8 @@ function App() {
     <CharacterCreationForm
       onCharacterCreated={() => {
         loadCharacter();
-        setSelectedDungeon(null);
+        setSelectedBattleSource(null);
+        setBattleRunId(0);
         setCurrentScreen('profile');
       }}
     />

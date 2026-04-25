@@ -3,16 +3,20 @@ import { useEffect, useRef } from 'react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { applyExpReward } from '../character-progression/progressionCalculations';
-import type { DungeonDefinition } from '../dungeon/dungeonTypes';
+// import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
 
 import { useBattle } from './useBattle';
-import type { BattleState, PlayerBattleState } from './battleTypes';
+import type {
+  BattleContentSource,
+  BattleState,
+  PlayerBattleState,
+} from './battleTypes';
 
 interface BattlePageProps {
   character: Character;
-  dungeon: DungeonDefinition;
-  onBackToDungeon: () => void;
+  source: BattleContentSource;
+  onBackToSource: () => void;
   onBattleFinished: (updatedCharacter: Character) => void;
   onContinueAdventure: (updatedCharacter: Character) => void;
 }
@@ -273,8 +277,8 @@ function getSkillResourceWarning(
 
 export function BattlePage({
   character,
-  dungeon,
-  onBackToDungeon,
+  source,
+  onBackToSource,
   onBattleFinished,
   onContinueAdventure,
 }: BattlePageProps) {
@@ -288,7 +292,7 @@ export function BattlePage({
     handleMonsterAction,
   } = useBattle({
     character,
-    dungeon,
+    source,
   });
 
   useEffect(() => {
@@ -306,6 +310,9 @@ export function BattlePage({
     }, [isMonsterTurn, handleMonsterAction]);
 
   const { player, monster } = battleState;
+  const sourceLabel = source.type === 'dungeon' ? 'Dungeon' : 'Zone';
+  const backButtonLabel =
+    source.type === 'dungeon' ? 'Back to Dungeons' : 'Back to Zones';
   const logContainerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const logContainer = logContainerRef.current;
@@ -323,7 +330,7 @@ export function BattlePage({
         <PageHeader
           eyebrow="Magisterium"
           title="Battle"
-          description={`${dungeon.name} — ${
+          description={`${source.data.name} — ${
             battleState.status === 'active'
               ? `Current turn: ${battleState.currentActor}`
               : `Battle result: ${battleState.status}`
@@ -331,11 +338,11 @@ export function BattlePage({
           actions={
             <button
               type="button"
-              onClick={onBackToDungeon}
+              onClick={onBackToSource}
               disabled={battleState.status === 'active'}
               className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-200 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Back to Dungeon
+              {backButtonLabel}
             </button>
           }
         />
@@ -343,10 +350,10 @@ export function BattlePage({
         <section className="mb-6 grid gap-4 md:grid-cols-4">
           <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
-              Dungeon
+              {sourceLabel}
             </p>
             <p className="mt-2 text-lg font-bold text-white">
-              {dungeon.name}
+              {source.data.name}
             </p>
           </div>
 

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import type { Character } from '../character-creation/types';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
-import type { DungeonDefinition } from '../dungeon/dungeonTypes';
+// import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 
 import {
   applyCriticalDamage,
@@ -24,11 +24,11 @@ import {
   rollChance,
 } from './battleCalculations';
 
-import type { BattleState } from './battleTypes';
+import type { BattleContentSource, BattleState } from './battleTypes';
 
 interface UseBattleParams {
   character: Character;
-  dungeon: DungeonDefinition;
+  source: BattleContentSource;
 }
 
 function getResourceText(
@@ -54,11 +54,11 @@ function getResourceText(
     return 'Unknown resource';
 }
 
-export function useBattle({ character, dungeon }: UseBattleParams) {
+export function useBattle({ character, source }: UseBattleParams) {
   const [battleState, setBattleState] = useState<BattleState>(() =>
     createInitialBattleState({
       character,
-      dungeon,
+      source,
     }),
   );
 
@@ -444,10 +444,10 @@ export function useBattle({ character, dungeon }: UseBattleParams) {
     setBattleState(
       createInitialBattleState({
         character,
-        dungeon,
+        source,
       }),
     );
-  }, [character, dungeon]);
+  }, [character, source]);
 
   return {
     battleState,

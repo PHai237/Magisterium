@@ -1,6 +1,7 @@
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
+import type { ZoneDefinition } from '../zone/zoneTypes';
 import { getMonsterById } from '../monster/monsterConstants';
 import type {
   MonsterBattleState,
@@ -8,6 +9,7 @@ import type {
 } from '../monster/monsterTypes';
 
 import type {
+  BattleContentSource,
   BattleLogEntry,
   BattleState,
   PlayerBattleState,
@@ -72,6 +74,38 @@ export function getDungeonBossMonster(
   return bossMonster;
 }
 
+export function getPossibleMonstersForZone(
+  zone: ZoneDefinition,
+): MonsterDefinition[] {
+  return zone.possibleMonsterIds
+    .map((monsterId) => getMonsterById(monsterId))
+    .filter((monster): monster is MonsterDefinition => Boolean(monster));
+}
+
+export function getRandomMonsterForZone(
+  zone: ZoneDefinition,
+): MonsterDefinition {
+  const possibleMonsters = getPossibleMonstersForZone(zone);
+
+  if (possibleMonsters.length === 0) {
+    throw new Error(`No monsters found for zone: ${zone.id}`);
+  }
+
+  const randomIndex = Math.floor(Math.random() * possibleMonsters.length);
+
+  return possibleMonsters[randomIndex];
+}
+
+export function resolveBattleMonster(
+  source: BattleContentSource,
+): MonsterDefinition {
+  if (source.type === 'dungeon') {
+    return getDungeonBossMonster(source.data);
+  }
+
+  return getRandomMonsterForZone(source.data);
+}
+
 export function determineFirstActor(
   player: PlayerBattleState,
   monster: MonsterBattleState,
@@ -98,17 +132,18 @@ export function createLogEntry(params: {
 
 export function createInitialBattleState(params: {
   character: Character;
-  dungeon: DungeonDefinition;
+  source: BattleContentSource;
 }): BattleState {
   const player = createPlayerBattleState(params.character);
-  const monsterDefinition = getDungeonBossMonster(params.dungeon);
+  const monsterDefinition = resolveBattleMonster(params.source);
   const monster = createMonsterBattleState(monsterDefinition);
   const firstActor = determineFirstActor(player, monster);
 
   return {
     id: createBattleId('battle'),
-    dungeonId: params.dungeon.id,
-    dungeonName: params.dungeon.name,
+    sourceType: params.source.type,
+    sourceId: params.source.data.id,
+    sourceName: params.source.data.name,
     player,
     monster,
     status: 'active',
@@ -122,7 +157,7 @@ export function createInitialBattleState(params: {
       createLogEntry({
         turn: 1,
         actor: 'system',
-        message: `${params.character.name} encountered ${monster.name} in ${params.dungeon.name}.`,
+        message: `${params.character.name} encountered ${monster.name} in ${params.source.data.name}.`,
       }),
       createLogEntry({
         turn: 1,
