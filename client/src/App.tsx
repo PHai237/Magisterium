@@ -27,15 +27,33 @@ function App() {
     clearCharacter,
   } = useCurrentCharacter();
 
-  function saveUpdatedCharacter(updatedCharacter: Character) {
+  function saveUpdatedCharacterToScreen(
+    updatedCharacter: Character,
+    nextScreen: AppScreen,
+  ) {
     localStorage.setItem(
       LOCAL_STORAGE_KEYS.currentCharacter,
       JSON.stringify(updatedCharacter),
     );
 
     loadCharacter();
-    setSelectedBattleSource(null);
-    setCurrentScreen('profile');
+    setCurrentScreen(nextScreen);
+  }
+
+  function saveUpdatedCharacterToProfile(updatedCharacter: Character) {
+    saveUpdatedCharacterToScreen(updatedCharacter, 'profile');
+  }
+
+  function saveUpdatedCharacterToSource(updatedCharacter: Character) {
+    if (!selectedBattleSource) {
+      saveUpdatedCharacterToScreen(updatedCharacter, 'profile');
+      return;
+    }
+
+    saveUpdatedCharacterToScreen(
+      updatedCharacter,
+      selectedBattleSource.type === 'dungeon' ? 'dungeon' : 'zone',
+    );
   }
 
   function saveUpdatedCharacterAndContinue(updatedCharacter: Character) {
@@ -88,7 +106,8 @@ function App() {
               selectedBattleSource.type === 'dungeon' ? 'dungeon' : 'zone',
             );
           }}
-          onBattleFinished={saveUpdatedCharacter}
+          onReturnToSourceAfterWin={saveUpdatedCharacterToSource}
+          onReturnToProfileAfterLoss={saveUpdatedCharacterToProfile}
           onContinueAdventure={saveUpdatedCharacterAndContinue}
         />
       );
@@ -101,7 +120,7 @@ function App() {
           onBackToProfile={() => {
             setCurrentScreen('profile');
           }}
-          onRecoverAtTavern={saveUpdatedCharacter}
+          onRecoverAtTavern={saveUpdatedCharacterToProfile}
         />
       );
     }

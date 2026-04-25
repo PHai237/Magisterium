@@ -17,7 +17,8 @@ interface BattlePageProps {
   character: Character;
   source: BattleContentSource;
   onBackToSource: () => void;
-  onBattleFinished: (updatedCharacter: Character) => void;
+  onReturnToSourceAfterWin: (updatedCharacter: Character) => void;
+  onReturnToProfileAfterLoss: (updatedCharacter: Character) => void;
   onContinueAdventure: (updatedCharacter: Character) => void;
 }
 
@@ -279,7 +280,8 @@ export function BattlePage({
   character,
   source,
   onBackToSource,
-  onBattleFinished,
+  onReturnToSourceAfterWin,
+  onReturnToProfileAfterLoss,
   onContinueAdventure,
 }: BattlePageProps) {
   const {
@@ -313,6 +315,15 @@ export function BattlePage({
   const sourceLabel = source.type === 'dungeon' ? 'Dungeon' : 'Zone';
   const backButtonLabel =
     source.type === 'dungeon' ? 'Back to Dungeons' : 'Back to Zones';
+  const returnToSourceAfterWinLabel =
+    source.type === 'dungeon'
+      ? 'Claim Reward & Return to Dungeons'
+      : 'Claim Reward & Return to Zones';
+
+  const continueAdventureLabel =
+    source.type === 'dungeon'
+      ? 'Claim Reward & Challenge Again'
+      : 'Claim Reward & Continue Farming';
   const logContainerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const logContainer = logContainerRef.current;
@@ -617,18 +628,18 @@ export function BattlePage({
 
                     <div className="mt-4 space-y-3">
                     <button
-                        type="button"
-                        onClick={() => {
+                      type="button"
+                      onClick={() => {
                         const updatedCharacter = buildCharacterAfterWin(
-                            character,
-                            battleState,
+                          character,
+                          battleState,
                         );
 
-                        onBattleFinished(updatedCharacter);
-                        }}
-                        className="w-full rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400"
+                        onReturnToSourceAfterWin(updatedCharacter);
+                      }}
+                      className="w-full rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400"
                     >
-                        Claim Reward & Return
+                      {returnToSourceAfterWinLabel}
                     </button>
 
                     <button
@@ -643,7 +654,7 @@ export function BattlePage({
                         }}
                         className="w-full rounded-xl border border-emerald-500/40 bg-slate-950 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-500/10"
                     >
-                        Claim Reward & Continue Adventure
+                        {continueAdventureLabel}
                     </button>
                     </div>
                 </div>
@@ -667,7 +678,7 @@ export function BattlePage({
                       battleState,
                     );
 
-                    onBattleFinished(updatedCharacter);
+                    onReturnToProfileAfterLoss(updatedCharacter);
                   }}
                   className="mt-4 w-full rounded-xl bg-red-500 px-5 py-3 font-semibold text-white transition hover:bg-red-400"
                 >
