@@ -183,13 +183,7 @@ export function CharacterProfilePage({
                 {character.name}
               </h2>
 
-              <p className="mt-2 max-w-2xl text-slate-400">
-                A rising adventurer of the Magisterium world. Continue growing
-                stronger through battle, progression, and future systems such as
-                equipment, achievements, and mastery.
-              </p>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="mt-6 grid max-w-3xl gap-4 md:grid-cols-3">
                 <OverviewStatCard label="Level" value={character.level} />
                 <OverviewStatCard
                   label="Currency"
@@ -218,14 +212,14 @@ export function CharacterProfilePage({
                   </p>
                 </div>
 
-                <span className="rounded-full border border-sky-500/40 bg-sky-500/10 px-3 py-1 text-sm font-semibold text-sky-300">
+                <span className="rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1 text-sm font-semibold text-violet-300">
                   {expPercent.toFixed(1)}%
                 </span>
               </div>
 
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-800">
                 <div
-                  className="ui-soft-pulse h-full rounded-full bg-sky-500 transition-all duration-500"
+                  className="ui-soft-pulse h-full rounded-full bg-violet-500 transition-all duration-500"
                   style={{ width: `${expPercent}%` }}
                 />
               </div>
@@ -252,13 +246,6 @@ export function CharacterProfilePage({
                   variant="energy"
                 />
               </div>
-
-              <div className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4">
-                <p className="text-sm text-slate-400">Shield</p>
-                <p className="mt-1 text-2xl font-bold text-white">
-                  {character.currentState.shield}
-                </p>
-              </div>
             </div>
           </div>
         </section>
@@ -267,7 +254,7 @@ export function CharacterProfilePage({
           <div className="space-y-6">
             <SectionCard
               title="Current State"
-              subtitle="Your current combat resources and defensive state."
+              subtitle="Your current combat resources."
               className="ui-card-enter"
             >
               <div className="space-y-4">
@@ -291,13 +278,6 @@ export function CharacterProfilePage({
                   max={character.derivedStats.maxEnergy}
                   variant="energy"
                 />
-
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <p className="text-sm text-slate-400">Shield</p>
-                  <p className="mt-1 text-xl font-bold text-white">
-                    {character.currentState.shield}
-                  </p>
-                </div>
               </div>
             </SectionCard>
 
