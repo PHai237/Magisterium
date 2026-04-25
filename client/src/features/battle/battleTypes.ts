@@ -8,7 +8,7 @@ import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 import type { ZoneDefinition } from '../zone/zoneTypes';
 import type { MonsterBattleState } from '../monster/monsterTypes';
 
-export type BattleStatus = 'active' | 'won' | 'lost';
+export type BattleStatus = 'active' | 'won' | 'lost' | 'escaped';
 
 export type BattleSourceType = 'dungeon' | 'zone';
 

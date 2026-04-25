@@ -14,6 +14,7 @@ import {
   calculatePlayerBasicAttackDamage,
   calculatePlayerSkillDamage,
   calculateSkillPower,
+  calculateZoneFleeChance,
   canUseSkill,
   createInitialBattleState,
   createLogEntry,
@@ -339,6 +340,60 @@ export function useBattle({ character, source }: UseBattleParams) {
     });
   }, []);
 
+    const handlePlayerFlee = useCallback(() => {
+      setBattleState((currentBattle) => {
+        if (
+          currentBattle.status !== 'active' ||
+          currentBattle.currentActor !== 'player'
+        ) {
+          return currentBattle;
+        }
+
+        if (source.type !== 'zone') {
+          const blockedLog = createLogEntry({
+            turn: currentBattle.turn,
+            actor: 'system',
+            message: 'Escape is currently only available in zone battles.',
+          });
+
+          return {
+            ...currentBattle,
+            logs: [...currentBattle.logs, blockedLog],
+          };
+        }
+
+        const fleeChance = calculateZoneFleeChance(currentBattle.player);
+        const escaped = rollChance(fleeChance);
+
+        if (escaped) {
+          const fleeLog = createLogEntry({
+            turn: currentBattle.turn,
+            actor: 'player',
+            message: `${currentBattle.player.name} escapes from ${currentBattle.monster.name} successfully (${fleeChance}% chance).`,
+          });
+
+          return {
+            ...currentBattle,
+            status: 'escaped',
+            logs: [...currentBattle.logs, fleeLog],
+          };
+        }
+
+        const failedFleeLog = createLogEntry({
+          turn: currentBattle.turn,
+          actor: 'system',
+          message: `${currentBattle.player.name} fails to escape from ${currentBattle.monster.name} (${fleeChance}% chance).`,
+        });
+
+        return {
+          ...currentBattle,
+          currentActor: 'monster',
+          turn: currentBattle.turn + 1,
+          logs: [...currentBattle.logs, failedFleeLog],
+        };
+      });
+    }, [source.type]);
+
   const handleMonsterAction = useCallback(() => {
     setBattleState((currentBattle) => {
       if (
@@ -457,6 +512,7 @@ export function useBattle({ character, source }: UseBattleParams) {
     playerSkills,
     handlePlayerBasicAttack,
     handlePlayerUseSkill,
+    handlePlayerFlee,
     handleMonsterAction,
     resetBattle,
   };

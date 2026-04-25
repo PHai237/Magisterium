@@ -430,6 +430,21 @@ export function isPlayerDefeated(player: PlayerBattleState): boolean {
   return player.currentHp <= 0;
 }
 
+export function calculateZoneFleeChance(
+  player: PlayerBattleState,
+): number {
+  const hpRatio = player.currentHp / player.derivedStats.maxHp;
+  const lowHpBonus =
+    hpRatio <= 0.35 ? BATTLE_BALANCE.zoneFleeLowHpBonusPercent : 0;
+
+  const rawChance =
+    BATTLE_BALANCE.zoneFleeBaseChancePercent +
+    player.baseStats.LUK * BATTLE_BALANCE.zoneFleeLuckScalingPercent +
+    lowHpBonus;
+
+  return Math.min(BATTLE_BALANCE.zoneFleeMaxChancePercent, rawChance);
+}
+
 export function getNextActor(
   currentActor: 'player' | 'monster',
 ): 'player' | 'monster' {

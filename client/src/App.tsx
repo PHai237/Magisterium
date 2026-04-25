@@ -108,6 +108,7 @@ function App() {
           }}
           onReturnToSourceAfterWin={saveUpdatedCharacterToSource}
           onReturnToProfileAfterLoss={saveUpdatedCharacterToProfile}
+          onEscapeFromBattle={saveUpdatedCharacterToSource}
           onContinueAdventure={saveUpdatedCharacterAndContinue}
         />
       );

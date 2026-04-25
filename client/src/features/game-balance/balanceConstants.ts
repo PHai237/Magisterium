@@ -20,6 +20,11 @@ export const BATTLE_BALANCE = {
   utilitySkillHideDamageReductionPercent: 0.5,
 
   defeatRecoveryHpPercent: 0.3,
+
+  zoneFleeBaseChancePercent: 15,
+  zoneFleeLuckScalingPercent: 2,
+  zoneFleeLowHpBonusPercent: 15,
+  zoneFleeMaxChancePercent: 80,
 } as const;
 
 export const PROGRESSION_BALANCE = {

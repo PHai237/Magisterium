@@ -19,6 +19,7 @@ interface BattlePageProps {
   onBackToSource: () => void;
   onReturnToSourceAfterWin: (updatedCharacter: Character) => void;
   onReturnToProfileAfterLoss: (updatedCharacter: Character) => void;
+  onEscapeFromBattle: (updatedCharacter: Character) => void;
   onContinueAdventure: (updatedCharacter: Character) => void;
 }
 
@@ -87,6 +88,10 @@ function getBattleStatusText(battleState: BattleState): string {
     return 'Defeat';
   }
 
+  if (battleState.status === 'escaped') {
+    return 'Escaped';
+  }
+
   return battleState.currentActor === 'player' ? 'Your Turn' : 'Enemy Turn';
 }
 
@@ -97,6 +102,10 @@ function getBattleStatusClass(battleState: BattleState): string {
 
   if (battleState.status === 'lost') {
     return 'border-red-500/40 bg-red-500/10 text-red-300';
+  }
+
+  if (battleState.status === 'escaped') {
+    return 'border-sky-500/40 bg-sky-500/10 text-sky-300';
   }
 
   return battleState.currentActor === 'player'
@@ -173,6 +182,21 @@ function buildCharacterAfterLoss(
             character.derivedStats.maxHp * BATTLE_BALANCE.defeatRecoveryHpPercent,
         ),
       ),
+      mp: battleState.player.currentMp,
+      energy: battleState.player.currentEnergy,
+      shield: 0,
+    },
+  };
+}
+
+function buildCharacterAfterEscape(
+  character: Character,
+  battleState: BattleState,
+): Character {
+  return {
+    ...character,
+    currentState: {
+      hp: battleState.player.currentHp,
       mp: battleState.player.currentMp,
       energy: battleState.player.currentEnergy,
       shield: 0,
@@ -282,6 +306,7 @@ export function BattlePage({
   onBackToSource,
   onReturnToSourceAfterWin,
   onReturnToProfileAfterLoss,
+  onEscapeFromBattle,
   onContinueAdventure,
 }: BattlePageProps) {
   const {
@@ -291,6 +316,7 @@ export function BattlePage({
     playerSkills,
     handlePlayerBasicAttack,
     handlePlayerUseSkill,
+    handlePlayerFlee,
     handleMonsterAction,
   } = useBattle({
     character,
@@ -550,6 +576,17 @@ export function BattlePage({
                 Basic Attack
               </button>
 
+              {source.type === 'zone' && (
+                <button
+                  type="button"
+                  onClick={handlePlayerFlee}
+                  disabled={!isPlayerTurn}
+                  className="w-full rounded-xl border border-sky-500/40 bg-sky-500/10 px-5 py-3 font-semibold text-sky-200 transition duration-200 hover:-translate-y-0.5 hover:bg-sky-500/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Attempt Escape
+                </button>
+              )}
+
               <div className="space-y-3">
                 {playerSkills.map((skill) => {
                     const usable = canPlayerUseSkill(player, skill.id);
@@ -659,6 +696,31 @@ export function BattlePage({
                     </div>
                 </div>
                 )}
+
+            {battleState.status === 'escaped' && (
+              <div className="mt-5 rounded-xl border border-sky-500/40 bg-sky-500/10 p-4">
+                <p className="font-semibold text-sky-200">Escaped</p>
+
+                <p className="mt-2 text-sm text-sky-100">
+                  You escaped successfully. No reward was gained from this encounter.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updatedCharacter = buildCharacterAfterEscape(
+                      character,
+                      battleState,
+                    );
+
+                    onEscapeFromBattle(updatedCharacter);
+                  }}
+                  className="mt-4 w-full rounded-xl bg-sky-500 px-5 py-3 font-semibold text-white transition hover:bg-sky-400"
+                >
+                  Return to Zones
+                </button>
+              </div>
+            )}
 
             {battleState.status === 'lost' && (
               <div className="mt-5 rounded-xl border border-red-500/40 bg-red-500/10 p-4">
