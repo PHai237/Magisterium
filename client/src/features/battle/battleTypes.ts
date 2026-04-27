@@ -5,12 +5,13 @@ import type {
 } from '../character-creation/types';
 
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
-import type { ZoneDefinition } from '../zone/zoneTypes';
 import type { MonsterBattleState } from '../monster/monsterTypes';
+import type { RoadEventBattleDefinition } from '../road-event/roadEventTypes';
+import type { ZoneDefinition } from '../zone/zoneTypes';
 
 export type BattleStatus = 'active' | 'won' | 'lost' | 'escaped';
 
-export type BattleSourceType = 'dungeon' | 'zone';
+export type BattleSourceType = 'dungeon' | 'zone' | 'road_event';
 
 export type BattleContentSource =
   | {
@@ -20,6 +21,10 @@ export type BattleContentSource =
   | {
       type: 'zone';
       data: ZoneDefinition;
+    }
+  | {
+      type: 'road_event';
+      data: RoadEventBattleDefinition;
     };
 
 export type BattleActor = 'player' | 'monster' | 'system';

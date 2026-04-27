@@ -2,7 +2,7 @@ import type { RoadEventDefinition } from './roadEventTypes';
 
 export const ROAD_EVENT_TRIGGER_SETTINGS = {
   eventChancePercent: 100,
-  checkpoints: [50],
+  checkpoints: [25, 50, 75],
 } as const;
 
 export const ROAD_EVENTS: RoadEventDefinition[] = [
@@ -118,36 +118,46 @@ export const ROAD_EVENTS: RoadEventDefinition[] = [
     category: 'danger',
     rarity: 'uncommon',
     description:
-      'Suspicious figures watch the road from a distance. They do not attack yet.',
+        'Suspicious figures watch the road from a distance. One of them starts moving closer.',
     triggerText:
-      'You spot suspicious figures watching travelers from behind the trees.',
+        'You spot suspicious figures watching travelers from behind the trees.',
     choices: [
-      {
+        {
         id: 'take_detour',
         label: 'Take a quiet detour',
         description:
-          'Spend energy to avoid possible trouble.',
+            'Spend energy to avoid possible trouble.',
         outcome: {
-          energyChange: -10,
-          message:
+            energyChange: -10,
+            message:
             'You take a quiet detour and avoid the suspicious figures. It costs you 10 Energy.',
-          futureHook: 'ambush',
+            futureHook: 'ambush',
+            nextAction: 'continue_travel',
         },
-      },
-      {
-        id: 'walk_carefully',
-        label: 'Walk carefully',
+        },
+        {
+        id: 'confront_bandit',
+        label: 'Confront the scout',
         description:
-          'Keep moving while staying alert. No combat happens yet in this foundation version.',
+            'Step forward and force the suspicious figure into a direct fight.',
         outcome: {
-          message:
-            'You walk carefully past the area. The figures do not follow you this time.',
-          futureHook: 'combat',
+            message:
+            'You confront the suspicious figure. A Bandit Scout draws a weapon and attacks.',
+            futureHook: 'combat',
+            nextAction: 'start_battle',
+            battle: {
+            id: 'bandit_scout_road_battle',
+            name: 'Bandit Scout Ambush',
+            description:
+                'A road event battle caused by confronting suspicious bandit scouts.',
+            monsterId: 'bandit_scout',
+            returnMode: 'continue_travel',
+            },
         },
-      },
+        },
     ],
-    tags: ['danger', 'bandit', 'future-ambush'],
-  },
+    tags: ['danger', 'bandit', 'ambush', 'road-combat'],
+    },
   {
     id: 'lost_traveler',
     title: 'Lost Traveler',
@@ -191,33 +201,43 @@ export const ROAD_EVENTS: RoadEventDefinition[] = [
     category: 'future_combat',
     rarity: 'rare',
     description:
-      'Unusual tracks cross the road. They may belong to a rare or mutated creature.',
+        'Unusual tracks cross the road. They may belong to a rare or mutated creature.',
     triggerText:
-      'You notice strange tracks cutting across the road. Something unusual passed through here.',
+        'You notice strange tracks cutting across the road. Something unusual passed through here.',
     choices: [
-      {
+        {
         id: 'inspect_tracks',
         label: 'Inspect the tracks',
         description:
-          'For now this only logs a future combat hook. Later it can trigger rare enemies or mini-bosses.',
+            'Follow the strange tracks and risk meeting whatever left them behind.',
         outcome: {
-          message:
-            'You inspect the tracks carefully. This will later become a rare enemy or mini-boss event hook.',
-          futureHook: 'rare_enemy',
+            message:
+            'You inspect the tracks and follow them into the brush. A Mutated Slime emerges from the shadows.',
+            futureHook: 'rare_enemy',
+            nextAction: 'start_battle',
+            battle: {
+            id: 'mutated_slime_road_battle',
+            name: 'Mutated Slime Encounter',
+            description:
+                'A rare road event battle caused by following strange tracks.',
+            monsterId: 'mutated_slime',
+            returnMode: 'continue_travel',
+            },
         },
-      },
-      {
+        },
+        {
         id: 'avoid_tracks',
         label: 'Avoid the area',
         description:
-          'Do not risk following unknown tracks.',
+            'Do not risk following unknown tracks.',
         outcome: {
-          message:
+            message:
             'You avoid the strange tracks and continue toward your destination.',
+            nextAction: 'continue_travel',
         },
-      },
+        },
     ],
     zoneIds: ['deep_forest', 'ruined_path'],
     tags: ['rare', 'future-combat', 'mutated-enemy'],
-  },
+    },
 ];

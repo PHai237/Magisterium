@@ -89,6 +89,12 @@ function App() {
       return;
     }
 
+    if (selectedBattleSource.type === 'road_event') {
+      setSelectedBattleSource(null);
+      saveUpdatedCharacterToScreen(updatedCharacter, 'travel');
+      return;
+    }
+
     saveUpdatedCharacterToScreen(updatedCharacter, 'dungeon');
   }
 
@@ -186,11 +192,17 @@ function App() {
           character={character}
           source={selectedBattleSource}
           onBackToSource={() => {
-            setCurrentScreen(
-              selectedBattleSource.type === 'dungeon'
-                ? 'dungeon'
-                : 'zone_explore',
-            );
+            if (selectedBattleSource.type === 'dungeon') {
+              setCurrentScreen('dungeon');
+              return;
+            }
+
+            if (selectedBattleSource.type === 'road_event') {
+              setCurrentScreen('travel');
+              return;
+            }
+
+            setCurrentScreen('zone_explore');
           }}
           onReturnToSourceAfterWin={saveUpdatedCharacterToSource}
           onReturnToProfileAfterLoss={saveUpdatedCharacterToProfile}
@@ -240,9 +252,22 @@ function App() {
             resetTravelState();
             setCurrentScreen('zone');
           }}
-          onResolveRoadEvent={(updatedCharacter) => {
+          onResolveRoadEvent={({ updatedCharacter, nextAction, battle }) => {
             persistCharacter(updatedCharacter);
             setSelectedRoadEvent(null);
+
+            if (nextAction === 'start_battle' && battle) {
+              setSelectedBattleSource({
+                type: 'road_event',
+                data: battle,
+              });
+
+              setBattleRunId((currentId) => currentId + 1);
+              setCurrentScreen('battle');
+              return;
+            }
+
+            setSelectedBattleSource(null);
             setCurrentScreen('travel');
           }}
         />

@@ -16,7 +16,11 @@ interface RoadEventPageProps {
   character: Character;
   zone: ZoneDefinition;
   roadEvent: RoadEventDefinition;
-  onResolveRoadEvent: (updatedCharacter: Character) => void;
+  onResolveRoadEvent: (result: {
+    updatedCharacter: Character;
+    nextAction: 'continue_travel' | 'start_battle';
+    battle?: RoadEventChoiceDefinition['outcome']['battle'];
+  }) => void;
   onCancelTravel: () => void;
 }
 
@@ -229,13 +233,32 @@ export function RoadEventPage({
     });
   }
 
-  function handleContinueTravel() {
-    if (!resolvedResult) {
-      return;
+    function handleContinueTravel() {
+        if (!resolvedResult) {
+            return;
+        }
+
+        onResolveRoadEvent({
+            updatedCharacter: resolvedResult.updatedCharacter,
+            nextAction: resolvedResult.choice.outcome.nextAction ?? 'continue_travel',
+            battle: resolvedResult.choice.outcome.battle,
+        });
     }
 
-    onResolveRoadEvent(resolvedResult.updatedCharacter);
-  }
+    function getContinueButtonLabel(): string {
+        if (!resolvedResult) {
+            return 'Continue Travel';
+        }
+
+        if (
+            resolvedResult.choice.outcome.nextAction === 'start_battle' &&
+            resolvedResult.choice.outcome.battle
+        ) {
+            return 'Start Battle';
+        }
+
+        return 'Continue Travel';
+    }
 
   const hpDelta =
     displayedCharacter.currentState.hp - character.currentState.hp;
@@ -264,7 +287,7 @@ export function RoadEventPage({
                 onClick={handleContinueTravel}
                 className="rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
               >
-                Continue Travel
+                {getContinueButtonLabel()}
               </button>
             ) : (
               <button
@@ -476,6 +499,27 @@ export function RoadEventPage({
               />
             </div>
 
+            {resolvedResult.choice.outcome.nextAction === 'start_battle' &&
+            resolvedResult.choice.outcome.battle && (
+                <div className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+                <p className="text-sm font-semibold text-red-200">
+                    Combat Encounter Prepared
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Your choice will start a battle:{' '}
+                    <span className="font-semibold text-red-200">
+                    {resolvedResult.choice.outcome.battle.name}
+                    </span>
+                    .
+                </p>
+
+                <p className="mt-2 text-xs leading-5 text-red-100">
+                    After winning this road event battle, you will return to the travel route.
+                </p>
+                </div>
+            )}
+
             {resolvedResult.choice.outcome.futureHook && (
               <div className="mt-6 rounded-2xl border border-violet-500/30 bg-violet-500/10 p-4">
                 <p className="text-sm font-semibold text-violet-200">
@@ -497,7 +541,7 @@ export function RoadEventPage({
               onClick={handleContinueTravel}
               className="mt-6 w-full rounded-xl bg-violet-500 px-5 py-3 font-semibold text-white transition hover:bg-violet-400"
             >
-              Continue Travel
+              {getContinueButtonLabel()}
             </button>
           </section>
         )}

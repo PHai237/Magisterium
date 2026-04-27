@@ -1,3 +1,4 @@
+import type { MonsterId } from '../monster/monsterTypes';
 import type { ZoneId } from '../zone/zoneTypes';
 
 export type RoadEventFrequency = 'low' | 'normal' | 'high';
@@ -29,6 +30,16 @@ export type RoadEventFutureHook =
   | 'ambush'
   | 'rare_enemy';
 
+export type RoadEventNextAction = 'continue_travel' | 'start_battle';
+
+export interface RoadEventBattleDefinition {
+  id: string;
+  name: string;
+  description: string;
+  monsterId: MonsterId;
+  returnMode: 'continue_travel';
+}
+
 export interface RoadEventChoiceOutcome {
   message: string;
   bronzeChange?: number;
@@ -36,6 +47,8 @@ export interface RoadEventChoiceOutcome {
   mpChange?: number;
   energyChange?: number;
   futureHook?: RoadEventFutureHook;
+  nextAction?: RoadEventNextAction;
+  battle?: RoadEventBattleDefinition;
 }
 
 export interface RoadEventChoiceDefinition {

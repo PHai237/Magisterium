@@ -5,47 +5,49 @@ export type MonsterId =
   | 'wild_rat'
   | 'lesser_goblin'
   | 'slime_king'
-  | 'goblin_chief';
+  | 'goblin_chief'
+  | 'bandit_scout'
+  | 'mutated_slime';
 
 export type MonsterRank = 'normal' | 'elite' | 'boss';
 
 export interface MonsterStats {
-    maxHp: number;
-    attack: number;
-    defense: number;
-    actionSpeed: number;
-    critRate: number;
+  maxHp: number;
+  attack: number;
+  defense: number;
+  actionSpeed: number;
+  critRate: number;
 }
 
 export interface MonsterReward {
-    exp: number;
-    bronze: number;
+  exp: number;
+  bronze: number;
 }
 
 export interface MonsterDefinition {
-    id: MonsterId;
-    name: string;
-    description: string;
-    level: number;
-    rank: MonsterRank;
-    damageType: DamageType;
-    stats: MonsterStats;
-    reward: MonsterReward;
-    tags: string[];
+  id: MonsterId;
+  name: string;
+  description: string;
+  level: number;
+  rank: MonsterRank;
+  damageType: DamageType;
+  stats: MonsterStats;
+  reward: MonsterReward;
+  tags: string[];
 }
 
 export interface MonsterBattleState {
-    monsterId: MonsterId;
-    name: string;
-    level: number;
-    rank: MonsterRank;
-    currentHp: number;
-    maxHp: number;
-    attack: number;
-    defense: number;
-    actionSpeed: number;
-    critRate: number;
-    damageType: DamageType;
-    reward: MonsterReward;
-    tags: string[];
+  monsterId: MonsterId;
+  name: string;
+  level: number;
+  rank: MonsterRank;
+  currentHp: number;
+  maxHp: number;
+  attack: number;
+  defense: number;
+  actionSpeed: number;
+  critRate: number;
+  damageType: DamageType;
+  reward: MonsterReward;
+  tags: string[];
 }

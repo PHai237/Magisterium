@@ -103,7 +103,19 @@ export function resolveBattleMonster(
     return getDungeonBossMonster(source.data);
   }
 
-  return getRandomMonsterForZone(source.data);
+  if (source.type === 'zone') {
+    return getRandomMonsterForZone(source.data);
+  }
+
+  const roadEventMonster = getMonsterById(source.data.monsterId);
+
+  if (!roadEventMonster) {
+    throw new Error(
+      `Road event monster not found for battle: ${source.data.monsterId}`,
+    );
+  }
+
+  return roadEventMonster;
 }
 
 export function determineFirstActor(

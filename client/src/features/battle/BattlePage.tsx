@@ -343,17 +343,32 @@ export function BattlePage({
     }, [isMonsterTurn, handleMonsterAction]);
 
   const { player, monster } = battleState;
-  const sourceLabel = source.type === 'dungeon' ? 'Dungeon' : 'Zone';
+  const sourceLabel =
+    source.type === 'dungeon'
+      ? 'Dungeon'
+      : source.type === 'road_event'
+      ? 'Road Event'
+      : 'Zone';
+
   const backButtonLabel =
-    source.type === 'dungeon' ? 'Back to Dungeons' : 'Back to Zones';
+    source.type === 'dungeon'
+      ? 'Back to Dungeons'
+      : source.type === 'road_event'
+      ? 'Back to Travel'
+      : 'Back to Zones';
+
   const returnToSourceAfterWinLabel =
     source.type === 'dungeon'
       ? 'Claim Reward & Return to Dungeons'
+      : source.type === 'road_event'
+      ? 'Claim Reward & Continue Travel'
       : 'Claim Reward & Return to Zones';
 
   const continueAdventureLabel =
     source.type === 'dungeon'
       ? 'Claim Reward & Challenge Again'
+      : source.type === 'road_event'
+      ? 'Claim Reward & Continue Travel'
       : 'Claim Reward & Continue Farming';
   const logContainerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
