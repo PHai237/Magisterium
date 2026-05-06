@@ -1,6 +1,7 @@
 import type {
   BaseStats,
   DerivedStats,
+  ResistanceProfile,
   SkillDefinition,
 } from '../character-creation/types';
 
@@ -43,6 +44,7 @@ export interface PlayerBattleState {
   shield: number;
   evasionChanceBonus: number;
   nextDamageReductionPercent: number;
+  resistances: ResistanceProfile;
   skills: SkillDefinition[];
 }
 

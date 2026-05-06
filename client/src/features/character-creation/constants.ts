@@ -31,6 +31,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         'When HP falls below 30%, gain 15% additional damage reduction.',
     },
     starterSkills: [
+      // Warrior
       {
         id: 'slash',
         name: 'Slash',
@@ -39,6 +40,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'offensive',
         effectType: 'damage',
         damageType: 'physical',
+        elementType: 'neutral',
         scalingStat: 'STR',
         baseValue: 12,
         multiplier: 1.25,
@@ -54,6 +56,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'defensive',
         effectType: 'shield',
         damageType: null,
+        elementType: null,
         scalingStat: 'VIT',
         baseValue: 10,
         multiplier: 0.9,
@@ -81,6 +84,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         'After using an MP skill, the next skill gains 10% extra power.',
     },
     starterSkills: [
+      // Mage
       {
         id: 'spark',
         name: 'Spark',
@@ -89,12 +93,13 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'offensive',
         effectType: 'damage',
         damageType: 'magical',
+        elementType: 'fire',
         scalingStat: 'INT',
         baseValue: 14,
         multiplier: 1.35,
         resourceType: 'MP',
         resourceCost: 12,
-        tags: ['single-target', 'magic'],
+        tags: ['single-target', 'magic', 'fire'],
       },
       {
         id: 'mana_barrier',
@@ -104,6 +109,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'defensive',
         effectType: 'shield',
         damageType: null,
+        elementType: null,
         scalingStat: 'INT',
         baseValue: 12,
         multiplier: 1.0,
@@ -131,6 +137,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         'Gain 10% bonus Crit Rate when acting first in a round.',
     },
     starterSkills: [
+      // Archer
       {
         id: 'rapid_shot',
         name: 'Rapid Shot',
@@ -139,12 +146,13 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'offensive',
         effectType: 'damage',
         damageType: 'physical',
+        elementType: 'wind',
         scalingStat: 'DEX',
         baseValue: 11,
         multiplier: 1.2,
         resourceType: 'Energy',
         resourceCost: 10,
-        tags: ['single-target', 'ranged'],
+        tags: ['single-target', 'ranged', 'wind'],
       },
       {
         id: 'evasion',
@@ -154,6 +162,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'defensive',
         effectType: 'buff',
         damageType: null,
+        elementType: null,
         scalingStat: 'DEX',
         baseValue: 0,
         multiplier: 0,
@@ -181,6 +190,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         'Deal 15% more damage to enemies that have not acted yet this round.',
     },
     starterSkills: [
+      // Rogue
       {
         id: 'backstab',
         name: 'Backstab',
@@ -189,12 +199,13 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'offensive',
         effectType: 'damage',
         damageType: 'physical',
+        elementType: 'dark',
         scalingStat: 'DEX',
         baseValue: 13,
         multiplier: 1.3,
         resourceType: 'Energy',
         resourceCost: 14,
-        tags: ['single-target', 'burst'],
+        tags: ['single-target', 'burst', 'dark'],
       },
       {
         id: 'hide',
@@ -204,6 +215,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'utility',
         effectType: 'buff',
         damageType: null,
+        elementType: null,
         scalingStat: 'DEX',
         baseValue: 0,
         multiplier: 0,
@@ -231,6 +243,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         'Healing effects are 15% more effective based on Intelligence.',
     },
     starterSkills: [
+      // Healer
       {
         id: 'purify',
         name: 'Purify',
@@ -239,12 +252,13 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'offensive',
         effectType: 'damage',
         damageType: 'magical',
+        elementType: 'light',
         scalingStat: 'INT',
         baseValue: 10,
         multiplier: 1.0,
         resourceType: 'MP',
         resourceCost: 10,
-        tags: ['single-target', 'holy'],
+        tags: ['single-target', 'holy', 'light'],
       },
       {
         id: 'heal',
@@ -254,6 +268,7 @@ export const CHARACTER_CLASSES: ClassDefinition[] = [
         actionCategory: 'defensive',
         effectType: 'heal',
         damageType: null,
+        elementType: null,
         scalingStat: 'INT',
         baseValue: 12,
         multiplier: 1.1,

@@ -25,6 +25,9 @@ export const BATTLE_BALANCE = {
   zoneFleeLuckScalingPercent: 2,
   zoneFleeLowHpBonusPercent: 15,
   zoneFleeMaxChancePercent: 80,
+
+  resistanceMin: -1,
+  resistanceMax: 0.9,
 } as const;
 
 export const PROGRESSION_BALANCE = {

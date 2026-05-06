@@ -1,5 +1,4 @@
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
-import type { Character, SkillDefinition } from '../character-creation/types';
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 import type { ZoneDefinition } from '../zone/zoneTypes';
 import { getMonsterById } from '../monster/monsterConstants';
@@ -9,11 +8,13 @@ import type {
 } from '../monster/monsterTypes';
 
 import type {
-  BattleContentSource,
-  BattleLogEntry,
-  BattleState,
-  PlayerBattleState,
-} from './battleTypes';
+  Character,
+  DamageType,
+  ElementType,
+  ResistanceProfile,
+  SkillDefinition,
+} from '../character-creation/types';
+import type { PlayerBattleState, BattleContentSource, BattleLogEntry, BattleState } from './battleTypes';
 
 export function createBattleId(prefix: string): string {
   if (crypto.randomUUID) {
@@ -38,6 +39,7 @@ export function createPlayerBattleState(
     shield: character.currentState.shield,
     evasionChanceBonus: 0,
     nextDamageReductionPercent: 0,
+    resistances: {},
     skills: character.skills,
   };
 }
@@ -57,6 +59,8 @@ export function createMonsterBattleState(
     actionSpeed: monster.stats.actionSpeed,
     critRate: monster.stats.critRate,
     damageType: monster.damageType,
+    elementType: monster.elementType,
+    resistances: monster.resistances,
     reward: monster.reward,
     tags: monster.tags,
   };
@@ -227,6 +231,119 @@ export function rollDamageVariance(
   );
 }
 
+const BASIC_ATTACK_DAMAGE_TYPE: DamageType = 'physical';
+const BASIC_ATTACK_ELEMENT_TYPE: ElementType = 'neutral';
+
+export function clampResistanceValue(value: number): number {
+  return Math.min(
+    Math.max(value, BATTLE_BALANCE.resistanceMin),
+    BATTLE_BALANCE.resistanceMax,
+  );
+}
+
+export function getResistanceValue(
+  resistances: ResistanceProfile | undefined,
+  key: DamageType | ElementType,
+): number {
+  if (!resistances) {
+    return 0;
+  }
+
+  return clampResistanceValue(resistances[key] ?? 0);
+}
+
+export function applyResistanceToDamage(
+  damage: number,
+  resistance: number,
+): number {
+  return Math.max(
+    BATTLE_BALANCE.minimumDamage,
+    Math.round(damage * (1 - resistance)),
+  );
+}
+
+export function applyDamageTypeAndElementResistance(params: {
+  damage: number;
+  damageType: DamageType;
+  elementType: ElementType;
+  targetResistances: ResistanceProfile;
+}): number {
+  const baseDamage = Math.max(BATTLE_BALANCE.minimumDamage, params.damage);
+
+  if (params.damageType === 'pure') {
+    return baseDamage;
+  }
+
+  const damageTypeResistance = getResistanceValue(
+    params.targetResistances,
+    params.damageType,
+  );
+
+  const afterDamageTypeResistance = applyResistanceToDamage(
+    baseDamage,
+    damageTypeResistance,
+  );
+
+  const elementResistance = getResistanceValue(
+    params.targetResistances,
+    params.elementType,
+  );
+
+  return applyResistanceToDamage(
+    afterDamageTypeResistance,
+    elementResistance,
+  );
+}
+
+export function reduceDamageByMonsterDefenseForDamageType(params: {
+  rawDamage: number;
+  monsterDefense: number;
+  damageType: DamageType;
+}): number {
+  if (params.damageType !== 'physical') {
+    return Math.max(BATTLE_BALANCE.minimumDamage, params.rawDamage);
+  }
+
+  return reduceDamageByMonsterDefense(
+    params.rawDamage,
+    params.monsterDefense,
+  );
+}
+
+export function reduceDamageByPlayerDefenseForDamageType(params: {
+  rawDamage: number;
+  player: PlayerBattleState;
+  damageType: DamageType;
+}): number {
+  if (params.damageType !== 'physical') {
+    return Math.max(BATTLE_BALANCE.minimumDamage, params.rawDamage);
+  }
+
+  const reducedByPlayerDefense =
+    params.rawDamage * (1 - params.player.derivedStats.damageReduction);
+
+  return Math.max(
+    BATTLE_BALANCE.minimumDamage,
+    Math.round(reducedByPlayerDefense),
+  );
+}
+
+export function getSkillDamageType(skill: SkillDefinition): DamageType {
+  if (skill.damageType) {
+    return skill.damageType;
+  }
+
+  if (skill.actionType === 'magical_spell') {
+    return 'magical';
+  }
+
+  return 'physical';
+}
+
+export function getSkillElementType(skill: SkillDefinition): ElementType {
+  return skill.elementType ?? 'neutral';
+}
+
 export function reduceDamageByMonsterDefense(
   rawDamage: number,
   monsterDefense: number,
@@ -249,13 +366,21 @@ export function calculatePlayerBasicAttackDamage(
       player.baseStats.STR * BATTLE_BALANCE.playerBasicAttackStrMultiplier,
   );
 
-  const reducedDamage = reduceDamageByMonsterDefense(
+  const damageAfterDefense = reduceDamageByMonsterDefenseForDamageType({
     rawDamage,
-    monster.defense,
-  );
+    monsterDefense: monster.defense,
+    damageType: BASIC_ATTACK_DAMAGE_TYPE,
+  });
+
+  const damageAfterResistance = applyDamageTypeAndElementResistance({
+    damage: damageAfterDefense,
+    damageType: BASIC_ATTACK_DAMAGE_TYPE,
+    elementType: BASIC_ATTACK_ELEMENT_TYPE,
+    targetResistances: monster.resistances,
+  });
 
   return rollDamageVariance(
-    reducedDamage,
+    damageAfterResistance,
     BATTLE_BALANCE.playerAttackVarianceMin,
     BATTLE_BALANCE.playerAttackVarianceMax,
   );
@@ -296,18 +421,28 @@ export function calculatePlayerSkillDamage(params: {
   }
 
   const rawDamage = calculateSkillPower(player, skill);
+  const damageType = getSkillDamageType(skill);
+  const elementType = getSkillElementType(skill);
 
-  if (skill.damageType === 'pure') {
+  if (damageType === 'pure') {
     return Math.max(BATTLE_BALANCE.minimumDamage, rawDamage);
   }
 
-  const reducedDamage = reduceDamageByMonsterDefense(
+  const damageAfterDefense = reduceDamageByMonsterDefenseForDamageType({
     rawDamage,
-    monster.defense,
-  );
+    monsterDefense: monster.defense,
+    damageType,
+  });
+
+  const damageAfterResistance = applyDamageTypeAndElementResistance({
+    damage: damageAfterDefense,
+    damageType,
+    elementType,
+    targetResistances: monster.resistances,
+  });
 
   return rollDamageVariance(
-    reducedDamage,
+    damageAfterResistance,
     BATTLE_BALANCE.playerAttackVarianceMin,
     BATTLE_BALANCE.playerAttackVarianceMax,
   );
@@ -317,16 +452,21 @@ export function calculateMonsterBasicAttackDamage(
   monster: MonsterBattleState,
   player: PlayerBattleState,
 ): number {
-  const reducedByPlayerDefense =
-    monster.attack * (1 - player.derivedStats.damageReduction);
+  const damageAfterDefense = reduceDamageByPlayerDefenseForDamageType({
+    rawDamage: monster.attack,
+    player,
+    damageType: monster.damageType,
+  });
 
-  const damageBeforeVariance = Math.max(
-    BATTLE_BALANCE.minimumDamage,
-    Math.round(reducedByPlayerDefense),
-  );
+  const damageAfterResistance = applyDamageTypeAndElementResistance({
+    damage: damageAfterDefense,
+    damageType: monster.damageType,
+    elementType: monster.elementType,
+    targetResistances: player.resistances,
+  });
 
   return rollDamageVariance(
-    damageBeforeVariance,
+    damageAfterResistance,
     BATTLE_BALANCE.monsterAttackVarianceMin,
     BATTLE_BALANCE.monsterAttackVarianceMax,
   );

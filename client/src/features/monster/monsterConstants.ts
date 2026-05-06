@@ -8,6 +8,12 @@ export const MONSTERS: MonsterDefinition[] = [
     level: 1,
     rank: 'normal',
     damageType: 'physical',
+    elementType: 'neutral',
+    resistances: {
+      physical: 0.1,
+      fire: -0.25,
+      water: 0.2,
+    },
     stats: {
       maxHp: 35,
       attack: 7,
@@ -28,6 +34,12 @@ export const MONSTERS: MonsterDefinition[] = [
     level: 1,
     rank: 'normal',
     damageType: 'physical',
+    elementType: 'neutral',
+    resistances: {
+      physical: -0.05,
+      wind: 0.1,
+      fire: -0.1,
+    },
     stats: {
       maxHp: 28,
       attack: 8,
@@ -49,6 +61,12 @@ export const MONSTERS: MonsterDefinition[] = [
     level: 2,
     rank: 'normal',
     damageType: 'physical',
+    elementType: 'neutral',
+    resistances: {
+      physical: 0.05,
+      magical: -0.05,
+      dark: 0.1,
+    },
     stats: {
       maxHp: 48,
       attack: 10,
@@ -70,6 +88,14 @@ export const MONSTERS: MonsterDefinition[] = [
     level: 3,
     rank: 'boss',
     damageType: 'physical',
+    elementType: 'earth',
+    resistances: {
+      physical: 0.15,
+      neutral: 0.1,
+      water: 0.3,
+      earth: 0.2,
+      fire: -0.35,
+    },
     stats: {
       maxHp: 110,
       attack: 14,
@@ -91,6 +117,13 @@ export const MONSTERS: MonsterDefinition[] = [
     level: 4,
     rank: 'boss',
     damageType: 'physical',
+    elementType: 'neutral',
+    resistances: {
+      physical: 0.1,
+      magical: 0.05,
+      fire: -0.1,
+      dark: 0.15,
+    },
     stats: {
       maxHp: 135,
       attack: 18,
@@ -112,6 +145,11 @@ export const MONSTERS: MonsterDefinition[] = [
     level: 2,
     rank: 'normal',
     damageType: 'physical',
+    elementType: 'neutral',
+    resistances: {
+      physical: 0.05,
+      light: -0.1,
+    },
     stats: {
       maxHp: 55,
       attack: 11,
@@ -132,7 +170,15 @@ export const MONSTERS: MonsterDefinition[] = [
       'A strange slime changed by unknown energy. Its body pulses with unstable power.',
     level: 3,
     rank: 'elite',
-    damageType: 'physical',
+    damageType: 'magical',
+    elementType: 'dark',
+    resistances: {
+      physical: 0.1,
+      magical: 0.1,
+      dark: 0.4,
+      fire: -0.2,
+      light: -0.35,
+    },
     stats: {
       maxHp: 82,
       attack: 13,

@@ -1,4 +1,8 @@
-import type { DamageType } from '../character-creation/types';
+import type {
+  DamageType,
+  ElementType,
+  ResistanceProfile,
+} from '../character-creation/types';
 
 export type MonsterId =
   | 'green_slime'
@@ -31,6 +35,8 @@ export interface MonsterDefinition {
   level: number;
   rank: MonsterRank;
   damageType: DamageType;
+  elementType: ElementType;
+  resistances: ResistanceProfile;
   stats: MonsterStats;
   reward: MonsterReward;
   tags: string[];
@@ -48,6 +54,8 @@ export interface MonsterBattleState {
   actionSpeed: number;
   critRate: number;
   damageType: DamageType;
+  elementType: ElementType;
+  resistances: ResistanceProfile;
   reward: MonsterReward;
   tags: string[];
 }

@@ -1,11 +1,42 @@
 import { useCallback, useState } from 'react';
 
-import { LOCAL_STORAGE_KEYS } from '../character-creation/constants';
+import {
+  CHARACTER_CLASSES,
+  LOCAL_STORAGE_KEYS,
+} from '../character-creation/constants';
 import type { Character } from '../character-creation/types';
 
 interface CurrentCharacterState {
   character: Character | null;
   errorMessage: string;
+}
+
+function getCurrentClassSkillDefinition(
+  classId: Character['classId'],
+  skillId: string,
+) {
+  return (
+    CHARACTER_CLASSES.find((characterClass) => characterClass.id === classId)
+      ?.starterSkills.find((skill) => skill.id === skillId) ?? null
+  );
+}
+
+function normalizeStoredSkills(parsedCharacter: Character): Character['skills'] {
+  return parsedCharacter.skills.map((skill) => {
+    const currentSkillDefinition = getCurrentClassSkillDefinition(
+      parsedCharacter.classId,
+      skill.id,
+    );
+
+    return {
+      ...currentSkillDefinition,
+      ...skill,
+      elementType:
+        skill.elementType ??
+        currentSkillDefinition?.elementType ??
+        (skill.effectType === 'damage' ? 'neutral' : null),
+    };
+  });
 }
 
 function normalizeStoredCharacter(rawCharacter: unknown): Character {
@@ -38,6 +69,7 @@ function normalizeStoredCharacter(rawCharacter: unknown): Character {
     version: Math.max(parsedCharacter.version ?? 1, 2),
     moneyBronze: normalizedMoneyBronze,
     starterGift: normalizedStarterGift ?? parsedCharacter.starterGift,
+    skills: normalizeStoredSkills(parsedCharacter),
   };
 }
 

@@ -2,6 +2,19 @@ export type StatKey = 'STR' | 'INT' | 'VIT' | 'DEX' | 'LUK';
 
 export type DamageType = 'physical' | 'magical' | 'pure';
 
+export type ElementType =
+  | 'neutral'
+  | 'fire'
+  | 'water'
+  | 'wind'
+  | 'earth'
+  | 'light'
+  | 'dark';
+
+export type ResistanceKey = DamageType | ElementType;
+
+export type ResistanceProfile = Partial<Record<ResistanceKey, number>>;
+
 export type ResourceType = 'HP' | 'MP' | 'Energy';
 
 export type ActionType = 'basic_attack' | 'physical_skill' | 'magical_spell';
@@ -66,6 +79,7 @@ export interface SkillDefinition {
   actionCategory: ActionCategory;
   effectType: EffectType;
   damageType: DamageType | null;
+  elementType: ElementType | null;
   scalingStat: StatKey | null;
   baseValue: number;
   multiplier: number;
