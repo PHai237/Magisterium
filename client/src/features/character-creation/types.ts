@@ -17,6 +17,68 @@ export type ResistanceProfile = Partial<Record<ResistanceKey, number>>;
 
 export type ResourceType = 'HP' | 'MP' | 'Energy';
 
+export type SkillFamily = 'weapon' | 'spell' | 'support' | 'utility';
+
+export type SkillTargetType =
+  | 'enemy_single'
+  | 'self';
+
+export type SkillRuneSlotType = 'power' | 'element' | 'utility';
+
+export type SkillRuneEffect =
+  | {
+      type: 'flat_power_bonus';
+      value: number;
+    }
+  | {
+      type: 'power_multiplier_bonus';
+      value: number;
+    }
+  | {
+      type: 'resource_cost_delta';
+      value: number;
+    }
+  | {
+      type: 'crit_rate_bonus';
+      value: number;
+    }
+  | {
+      type: 'element_override';
+      value: ElementType;
+    }
+  | {
+      type: 'damage_type_override';
+      value: DamageType;
+    }
+  | {
+      type: 'lifesteal_percent';
+      value: number;
+    }
+  | {
+      type: 'shield_on_damage_percent';
+      value: number;
+    };
+
+export interface SkillRuneDefinition {
+  id: string;
+  name: string;
+  description: string;
+  slotType: SkillRuneSlotType;
+  effects: SkillRuneEffect[];
+  tags: string[];
+}
+
+export interface SkillModifierProfile {
+  flatPowerBonus: number;
+  powerMultiplierBonus: number;
+  resourceCostDelta: number;
+  critRateBonus: number;
+  elementOverride: ElementType | null;
+  damageTypeOverride: DamageType | null;
+  lifestealPercent: number;
+  shieldOnDamagePercent: number;
+}
+
 export type ActionType = 'basic_attack' | 'physical_skill' | 'magical_spell';
 
 export type ActionCategory = 'offensive' | 'defensive' | 'utility';
@@ -80,6 +142,10 @@ export interface SkillDefinition {
   effectType: EffectType;
   damageType: DamageType | null;
   elementType: ElementType | null;
+  skillFamily?: SkillFamily;
+  targetType?: SkillTargetType;
+  runeSlots?: SkillRuneSlotType[];
+  attachedRuneIds?: string[];
   scalingStat: StatKey | null;
   baseValue: number;
   multiplier: number;

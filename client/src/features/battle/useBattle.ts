@@ -3,6 +3,12 @@ import { useCallback, useMemo, useState } from 'react';
 import type { Character } from '../character-creation/types';
 import { formatCurrency } from '../economy/currencyUtils';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
+import {
+  calculateSkillFollowUpEffects,
+  getEffectiveSkillCritRate,
+  getEffectiveSkillResourceCost,
+  getSkillRuneSummaryText,
+} from '../skill/skillCalculations';
 
 import {
   applyCriticalDamage,
@@ -21,8 +27,8 @@ import {
   getCriticalLogText,
   isMonsterDefeated,
   isPlayerDefeated,
-  spendSkillResource,
   rollChance,
+  spendSkillResource,
 } from './battleCalculations';
 
 import type { BattleContentSource, BattleState } from './battleTypes';
@@ -163,10 +169,12 @@ export function useBattle({ character, source }: UseBattleParams) {
       }
 
       if (!canUseSkill(currentBattle.player, selectedSkill)) {
+        const requiredResourceCost = getEffectiveSkillResourceCost(selectedSkill);
+
         const noResourceLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'system',
-          message: `${currentBattle.player.name} cannot use ${selectedSkill.name}. Required: ${selectedSkill.resourceCost} ${selectedSkill.resourceType}. Current: ${getResourceText(
+          message: `${currentBattle.player.name} cannot use ${selectedSkill.name}. Required: ${requiredResourceCost} ${selectedSkill.resourceType}. Current: ${getResourceText(
             currentBattle.player,
             selectedSkill.resourceType,
           )}.`,
@@ -190,7 +198,12 @@ export function useBattle({ character, source }: UseBattleParams) {
           skill: selectedSkill,
         });
 
-        const isCritical = rollChance(currentBattle.player.derivedStats.critRate);
+        const effectiveCritRate = getEffectiveSkillCritRate(
+          currentBattle.player.derivedStats.critRate,
+          selectedSkill,
+        );
+
+        const isCritical = rollChance(effectiveCritRate);
         const damage = applyCriticalDamage(baseDamage, isCritical);
 
         const updatedMonster = applyDamageToMonster(
@@ -198,12 +211,42 @@ export function useBattle({ character, source }: UseBattleParams) {
           damage,
         );
 
+        const followUpEffects = calculateSkillFollowUpEffects({
+          finalDamage: damage,
+          skill: selectedSkill,
+        });
+
+        let playerAfterSkillResult = playerAfterCost;
+
+        if (followUpEffects.healToPlayer > 0) {
+          playerAfterSkillResult = applyHealToPlayer(
+            playerAfterSkillResult,
+            followUpEffects.healToPlayer,
+          );
+        }
+
+        if (followUpEffects.shieldToPlayer > 0) {
+          playerAfterSkillResult = applyShieldToPlayer(
+            playerAfterSkillResult,
+            followUpEffects.shieldToPlayer,
+          );
+        }
+
+        const followUpTextParts = [
+          followUpEffects.healToPlayer > 0
+            ? ` Restores ${followUpEffects.healToPlayer} HP through rune effect.`
+            : '',
+          followUpEffects.shieldToPlayer > 0
+            ? ` Gains ${followUpEffects.shieldToPlayer} Shield through rune effect.`
+            : '',
+        ].filter(Boolean);
+
         const skillLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'player',
           message: `${currentBattle.player.name} uses ${selectedSkill.name} and deals ${damage} damage.${getCriticalLogText(
             isCritical,
-          )}`,
+          )}${followUpTextParts.join('')}${getSkillRuneSummaryText(selectedSkill)}`,
         });
 
         if (isMonsterDefeated(updatedMonster)) {
@@ -223,7 +266,7 @@ export function useBattle({ character, source }: UseBattleParams) {
 
           return {
             ...currentBattle,
-            player: playerAfterCost,
+            player: playerAfterSkillResult,
             monster: updatedMonster,
             status: 'won',
             logs: [...currentBattle.logs, skillLog, winLog, rewardLog],
@@ -232,7 +275,7 @@ export function useBattle({ character, source }: UseBattleParams) {
 
         return {
           ...currentBattle,
-          player: playerAfterCost,
+          player: playerAfterSkillResult,
           monster: updatedMonster,
           currentActor: 'monster',
           turn: currentBattle.turn + 1,
@@ -251,7 +294,9 @@ export function useBattle({ character, source }: UseBattleParams) {
         const healLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'player',
-          message: `${currentBattle.player.name} uses ${selectedSkill.name} and restores ${healAmount} HP.`,
+          message: `${currentBattle.player.name} uses ${selectedSkill.name} and restores ${healAmount} HP.${getSkillRuneSummaryText(
+            selectedSkill,
+          )}`,
         });
 
         return {
@@ -277,7 +322,9 @@ export function useBattle({ character, source }: UseBattleParams) {
         const shieldLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'player',
-          message: `${currentBattle.player.name} uses ${selectedSkill.name} and gains ${shieldAmount} Shield.`,
+          message: `${currentBattle.player.name} uses ${selectedSkill.name} and gains ${shieldAmount} Shield.${getSkillRuneSummaryText(
+            selectedSkill,
+          )}`,
         });
 
         return {
@@ -320,7 +367,7 @@ export function useBattle({ character, source }: UseBattleParams) {
         const buffLog = createLogEntry({
           turn: currentBattle.turn,
           actor: 'player',
-          message: buffMessage,
+          message: `${buffMessage}${getSkillRuneSummaryText(selectedSkill)}`,
         });
 
         return {
@@ -335,7 +382,9 @@ export function useBattle({ character, source }: UseBattleParams) {
       const unsupportedEffectLog = createLogEntry({
         turn: currentBattle.turn,
         actor: 'player',
-        message: `${currentBattle.player.name} uses ${selectedSkill.name}, but this effect is not implemented yet.`,
+        message: `${currentBattle.player.name} uses ${selectedSkill.name}, but this effect is not implemented yet.${getSkillRuneSummaryText(
+          selectedSkill,
+        )}`,
       });
 
       return {

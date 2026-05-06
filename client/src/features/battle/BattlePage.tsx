@@ -4,9 +4,8 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { applyExpReward } from '../character-progression/progressionCalculations';
 import { addBronze, formatCurrency } from '../economy/currencyUtils';
-// import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
-// import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
+import { getEffectiveSkillResourceCost } from '../skill/skillCalculations';
 
 import { useBattle } from './useBattle';
 import type {
@@ -184,7 +183,8 @@ function buildCharacterAfterLoss(
       hp: Math.max(
         1,
         Math.ceil(
-            character.derivedStats.maxHp * BATTLE_BALANCE.defeatRecoveryHpPercent,
+          character.derivedStats.maxHp *
+            BATTLE_BALANCE.defeatRecoveryHpPercent,
         ),
       ),
       mp: battleState.player.currentMp,
@@ -220,16 +220,18 @@ function canPlayerUseSkill(player: PlayerBattleState, skillId: string): boolean 
     return true;
   }
 
+  const resourceCost = getEffectiveSkillResourceCost(skill);
+
   if (skill.resourceType === 'MP') {
-    return player.currentMp >= skill.resourceCost;
+    return player.currentMp >= resourceCost;
   }
 
   if (skill.resourceType === 'Energy') {
-    return player.currentEnergy >= skill.resourceCost;
+    return player.currentEnergy >= resourceCost;
   }
 
   if (skill.resourceType === 'HP') {
-    return player.currentHp > skill.resourceCost;
+    return player.currentHp > resourceCost;
   }
 
   return false;
@@ -272,34 +274,46 @@ function getLogBadgeClass(actor: BattleState['logs'][number]['actor']): string {
 }
 
 function getSkillCostText(skill: SkillDefinition): string {
-  if (!skill.resourceType || skill.resourceCost <= 0) {
+  if (!skill.resourceType) {
     return 'Free';
   }
 
-  return `${skill.resourceCost} ${skill.resourceType}`;
+  const resourceCost = getEffectiveSkillResourceCost(skill);
+
+  if (resourceCost <= 0) {
+    return 'Free';
+  }
+
+  return `${resourceCost} ${skill.resourceType}`;
 }
 
 function getSkillResourceWarning(
   player: PlayerBattleState,
   skill: SkillDefinition,
 ): string {
-  if (!skill.resourceType || skill.resourceCost <= 0) {
+  if (!skill.resourceType) {
     return '';
   }
 
-  if (skill.resourceType === 'MP' && player.currentMp < skill.resourceCost) {
-    return `Not enough MP. Current: ${player.currentMp}, Required: ${skill.resourceCost}.`;
+  const resourceCost = getEffectiveSkillResourceCost(skill);
+
+  if (resourceCost <= 0) {
+    return '';
+  }
+
+  if (skill.resourceType === 'MP' && player.currentMp < resourceCost) {
+    return `Not enough MP. Current: ${player.currentMp}, Required: ${resourceCost}.`;
   }
 
   if (
     skill.resourceType === 'Energy' &&
-    player.currentEnergy < skill.resourceCost
+    player.currentEnergy < resourceCost
   ) {
-    return `Not enough Energy. Current: ${player.currentEnergy}, Required: ${skill.resourceCost}.`;
+    return `Not enough Energy. Current: ${player.currentEnergy}, Required: ${resourceCost}.`;
   }
 
-  if (skill.resourceType === 'HP' && player.currentHp <= skill.resourceCost) {
-    return `Not enough HP. Current: ${player.currentHp}, Required: more than ${skill.resourceCost}.`;
+  if (skill.resourceType === 'HP' && player.currentHp <= resourceCost) {
+    return `Not enough HP. Current: ${player.currentHp}, Required: more than ${resourceCost}.`;
   }
 
   return '';
@@ -330,19 +344,20 @@ export function BattlePage({
 
   useEffect(() => {
     if (!isMonsterTurn) {
-        return;
+      return;
     }
 
     const timerId = window.setTimeout(() => {
-        handleMonsterAction();
+      handleMonsterAction();
     }, BATTLE_BALANCE.autoMonsterTurnDelayMs);
 
     return () => {
-        window.clearTimeout(timerId);
+      window.clearTimeout(timerId);
     };
-    }, [isMonsterTurn, handleMonsterAction]);
+  }, [isMonsterTurn, handleMonsterAction]);
 
   const { player, monster } = battleState;
+
   const sourceLabel =
     source.type === 'dungeon'
       ? 'Dungeon'
@@ -370,7 +385,9 @@ export function BattlePage({
       : source.type === 'road_event'
       ? 'Claim Reward & Continue Travel'
       : 'Claim Reward & Continue Farming';
+
   const logContainerRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const logContainer = logContainerRef.current;
 
@@ -403,7 +420,7 @@ export function BattlePage({
             </button>
           }
         />
-        
+
         <section className="mb-6 grid gap-4 md:grid-cols-4">
           <div className="ui-card-enter rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">
@@ -428,7 +445,8 @@ export function BattlePage({
               Reward
             </p>
             <p className="mt-2 text-lg font-bold text-white">
-              {battleState.reward.exp} EXP / {formatCurrency(battleState.reward.bronze)}
+              {battleState.reward.exp} EXP /{' '}
+              {formatCurrency(battleState.reward.bronze)}
             </p>
           </div>
 
@@ -488,29 +506,30 @@ export function BattlePage({
                   {player.shield}
                 </p>
               </div>
+
               {(player.evasionChanceBonus > 0 ||
-              player.nextDamageReductionPercent > 0) && (
-              <div className="rounded-xl border border-violet-500/40 bg-violet-500/10 p-4">
-                <p className="text-sm font-semibold text-violet-300">
-                  Temporary Effects
-                </p>
+                player.nextDamageReductionPercent > 0) && (
+                <div className="rounded-xl border border-violet-500/40 bg-violet-500/10 p-4">
+                  <p className="text-sm font-semibold text-violet-300">
+                    Temporary Effects
+                  </p>
 
-                <div className="mt-2 space-y-1 text-sm text-slate-200">
-                  {player.evasionChanceBonus > 0 && (
-                    <p>
-                      Evasion Chance: {player.evasionChanceBonus}%
-                    </p>
-                  )}
+                  <div className="mt-2 space-y-1 text-sm text-slate-200">
+                    {player.evasionChanceBonus > 0 && (
+                      <p>
+                        Evasion Chance: {player.evasionChanceBonus}%
+                      </p>
+                    )}
 
-                  {player.nextDamageReductionPercent > 0 && (
-                    <p>
-                      Next Damage Reduction:{' '}
-                      {Math.round(player.nextDamageReductionPercent * 100)}%
-                    </p>
-                  )}
+                    {player.nextDamageReductionPercent > 0 && (
+                      <p>
+                        Next Damage Reduction:{' '}
+                        {Math.round(player.nextDamageReductionPercent * 100)}%
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           </article>
 
@@ -609,112 +628,117 @@ export function BattlePage({
 
               <div className="space-y-3">
                 {playerSkills.map((skill) => {
-                    const usable = canPlayerUseSkill(player, skill.id);
-                    const resourceWarning = getSkillResourceWarning(player, skill);
+                  const usable = canPlayerUseSkill(player, skill.id);
+                  const resourceWarning = getSkillResourceWarning(
+                    player,
+                    skill,
+                  );
 
-                    return (
-                        <button
-                          key={skill.id}
-                          type="button"
-                          onClick={() => handlePlayerUseSkill(skill.id)}
-                          disabled={!isPlayerTurn || !usable}
-                          className="w-full rounded-xl border border-slate-700 bg-slate-950 px-5 py-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-semibold text-white">
-                                  {skill.name}
-                                </p>
+                  return (
+                    <button
+                      key={skill.id}
+                      type="button"
+                      onClick={() => handlePlayerUseSkill(skill.id)}
+                      disabled={!isPlayerTurn || !usable}
+                      className="w-full rounded-xl border border-slate-700 bg-slate-950 px-5 py-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-white">
+                              {skill.name}
+                            </p>
 
-                                <span
-                                  className={`rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${getSkillEffectBadgeClass(
-                                    skill.effectType,
-                                  )}`}
-                                >
-                                  {skill.effectType}
-                                </span>
-                              </div>
-
-                              <p className="mt-2 text-sm text-slate-400">
-                                {skill.description}
-                              </p>
-
-                              <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-300">
-                                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
-                                  Cost: {getSkillCostText(skill)}
-                                </span>
-
-                                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
-                                  Type: {skill.actionType}
-                                </span>
-
-                                <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
-                                  Scale: {skill.scalingStat ?? 'none'}
-                                </span>
-                              </div>
-
-                              {resourceWarning && (
-                                <p className="mt-3 text-xs font-semibold text-red-300">
-                                  {resourceWarning}
-                                </p>
-                              )}
-                            </div>
+                            <span
+                              className={`rounded-full border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${getSkillEffectBadgeClass(
+                                skill.effectType,
+                              )}`}
+                            >
+                              {skill.effectType}
+                            </span>
                           </div>
-                        </button>
-                    );
-                    })}
+
+                          <p className="mt-2 text-sm text-slate-400">
+                            {skill.description}
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-300">
+                            <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
+                              Cost: {getSkillCostText(skill)}
+                            </span>
+
+                            <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
+                              Type: {skill.actionType}
+                            </span>
+
+                            <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1">
+                              Scale: {skill.scalingStat ?? 'none'}
+                            </span>
+                          </div>
+
+                          {resourceWarning && (
+                            <p className="mt-3 text-xs font-semibold text-red-300">
+                              {resourceWarning}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-                {isMonsterTurn && (
-                  <div className="ui-soft-pulse rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                    {monster.name} is preparing an attack...
-                  </div>
-                )}
+
+              {isMonsterTurn && (
+                <div className="ui-soft-pulse rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                  {monster.name} is preparing an attack...
+                </div>
+              )}
             </div>
 
             {battleState.status === 'won' && (
-                <div className="mt-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
-                    <p className="font-semibold text-emerald-200">
-                    Victory!
-                    </p>
+              <div className="mt-5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
+                <p className="font-semibold text-emerald-200">
+                  Victory!
+                </p>
 
-                    <p className="mt-2 text-sm text-emerald-100">
-                    You gained {battleState.reward.exp} EXP and {formatCurrency(battleState.reward.bronze)}.
-                    </p>
+                <p className="mt-2 text-sm text-emerald-100">
+                  You gained {battleState.reward.exp} EXP and{' '}
+                  {formatCurrency(battleState.reward.bronze)}.
+                </p>
 
-                    <div className="mt-4 space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updatedCharacter = buildCharacterAfterWin(
-                          character,
-                          battleState,
-                        );
+                <div className="mt-4 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updatedCharacter = buildCharacterAfterWin(
+                        character,
+                        battleState,
+                      );
 
-                        onReturnToSourceAfterWin(updatedCharacter);
-                      }}
-                      className="w-full rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400"
-                    >
-                      {returnToSourceAfterWinLabel}
-                    </button>
+                      onReturnToSourceAfterWin(updatedCharacter);
+                    }}
+                    className="w-full rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400"
+                  >
+                    {returnToSourceAfterWinLabel}
+                  </button>
 
-                    <button
-                        type="button"
-                        onClick={() => {
-                        const updatedCharacter = buildCharacterAfterWin(
-                            character,
-                            battleState,
-                        );
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updatedCharacter = buildCharacterAfterWin(
+                        character,
+                        battleState,
+                      );
 
-                        onContinueAdventure(updatedCharacter);
-                        }}
-                        className="w-full rounded-xl border border-emerald-500/40 bg-slate-950 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-500/10"
-                    >
-                        {continueAdventureLabel}
-                    </button>
-                    </div>
+                      onContinueAdventure(updatedCharacter);
+                    }}
+                    className="w-full rounded-xl border border-emerald-500/40 bg-slate-950 px-5 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-500/10"
+                  >
+                    {continueAdventureLabel}
+                  </button>
                 </div>
-                )}
+              </div>
+            )}
 
             {battleState.status === 'escaped' && (
               <div className="mt-5 rounded-xl border border-sky-500/40 bg-sky-500/10 p-4">

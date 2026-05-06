@@ -16,6 +16,13 @@ import type {
 } from '../character-creation/types';
 import type { PlayerBattleState, BattleContentSource, BattleLogEntry, BattleState } from './battleTypes';
 
+import {
+  calculateEffectiveSkillPower,
+  getEffectiveSkillDamageType,
+  getEffectiveSkillElementType,
+  getEffectiveSkillResourceCost,
+} from '../skill/skillCalculations';
+
 export function createBattleId(prefix: string): string {
   if (crypto.randomUUID) {
     return `${prefix}_${crypto.randomUUID()}`;
@@ -401,12 +408,7 @@ export function calculateSkillPower(
   player: PlayerBattleState,
   skill: SkillDefinition,
 ): number {
-  const scalingStatValue = getSkillScalingStatValue(player, skill);
-
-  return Math.max(
-    1,
-    Math.round(skill.baseValue + scalingStatValue * skill.multiplier),
-  );
+  return calculateEffectiveSkillPower(player.baseStats, skill);
 }
 
 export function calculatePlayerSkillDamage(params: {
@@ -420,9 +422,13 @@ export function calculatePlayerSkillDamage(params: {
     return 0;
   }
 
-  const rawDamage = calculateSkillPower(player, skill);
-  const damageType = getSkillDamageType(skill);
-  const elementType = getSkillElementType(skill);
+    const rawDamage = calculateSkillPower(player, skill);
+  const damageType = getEffectiveSkillDamageType(skill);
+  const elementType = getEffectiveSkillElementType(skill);
+
+  if (!damageType || !elementType) {
+    return 0;
+  }
 
   if (damageType === 'pure') {
     return Math.max(BATTLE_BALANCE.minimumDamage, rawDamage);
@@ -480,16 +486,18 @@ export function canUseSkill(
     return true;
   }
 
+  const resourceCost = getEffectiveSkillResourceCost(skill);
+
   if (skill.resourceType === 'MP') {
-    return player.currentMp >= skill.resourceCost;
+    return player.currentMp >= resourceCost;
   }
 
   if (skill.resourceType === 'Energy') {
-    return player.currentEnergy >= skill.resourceCost;
+    return player.currentEnergy >= resourceCost;
   }
 
   if (skill.resourceType === 'HP') {
-    return player.currentHp > skill.resourceCost;
+    return player.currentHp > resourceCost;
   }
 
   return false;
@@ -503,24 +511,26 @@ export function spendSkillResource(
     return player;
   }
 
+  const resourceCost = getEffectiveSkillResourceCost(skill);
+
   if (skill.resourceType === 'MP') {
     return {
       ...player,
-      currentMp: Math.max(0, player.currentMp - skill.resourceCost),
+      currentMp: Math.max(0, player.currentMp - resourceCost),
     };
   }
 
   if (skill.resourceType === 'Energy') {
     return {
       ...player,
-      currentEnergy: Math.max(0, player.currentEnergy - skill.resourceCost),
+      currentEnergy: Math.max(0, player.currentEnergy - resourceCost),
     };
   }
 
   if (skill.resourceType === 'HP') {
     return {
       ...player,
-      currentHp: Math.max(1, player.currentHp - skill.resourceCost),
+      currentHp: Math.max(1, player.currentHp - resourceCost),
     };
   }
 
