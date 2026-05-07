@@ -3,6 +3,10 @@ import type {
   ElementType,
   ResistanceProfile,
 } from '../character-creation/types';
+import type {
+  MonsterAffixDefinition,
+  MonsterAffixId,
+} from '../monster-affix/monsterAffixTypes';
 
 export type MonsterId =
   | 'green_slime'
@@ -37,6 +41,7 @@ export interface MonsterDefinition {
   damageType: DamageType;
   elementType: ElementType;
   resistances: ResistanceProfile;
+  possibleAffixIds?: MonsterAffixId[];
   stats: MonsterStats;
   reward: MonsterReward;
   tags: string[];
@@ -45,6 +50,7 @@ export interface MonsterDefinition {
 export interface MonsterBattleState {
   monsterId: MonsterId;
   name: string;
+  baseName: string;
   level: number;
   rank: MonsterRank;
   currentHp: number;
@@ -56,6 +62,7 @@ export interface MonsterBattleState {
   damageType: DamageType;
   elementType: ElementType;
   resistances: ResistanceProfile;
+  affixes: MonsterAffixDefinition[];
   reward: MonsterReward;
   tags: string[];
 }

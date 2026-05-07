@@ -23,6 +23,14 @@ import {
   getEffectiveSkillResourceCost,
 } from '../skill/skillCalculations';
 
+import {
+  applyMonsterAffixes,
+  getAffixedMonsterDisplayName,
+  getMonsterAffixNameList,
+  resolveMonsterAffixesByIds,
+  rollMonsterAffixes,
+} from '../monster-affix/monsterAffixCalculations';
+
 export function createBattleId(prefix: string): string {
   if (crypto.randomUUID) {
     return `${prefix}_${crypto.randomUUID()}`;
@@ -54,9 +62,15 @@ export function createPlayerBattleState(
 export function createMonsterBattleState(
   monster: MonsterDefinition,
 ): MonsterBattleState {
-  return {
+  const rolledAffixes =
+    monster.possibleAffixIds && monster.possibleAffixIds.length > 0
+      ? resolveMonsterAffixesByIds(monster.possibleAffixIds)
+      : rollMonsterAffixes(monster);
+
+  const baseMonsterBattleState: MonsterBattleState = {
     monsterId: monster.id,
     name: monster.name,
+    baseName: monster.name,
     level: monster.level,
     rank: monster.rank,
     currentHp: monster.stats.maxHp,
@@ -68,8 +82,19 @@ export function createMonsterBattleState(
     damageType: monster.damageType,
     elementType: monster.elementType,
     resistances: monster.resistances,
+    affixes: rolledAffixes,
     reward: monster.reward,
     tags: monster.tags,
+  };
+
+  const affixedMonster = applyMonsterAffixes(
+    baseMonsterBattleState,
+    rolledAffixes,
+  );
+
+  return {
+    ...affixedMonster,
+    name: getAffixedMonsterDisplayName(monster.name, rolledAffixes),
   };
 }
 
@@ -182,6 +207,17 @@ export function createInitialBattleState(params: {
         actor: 'system',
         message: `${params.character.name} encountered ${monster.name} in ${params.source.data.name}.`,
       }),
+      ...(monster.affixes.length > 0
+        ? [
+            createLogEntry({
+              turn: 1,
+              actor: 'system' as const,
+              message: `${monster.baseName} has affixes: ${getMonsterAffixNameList(
+                monster.affixes,
+              )}.`,
+            }),
+          ]
+        : []),
       createLogEntry({
         turn: 1,
         actor: 'system',
