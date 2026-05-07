@@ -20,6 +20,7 @@ interface RoadEventPageProps {
     updatedCharacter: Character;
     nextAction: 'continue_travel' | 'start_battle';
     battle?: RoadEventChoiceDefinition['outcome']['battle'];
+    pendingEncounterModifierIds?: RoadEventChoiceDefinition['outcome']['pendingEncounterModifierIds'];
   }) => void;
   onCancelTravel: () => void;
 }
@@ -127,6 +128,17 @@ function getChoiceOutcomePreview(choice: RoadEventChoiceDefinition): string {
     formatSignedValue(choice.outcome.energyChange ?? 0, 'Energy'),
   ].filter(Boolean);
 
+  if (
+    choice.outcome.pendingEncounterModifierIds &&
+    choice.outcome.pendingEncounterModifierIds.length > 0
+  ) {
+    parts.push('Next encounter modifier');
+  }
+
+  if (choice.outcome.nextAction === 'start_battle' && choice.outcome.battle) {
+    parts.push('Starts battle');
+  }
+
   if (parts.length === 0) {
     return 'No immediate resource change';
   }
@@ -233,32 +245,34 @@ export function RoadEventPage({
     });
   }
 
-    function handleContinueTravel() {
-        if (!resolvedResult) {
-            return;
-        }
-
-        onResolveRoadEvent({
-            updatedCharacter: resolvedResult.updatedCharacter,
-            nextAction: resolvedResult.choice.outcome.nextAction ?? 'continue_travel',
-            battle: resolvedResult.choice.outcome.battle,
-        });
+  function handleContinueTravel() {
+    if (!resolvedResult) {
+      return;
     }
 
-    function getContinueButtonLabel(): string {
-        if (!resolvedResult) {
-            return 'Continue Travel';
-        }
+    onResolveRoadEvent({
+      updatedCharacter: resolvedResult.updatedCharacter,
+      nextAction: resolvedResult.choice.outcome.nextAction ?? 'continue_travel',
+      battle: resolvedResult.choice.outcome.battle,
+      pendingEncounterModifierIds:
+        resolvedResult.choice.outcome.pendingEncounterModifierIds,
+    });
+  }
 
-        if (
-            resolvedResult.choice.outcome.nextAction === 'start_battle' &&
-            resolvedResult.choice.outcome.battle
-        ) {
-            return 'Start Battle';
-        }
-
-        return 'Continue Travel';
+  function getContinueButtonLabel(): string {
+    if (!resolvedResult) {
+      return 'Continue Travel';
     }
+
+    if (
+      resolvedResult.choice.outcome.nextAction === 'start_battle' &&
+      resolvedResult.choice.outcome.battle
+    ) {
+      return 'Start Battle';
+    }
+
+    return 'Continue Travel';
+  }
 
   const hpDelta =
     displayedCharacter.currentState.hp - character.currentState.hp;
@@ -500,25 +514,26 @@ export function RoadEventPage({
             </div>
 
             {resolvedResult.choice.outcome.nextAction === 'start_battle' &&
-            resolvedResult.choice.outcome.battle && (
+              resolvedResult.choice.outcome.battle && (
                 <div className="mt-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
-                <p className="text-sm font-semibold text-red-200">
+                  <p className="text-sm font-semibold text-red-200">
                     Combat Encounter Prepared
-                </p>
+                  </p>
 
-                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
                     Your choice will start a battle:{' '}
                     <span className="font-semibold text-red-200">
-                    {resolvedResult.choice.outcome.battle.name}
+                      {resolvedResult.choice.outcome.battle.name}
                     </span>
                     .
-                </p>
+                  </p>
 
-                <p className="mt-2 text-xs leading-5 text-red-100">
-                    After winning this road event battle, you will return to the travel route.
-                </p>
+                  <p className="mt-2 text-xs leading-5 text-red-100">
+                    After winning this road event battle, you will return to the
+                    travel route.
+                  </p>
                 </div>
-            )}
+              )}
 
             {resolvedResult.choice.outcome.futureHook && (
               <div className="mt-6 rounded-2xl border border-violet-500/30 bg-violet-500/10 p-4">
@@ -535,6 +550,28 @@ export function RoadEventPage({
                 </p>
               </div>
             )}
+
+            {resolvedResult.choice.outcome.pendingEncounterModifierIds &&
+              resolvedResult.choice.outcome.pendingEncounterModifierIds.length >
+                0 && (
+                <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                  <p className="text-sm font-semibold text-amber-200">
+                    Next Encounter Modifier Prepared
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Your choice will affect the next zone encounter. The
+                    modifier will be applied when you search for the next enemy.
+                  </p>
+
+                  <p className="mt-2 text-xs leading-5 text-amber-100">
+                    Modifier IDs:{' '}
+                    {resolvedResult.choice.outcome.pendingEncounterModifierIds.join(
+                      ', ',
+                    )}
+                  </p>
+                </div>
+              )}
 
             <button
               type="button"

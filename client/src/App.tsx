@@ -13,6 +13,9 @@ import {
   canAffordBronze,
   subtractBronze,
 } from './features/economy/currencyUtils';
+import {
+  createActivePendingEncounterModifiersByIds,
+} from './features/encounter-modifier/encounterModifierCalculations';
 import type { ActivePendingEncounterModifier } from './features/encounter-modifier/encounterModifierTypes';
 import { TownPage } from './features/place/TownPage';
 import { RoadEventPage } from './features/road-event/RoadEventPage';
@@ -164,6 +167,19 @@ function App() {
       return;
     }
 
+    if (selectedBattleSource.type === 'zone') {
+      persistCharacter(updatedCharacter);
+
+      setSelectedBattleSource({
+        type: 'zone',
+        data: selectedBattleSource.data,
+      });
+
+      setBattleRunId((currentId) => currentId + 1);
+      setCurrentScreen('battle');
+      return;
+    }
+
     persistCharacter(updatedCharacter);
     setBattleRunId((currentId) => currentId + 1);
     setCurrentScreen('battle');
@@ -263,9 +279,26 @@ function App() {
             resetAdventureRouteState();
             setCurrentScreen('zone');
           }}
-          onResolveRoadEvent={({ updatedCharacter, nextAction, battle }) => {
+          onResolveRoadEvent={({
+            updatedCharacter,
+            nextAction,
+            battle,
+            pendingEncounterModifierIds,
+          }) => {
             persistCharacter(updatedCharacter);
             setSelectedRoadEvent(null);
+
+            const newPendingModifiers =
+              createActivePendingEncounterModifiersByIds(
+                pendingEncounterModifierIds,
+              );
+
+            if (newPendingModifiers.length > 0) {
+              setPendingEncounterModifiers((currentModifiers) => [
+                ...currentModifiers,
+                ...newPendingModifiers,
+              ]);
+            }
 
             if (nextAction === 'start_battle' && battle) {
               setSelectedBattleSource({

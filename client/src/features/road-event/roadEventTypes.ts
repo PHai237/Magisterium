@@ -1,3 +1,4 @@
+import type { PendingEncounterModifierId } from '../encounter-modifier/encounterModifierTypes';
 import type { MonsterId } from '../monster/monsterTypes';
 import type { ZoneId } from '../zone/zoneTypes';
 
@@ -28,7 +29,8 @@ export type RoadEventFutureHook =
   | 'combat'
   | 'multi_enemy'
   | 'ambush'
-  | 'rare_enemy';
+  | 'rare_enemy'
+  | 'encounter_modifier';
 
 export type RoadEventNextAction = 'continue_travel' | 'start_battle';
 
@@ -49,6 +51,7 @@ export interface RoadEventChoiceOutcome {
   futureHook?: RoadEventFutureHook;
   nextAction?: RoadEventNextAction;
   battle?: RoadEventBattleDefinition;
+  pendingEncounterModifierIds?: PendingEncounterModifierId[];
 }
 
 export interface RoadEventChoiceDefinition {
