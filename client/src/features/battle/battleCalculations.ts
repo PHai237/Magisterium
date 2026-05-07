@@ -14,7 +14,13 @@ import type {
   ResistanceProfile,
   SkillDefinition,
 } from '../character-creation/types';
-import type { PlayerBattleState, BattleContentSource, BattleLogEntry, BattleState } from './battleTypes';
+
+import type {
+  BattleContentSource,
+  BattleLogEntry,
+  BattleState,
+  PlayerBattleState,
+} from './battleTypes';
 
 import {
   calculateEffectiveSkillPower,
@@ -30,6 +36,11 @@ import {
   resolveMonsterAffixesByIds,
   rollMonsterAffixes,
 } from '../monster-affix/monsterAffixCalculations';
+
+import {
+  applyPendingEncounterModifiersToMonster,
+  getPendingEncounterModifierNameList,
+} from '../encounter-modifier/encounterModifierCalculations';
 
 export function createBattleId(prefix: string): string {
   if (crypto.randomUUID) {
@@ -184,7 +195,26 @@ export function createInitialBattleState(params: {
 }): BattleState {
   const player = createPlayerBattleState(params.character);
   const monsterDefinition = resolveBattleMonster(params.source);
-  const monster = createMonsterBattleState(monsterDefinition);
+  const baseMonster = createMonsterBattleState(monsterDefinition);
+
+  const encounterModifiers =
+    params.source.type === 'zone'
+      ? params.source.encounterModifiers ?? []
+      : [];
+
+  const modifiedMonster = applyPendingEncounterModifiersToMonster(
+    baseMonster,
+    encounterModifiers,
+  );
+
+  const monster: MonsterBattleState = {
+    ...modifiedMonster,
+    name: getAffixedMonsterDisplayName(
+      modifiedMonster.baseName,
+      modifiedMonster.affixes,
+    ),
+  };
+
   const firstActor = determineFirstActor(player, monster);
 
   return {
@@ -194,6 +224,7 @@ export function createInitialBattleState(params: {
     sourceName: params.source.data.name,
     player,
     monster,
+    encounterModifiers,
     status: 'active',
     turn: 1,
     currentActor: firstActor,
@@ -214,6 +245,17 @@ export function createInitialBattleState(params: {
               actor: 'system' as const,
               message: `${monster.baseName} has affixes: ${getMonsterAffixNameList(
                 monster.affixes,
+              )}.`,
+            }),
+          ]
+        : []),
+      ...(encounterModifiers.length > 0
+        ? [
+            createLogEntry({
+              turn: 1,
+              actor: 'system' as const,
+              message: `Pending encounter modifiers applied: ${getPendingEncounterModifierNameList(
+                encounterModifiers,
               )}.`,
             }),
           ]
@@ -458,7 +500,7 @@ export function calculatePlayerSkillDamage(params: {
     return 0;
   }
 
-    const rawDamage = calculateSkillPower(player, skill);
+  const rawDamage = calculateSkillPower(player, skill);
   const damageType = getEffectiveSkillDamageType(skill);
   const elementType = getEffectiveSkillElementType(skill);
 

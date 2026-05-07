@@ -13,6 +13,7 @@ import {
   canAffordBronze,
   subtractBronze,
 } from './features/economy/currencyUtils';
+import type { ActivePendingEncounterModifier } from './features/encounter-modifier/encounterModifierTypes';
 import { TownPage } from './features/place/TownPage';
 import { RoadEventPage } from './features/road-event/RoadEventPage';
 import type { RoadEventDefinition } from './features/road-event/roadEventTypes';
@@ -46,6 +47,10 @@ function App() {
 
   const [checkedRoadEventCheckpoints, setCheckedRoadEventCheckpoints] =
     useState<number[]>([]);
+
+  const [pendingEncounterModifiers, setPendingEncounterModifiers] = useState<
+    ActivePendingEncounterModifier[]
+  >([]);
 
   const [battleRunId, setBattleRunId] = useState(0);
 
@@ -104,12 +109,18 @@ function App() {
     setCheckedRoadEventCheckpoints([]);
   }
 
+  function resetAdventureRouteState() {
+    resetTravelState();
+    setPendingEncounterModifiers([]);
+  }
+
   function resetRunState() {
     setSelectedBattleSource(null);
     setSelectedZone(null);
     setSelectedRoadEvent(null);
     setTravelProgressSnapshot(0);
     setCheckedRoadEventCheckpoints([]);
+    setPendingEncounterModifiers([]);
     setBattleRunId(0);
   }
 
@@ -229,13 +240,13 @@ function App() {
         <ZoneEntryPage
           character={character}
           onBackToProfile={() => {
-            resetTravelState();
+            resetAdventureRouteState();
             setCurrentScreen('profile');
           }}
           onEnterZone={(zone) => {
+            resetAdventureRouteState();
             setSelectedZone(zone);
             setSelectedBattleSource(null);
-            resetTravelState();
             setCurrentScreen('travel');
           }}
         />
@@ -249,7 +260,7 @@ function App() {
           zone={selectedZone}
           roadEvent={selectedRoadEvent}
           onCancelTravel={() => {
-            resetTravelState();
+            resetAdventureRouteState();
             setCurrentScreen('zone');
           }}
           onResolveRoadEvent={({ updatedCharacter, nextAction, battle }) => {
@@ -282,7 +293,7 @@ function App() {
           initialProgress={travelProgressSnapshot}
           checkedRoadEventCheckpoints={checkedRoadEventCheckpoints}
           onCancelTravel={() => {
-            resetTravelState();
+            resetAdventureRouteState();
             setCurrentScreen('zone');
           }}
           onArriveAtZone={() => {
@@ -322,19 +333,23 @@ function App() {
           character={character}
           zone={selectedZone}
           onBackToZoneList={() => {
-            resetTravelState();
+            resetAdventureRouteState();
             setCurrentScreen('zone');
           }}
           onReturnToProfile={() => {
-            resetTravelState();
+            resetAdventureRouteState();
             setCurrentScreen('profile');
           }}
           onSearchEncounter={() => {
+            const modifiersForNextEncounter = pendingEncounterModifiers;
+
             setSelectedBattleSource({
               type: 'zone',
               data: selectedZone,
+              encounterModifiers: modifiersForNextEncounter,
             });
 
+            setPendingEncounterModifiers([]);
             setBattleRunId((currentId) => currentId + 1);
             setCurrentScreen('battle');
           }}
@@ -366,15 +381,15 @@ function App() {
           setCurrentScreen('profile');
         }}
         onStartAdventure={() => {
-          resetTravelState();
+          resetAdventureRouteState();
           setCurrentScreen('dungeon');
         }}
         onVisitTown={() => {
-          resetTravelState();
+          resetAdventureRouteState();
           setCurrentScreen('town');
         }}
         onExploreZones={() => {
-          resetTravelState();
+          resetAdventureRouteState();
           setCurrentScreen('zone');
         }}
       />

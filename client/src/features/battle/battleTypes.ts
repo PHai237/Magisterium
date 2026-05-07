@@ -9,6 +9,7 @@ import type { DungeonDefinition } from '../dungeon/dungeonTypes';
 import type { MonsterBattleState } from '../monster/monsterTypes';
 import type { RoadEventBattleDefinition } from '../road-event/roadEventTypes';
 import type { ZoneDefinition } from '../zone/zoneTypes';
+import type { ActivePendingEncounterModifier } from '../encounter-modifier/encounterModifierTypes';
 
 export type BattleStatus = 'active' | 'won' | 'lost' | 'escaped';
 
@@ -22,6 +23,7 @@ export type BattleContentSource =
   | {
       type: 'zone';
       data: ZoneDefinition;
+      encounterModifiers?: ActivePendingEncounterModifier[];
     }
   | {
       type: 'road_event';
@@ -67,6 +69,7 @@ export interface BattleState {
   sourceName: string;
   player: PlayerBattleState;
   monster: MonsterBattleState;
+  encounterModifiers: ActivePendingEncounterModifier[];
   status: BattleStatus;
   turn: number;
   currentActor: Exclude<BattleActor, 'system'>;
