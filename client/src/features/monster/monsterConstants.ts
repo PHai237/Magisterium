@@ -14,6 +14,7 @@ export const MONSTERS: MonsterDefinition[] = [
       fire: -0.25,
       water: 0.2,
     },
+    lootTableId: 'green_slime_loot',
     stats: {
       maxHp: 35,
       attack: 7,
@@ -40,6 +41,7 @@ export const MONSTERS: MonsterDefinition[] = [
       wind: 0.1,
       fire: -0.1,
     },
+    lootTableId: 'wild_rat_loot',
     stats: {
       maxHp: 28,
       attack: 8,
@@ -67,6 +69,7 @@ export const MONSTERS: MonsterDefinition[] = [
       magical: -0.05,
       dark: 0.1,
     },
+    lootTableId: 'lesser_goblin_loot',
     stats: {
       maxHp: 48,
       attack: 10,
@@ -96,6 +99,7 @@ export const MONSTERS: MonsterDefinition[] = [
       earth: 0.2,
       fire: -0.35,
     },
+    lootTableId: 'slime_king_loot',
     stats: {
       maxHp: 110,
       attack: 14,
@@ -124,6 +128,7 @@ export const MONSTERS: MonsterDefinition[] = [
       fire: -0.1,
       dark: 0.15,
     },
+    lootTableId: 'goblin_chief_loot',
     stats: {
       maxHp: 135,
       attack: 18,
@@ -150,6 +155,7 @@ export const MONSTERS: MonsterDefinition[] = [
       physical: 0.05,
       light: -0.1,
     },
+    lootTableId: 'bandit_scout_loot',
     stats: {
       maxHp: 55,
       attack: 11,
@@ -179,6 +185,7 @@ export const MONSTERS: MonsterDefinition[] = [
       fire: -0.2,
       light: -0.35,
     },
+    lootTableId: 'mutated_slime_loot',
     stats: {
       maxHp: 82,
       attack: 13,

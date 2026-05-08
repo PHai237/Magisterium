@@ -3,6 +3,7 @@ import type {
   ElementType,
   ResistanceProfile,
 } from '../character-creation/types';
+import type { LootTableId } from '../loot/lootTypes';
 import type {
   MonsterAffixDefinition,
   MonsterAffixId,
@@ -42,6 +43,7 @@ export interface MonsterDefinition {
   elementType: ElementType;
   resistances: ResistanceProfile;
   possibleAffixIds?: MonsterAffixId[];
+  lootTableId?: LootTableId;
   stats: MonsterStats;
   reward: MonsterReward;
   tags: string[];

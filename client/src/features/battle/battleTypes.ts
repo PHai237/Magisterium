@@ -6,10 +6,11 @@ import type {
 } from '../character-creation/types';
 
 import type { DungeonDefinition } from '../dungeon/dungeonTypes';
+import type { ActivePendingEncounterModifier } from '../encounter-modifier/encounterModifierTypes';
+import type { ItemStack } from '../item/itemTypes';
 import type { MonsterBattleState } from '../monster/monsterTypes';
 import type { RoadEventBattleDefinition } from '../road-event/roadEventTypes';
 import type { ZoneDefinition } from '../zone/zoneTypes';
-import type { ActivePendingEncounterModifier } from '../encounter-modifier/encounterModifierTypes';
 
 export type BattleStatus = 'active' | 'won' | 'lost' | 'escaped';
 
@@ -53,6 +54,7 @@ export interface PlayerBattleState {
 export interface BattleReward {
   exp: number;
   bronze: number;
+  items: ItemStack[];
 }
 
 export interface BattleLogEntry {

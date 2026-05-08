@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { Character } from '../character-creation/types';
 import { formatCurrency } from '../economy/currencyUtils';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
+import { formatItemStackList } from '../loot/lootCalculations';
 import {
   calculateSkillFollowUpEffects,
   getEffectiveSkillCritRate,
@@ -31,7 +32,11 @@ import {
   spendSkillResource,
 } from './battleCalculations';
 
-import type { BattleContentSource, BattleState } from './battleTypes';
+import type {
+  BattleContentSource,
+  BattleLogEntry,
+  BattleState,
+} from './battleTypes';
 
 interface UseBattleParams {
   character: Character;
@@ -61,6 +66,22 @@ function getResourceText(
   return 'Unknown resource';
 }
 
+function createLootLogIfNeeded(
+  battleState: BattleState,
+): BattleLogEntry | null {
+  if (battleState.reward.items.length === 0) {
+    return null;
+  }
+
+  return createLogEntry({
+    turn: battleState.turn,
+    actor: 'system',
+    message: `Item drops: ${formatItemStackList(
+      battleState.reward.items,
+    )}.`,
+  });
+}
+
 export function useBattle({ character, source }: UseBattleParams) {
   const [battleState, setBattleState] = useState<BattleState>(() =>
     createInitialBattleState({
@@ -70,8 +91,10 @@ export function useBattle({ character, source }: UseBattleParams) {
   );
 
   const isBattleActive = battleState.status === 'active';
+
   const isPlayerTurn =
     battleState.status === 'active' && battleState.currentActor === 'player';
+
   const isMonsterTurn =
     battleState.status === 'active' && battleState.currentActor === 'monster';
 
@@ -124,11 +147,19 @@ export function useBattle({ character, source }: UseBattleParams) {
           )}.`,
         });
 
+        const lootLog = createLootLogIfNeeded(currentBattle);
+
         return {
           ...currentBattle,
           monster: updatedMonster,
           status: 'won',
-          logs: [...currentBattle.logs, attackLog, winLog, rewardLog],
+          logs: [
+            ...currentBattle.logs,
+            attackLog,
+            winLog,
+            rewardLog,
+            ...(lootLog ? [lootLog] : []),
+          ],
         };
       }
 
@@ -169,7 +200,8 @@ export function useBattle({ character, source }: UseBattleParams) {
       }
 
       if (!canUseSkill(currentBattle.player, selectedSkill)) {
-        const requiredResourceCost = getEffectiveSkillResourceCost(selectedSkill);
+        const requiredResourceCost =
+          getEffectiveSkillResourceCost(selectedSkill);
 
         const noResourceLog = createLogEntry({
           turn: currentBattle.turn,
@@ -264,12 +296,20 @@ export function useBattle({ character, source }: UseBattleParams) {
             )}.`,
           });
 
+          const lootLog = createLootLogIfNeeded(currentBattle);
+
           return {
             ...currentBattle,
             player: playerAfterSkillResult,
             monster: updatedMonster,
             status: 'won',
-            logs: [...currentBattle.logs, skillLog, winLog, rewardLog],
+            logs: [
+              ...currentBattle.logs,
+              skillLog,
+              winLog,
+              rewardLog,
+              ...(lootLog ? [lootLog] : []),
+            ],
           };
         }
 

@@ -42,6 +42,11 @@ import {
   getPendingEncounterModifierNameList,
 } from '../encounter-modifier/encounterModifierCalculations';
 
+import {
+  formatItemStackList,
+  rollLootForTable,
+} from '../loot/lootCalculations';
+
 export function createBattleId(prefix: string): string {
   if (crypto.randomUUID) {
     return `${prefix}_${crypto.randomUUID()}`;
@@ -215,6 +220,7 @@ export function createInitialBattleState(params: {
     ),
   };
 
+  const itemDrops = rollLootForTable(monsterDefinition.lootTableId);
   const firstActor = determineFirstActor(player, monster);
 
   return {
@@ -231,6 +237,7 @@ export function createInitialBattleState(params: {
     reward: {
       exp: monster.reward.exp,
       bronze: monster.reward.bronze,
+      items: itemDrops,
     },
     logs: [
       createLogEntry({
@@ -256,6 +263,17 @@ export function createInitialBattleState(params: {
               actor: 'system' as const,
               message: `Pending encounter modifiers applied: ${getPendingEncounterModifierNameList(
                 encounterModifiers,
+              )}.`,
+            }),
+          ]
+        : []),
+      ...(itemDrops.length > 0
+        ? [
+            createLogEntry({
+              turn: 1,
+              actor: 'system' as const,
+              message: `Potential item drops: ${formatItemStackList(
+                itemDrops,
               )}.`,
             }),
           ]

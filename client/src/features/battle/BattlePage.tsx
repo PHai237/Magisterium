@@ -5,10 +5,12 @@ import type { Character, SkillDefinition } from '../character-creation/types';
 import { applyExpReward } from '../character-progression/progressionCalculations';
 import { addBronze, formatCurrency } from '../economy/currencyUtils';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
+import { formatItemStackList } from '../loot/lootCalculations';
 import { getEffectiveSkillResourceCost } from '../skill/skillCalculations';
 
 import { useBattle } from './useBattle';
 import type {
+  BattleActor,
   BattleContentSource,
   BattleState,
   PlayerBattleState,
@@ -237,7 +239,7 @@ function canPlayerUseSkill(player: PlayerBattleState, skillId: string): boolean 
   return false;
 }
 
-function getLogActorLabel(actor: BattleState['logs'][number]['actor']): string {
+function getLogActorLabel(actor: BattleActor): string {
   if (actor === 'player') {
     return 'Player';
   }
@@ -249,7 +251,7 @@ function getLogActorLabel(actor: BattleState['logs'][number]['actor']): string {
   return 'System';
 }
 
-function getLogCardClass(actor: BattleState['logs'][number]['actor']): string {
+function getLogCardClass(actor: BattleActor): string {
   if (actor === 'player') {
     return 'border-violet-500/30 bg-violet-500/10';
   }
@@ -261,7 +263,7 @@ function getLogCardClass(actor: BattleState['logs'][number]['actor']): string {
   return 'border-slate-800 bg-slate-950';
 }
 
-function getLogBadgeClass(actor: BattleState['logs'][number]['actor']): string {
+function getLogBadgeClass(actor: BattleActor): string {
   if (actor === 'player') {
     return 'border-violet-500/40 bg-violet-500/10 text-violet-300';
   }
@@ -344,7 +346,7 @@ export function BattlePage({
 
   useEffect(() => {
     if (!isMonsterTurn) {
-      return;
+      return undefined;
     }
 
     const timerId = window.setTimeout(() => {
@@ -448,6 +450,12 @@ export function BattlePage({
               {battleState.reward.exp} EXP /{' '}
               {formatCurrency(battleState.reward.bronze)}
             </p>
+
+            {battleState.reward.items.length > 0 && (
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                Items: {formatItemStackList(battleState.reward.items)}
+              </p>
+            )}
           </div>
 
           <div
@@ -705,6 +713,12 @@ export function BattlePage({
                   You gained {battleState.reward.exp} EXP and{' '}
                   {formatCurrency(battleState.reward.bronze)}.
                 </p>
+
+                {battleState.reward.items.length > 0 && (
+                  <p className="mt-2 text-sm text-emerald-100">
+                    Item drops: {formatItemStackList(battleState.reward.items)}.
+                  </p>
+                )}
 
                 <div className="mt-4 space-y-3">
                   <button
