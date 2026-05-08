@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { LOCAL_STORAGE_KEYS } from './constants';
+import { characterRepository } from '../../services/characterRepository';
+
 import {
   buildBaseStatsForClass,
   buildDerivedStats,
-  createCharacter,
   getClassById,
 } from './calculations';
+
 import type { Character, ClassId, GiftId } from './types';
 
 export function useCharacterCreation() {
@@ -16,20 +17,30 @@ export function useCharacterCreation() {
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [createdCharacter, setCreatedCharacter] = useState<Character | null>(null);
+  const [createdCharacter, setCreatedCharacter] =
+    useState<Character | null>(null);
 
   const selectedClass = useMemo(() => {
-    if (!selectedClassId) return null;
+    if (!selectedClassId) {
+      return null;
+    }
+
     return getClassById(selectedClassId);
   }, [selectedClassId]);
 
   const previewBaseStats = useMemo(() => {
-    if (!selectedClass) return null;
+    if (!selectedClass) {
+      return null;
+    }
+
     return buildBaseStatsForClass(selectedClass);
   }, [selectedClass]);
 
   const previewDerivedStats = useMemo(() => {
-    if (!previewBaseStats) return null;
+    if (!previewBaseStats) {
+      return null;
+    }
+
     return buildDerivedStats(previewBaseStats);
   }, [previewBaseStats]);
 
@@ -40,23 +51,6 @@ export function useCharacterCreation() {
       selectedGiftId !== ''
     );
   }, [name, selectedClassId, selectedGiftId]);
-
-  const saveCharacter = useCallback((character: Character) => {
-    localStorage.setItem(
-      LOCAL_STORAGE_KEYS.currentCharacter,
-      JSON.stringify(character),
-    );
-
-    const archiveRaw = localStorage.getItem(LOCAL_STORAGE_KEYS.characterArchive);
-    const archive: Character[] = archiveRaw ? JSON.parse(archiveRaw) : [];
-
-    archive.push(character);
-
-    localStorage.setItem(
-      LOCAL_STORAGE_KEYS.characterArchive,
-      JSON.stringify(archive),
-    );
-  }, []);
 
   const handleCreateCharacter = useCallback((): Character | null => {
     setErrorMessage('');
@@ -79,18 +73,19 @@ export function useCharacterCreation() {
       return null;
     }
 
-    const character = createCharacter({
+    const character = characterRepository.createCharacter({
       name: trimmedName,
       classId: selectedClassId,
       giftId: selectedGiftId,
     });
 
-    saveCharacter(character);
     setCreatedCharacter(character);
-    setSuccessMessage(`Character "${character.name}" has been created successfully.`);
+    setSuccessMessage(
+      `Character "${character.name}" has been created successfully.`,
+    );
 
     return character;
-  }, [name, saveCharacter, selectedClassId, selectedGiftId]);
+  }, [name, selectedClassId, selectedGiftId]);
 
   const resetForm = useCallback(() => {
     setName('');
