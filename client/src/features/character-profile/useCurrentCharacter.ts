@@ -5,6 +5,8 @@ import {
   LOCAL_STORAGE_KEYS,
 } from '../character-creation/constants';
 import type { Character } from '../character-creation/types';
+import { mergeInventoryStacks } from '../inventory/inventoryCalculations';
+import type { ItemStack } from '../item/itemTypes';
 
 interface CurrentCharacterState {
   character: Character | null;
@@ -22,6 +24,10 @@ function getCurrentClassSkillDefinition(
 }
 
 function normalizeStoredSkills(parsedCharacter: Character): Character['skills'] {
+  if (!Array.isArray(parsedCharacter.skills)) {
+    return [];
+  }
+
   return parsedCharacter.skills.map((skill) => {
     const currentSkillDefinition = getCurrentClassSkillDefinition(
       parsedCharacter.classId,
@@ -39,10 +45,37 @@ function normalizeStoredSkills(parsedCharacter: Character): Character['skills'] 
   });
 }
 
+function normalizeInventory(rawInventory: unknown): ItemStack[] {
+  if (!Array.isArray(rawInventory)) {
+    return [];
+  }
+
+  const normalizedInventory = rawInventory
+    .map((itemStack) => {
+      const parsedItemStack = itemStack as Partial<ItemStack>;
+
+      if (
+        typeof parsedItemStack.itemId !== 'string' ||
+        typeof parsedItemStack.quantity !== 'number'
+      ) {
+        return null;
+      }
+
+      return {
+        itemId: parsedItemStack.itemId,
+        quantity: Math.max(0, Math.floor(parsedItemStack.quantity)),
+      };
+    })
+    .filter((itemStack): itemStack is ItemStack => Boolean(itemStack));
+
+  return mergeInventoryStacks(normalizedInventory);
+}
+
 function normalizeStoredCharacter(rawCharacter: unknown): Character {
   const parsedCharacter = rawCharacter as Character & {
     gold?: number;
     moneyBronze?: number;
+    inventory?: unknown;
     starterGift?: Character['starterGift'] & {
       effectType?: string;
     };
@@ -66,10 +99,11 @@ function normalizeStoredCharacter(rawCharacter: unknown): Character {
 
   return {
     ...parsedCharacter,
-    version: Math.max(parsedCharacter.version ?? 1, 2),
+    version: Math.max(parsedCharacter.version ?? 1, 3),
     moneyBronze: normalizedMoneyBronze,
     starterGift: normalizedStarterGift ?? parsedCharacter.starterGift,
     skills: normalizeStoredSkills(parsedCharacter),
+    inventory: normalizeInventory(parsedCharacter.inventory),
   };
 }
 

@@ -1,11 +1,17 @@
 import type { ReactNode } from 'react';
 
+import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
 import { OverviewStatCard } from '../../components/ui/OverviewStatCard';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SectionCard } from '../../components/ui/SectionCard';
 import type { Character, SkillDefinition } from '../character-creation/types';
 import { getExpToNextLevel } from '../character-progression/progressionCalculations';
-import { MoneyDisplay } from '../../components/ui/MoneyDisplay';
+import {
+  formatInventoryPreview,
+  getInventoryTotalQuantity,
+  getInventoryUniqueItemCount,
+  resolveInventoryItemStacks,
+} from '../inventory/inventoryCalculations';
 
 interface CharacterProfilePageProps {
   character: Character;
@@ -118,6 +124,11 @@ export function CharacterProfilePage({
   const expToNextLevel = getExpToNextLevel(character.level);
   const expPercent = getPercent(character.exp, expToNextLevel);
 
+  const inventory = character.inventory ?? [];
+  const resolvedInventory = resolveInventoryItemStacks(inventory);
+  const inventoryTotalQuantity = getInventoryTotalQuantity(inventory);
+  const inventoryUniqueItemCount = getInventoryUniqueItemCount(inventory);
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto max-w-7xl">
@@ -185,10 +196,17 @@ export function CharacterProfilePage({
 
               <div className="mt-6 grid max-w-3xl gap-4 md:grid-cols-3">
                 <OverviewStatCard label="Level" value={character.level} />
+
                 <OverviewStatCard
                   label="Currency"
-                  value={<MoneyDisplay totalBronze={character.moneyBronze} compact />}
+                  value={
+                    <MoneyDisplay
+                      totalBronze={character.moneyBronze}
+                      compact
+                    />
+                  }
                 />
+
                 <OverviewStatCard
                   label="Passive"
                   value={character.passive.name}
@@ -278,6 +296,81 @@ export function CharacterProfilePage({
                   max={character.derivedStats.maxEnergy}
                   variant="energy"
                 />
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              title="Inventory"
+              subtitle="Basic item storage from battle loot. Equipment and item usage will be added later."
+              className="ui-card-enter"
+            >
+              <div className="grid gap-4 lg:grid-cols-3">
+                <OverviewStatCard
+                  label="Unique Items"
+                  value={inventoryUniqueItemCount}
+                  accentClass="text-violet-300"
+                />
+
+                <OverviewStatCard
+                  label="Total Quantity"
+                  value={inventoryTotalQuantity}
+                  accentClass="text-emerald-300"
+                />
+
+                <OverviewStatCard
+                  label="Preview"
+                  value={formatInventoryPreview(inventory)}
+                  accentClass="text-amber-300"
+                />
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                {resolvedInventory.length === 0 ? (
+                  <p className="text-sm text-slate-400">
+                    Inventory is empty. Defeat monsters to collect item drops.
+                  </p>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {resolvedInventory.map((itemStack) => (
+                      <div
+                        key={itemStack.itemId}
+                        className="rounded-xl border border-slate-800 bg-slate-900 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {itemStack.item.name}
+                            </p>
+
+                            <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
+                              {itemStack.item.rarity} ·{' '}
+                              {itemStack.item.category}
+                            </p>
+                          </div>
+
+                          <span className="rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1 text-sm font-semibold text-violet-200">
+                            x{itemStack.quantity}
+                          </span>
+                        </div>
+
+                        <p className="mt-3 text-sm leading-6 text-slate-400">
+                          {itemStack.item.description}
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {itemStack.item.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-slate-950 px-2 py-1 text-xs text-slate-400"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </SectionCard>
 

@@ -115,7 +115,7 @@ export function createCharacter(params: {
 
   return {
     id: crypto.randomUUID(),
-    version: 2,
+    version: 3,
     name: params.name.trim(),
     classId: classDef.id,
     className: classDef.name,
@@ -128,6 +128,7 @@ export function createCharacter(params: {
     passive: classDef.passive,
     skills: classDef.starterSkills,
     starterGift: giftDef,
+    inventory: [],
     createdAt: new Date().toISOString(),
   };
 }

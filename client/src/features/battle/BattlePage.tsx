@@ -5,6 +5,7 @@ import type { Character, SkillDefinition } from '../character-creation/types';
 import { applyExpReward } from '../character-progression/progressionCalculations';
 import { addBronze, formatCurrency } from '../economy/currencyUtils';
 import { BATTLE_BALANCE } from '../game-balance/balanceConstants';
+import { addItemStacksToInventory } from '../inventory/inventoryCalculations';
 import { formatItemStackList } from '../loot/lootCalculations';
 import { getEffectiveSkillResourceCost } from '../skill/skillCalculations';
 
@@ -156,6 +157,10 @@ function buildCharacterAfterWin(
       character.moneyBronze,
       battleState.reward.bronze,
     ),
+    inventory: addItemStacksToInventory({
+      inventory: character.inventory ?? [],
+      itemStacks: battleState.reward.items,
+    }),
     currentState: {
       hp: Math.min(
         character.derivedStats.maxHp,

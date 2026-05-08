@@ -1,3 +1,5 @@
+import type { ItemStack } from '../item/itemTypes';
+
 export type StatKey = 'STR' | 'INT' | 'VIT' | 'DEX' | 'LUK';
 
 export type DamageType = 'physical' | 'magical' | 'pure';
@@ -19,9 +21,7 @@ export type ResourceType = 'HP' | 'MP' | 'Energy';
 
 export type SkillFamily = 'weapon' | 'spell' | 'support' | 'utility';
 
-export type SkillTargetType =
-  | 'enemy_single'
-  | 'self';
+export type SkillTargetType = 'enemy_single' | 'self';
 
 export type SkillRuneSlotType = 'power' | 'element' | 'utility';
 
@@ -186,5 +186,6 @@ export interface Character {
   passive: PassiveDefinition;
   skills: SkillDefinition[];
   starterGift: StarterGiftDefinition;
+  inventory: ItemStack[];
   createdAt: string;
 }
