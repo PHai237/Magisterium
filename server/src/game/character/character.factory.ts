@@ -1,52 +1,92 @@
 import { randomUUID } from 'crypto';
 
 import {
-  buildBaseStatsForClass,
+  STARTING_CHARACTER_EXP,
+  STARTING_CHARACTER_LEVEL,
+  STARTING_FATIGUE,
+} from './character.constants';
+
+import {
   buildCurrentState,
-  buildDerivedStats,
-  getClassById,
-  getGiftById,
+  buildStatsForOrigin,
+  calculateBaseStats,
+  calculateDerivedStats,
+  getDefaultStarterKit,
+  getOriginById,
 } from './character.calculations';
 
-import type { Character, ClassId, GiftId } from './character.types';
+import type {
+  Character,
+  CreateCharacterInput,
+  ItemId,
+  PassiveId,
+  SkillId,
+} from './character.types';
 
-export interface CreateCharacterFactoryInput {
-  name: string;
-  classId: ClassId;
-  giftId: GiftId;
+function uniqueIds<T extends string>(ids: T[]): T[] {
+  return Array.from(new Set(ids));
 }
 
-export function createCharacter(
-  input: CreateCharacterFactoryInput,
-): Character {
-  const classDef = getClassById(input.classId);
-  const giftDef = getGiftById(input.giftId);
+export function createCharacter(input: CreateCharacterInput): Character {
+  const originDef = getOriginById(input.originId);
+  const starterKitDef = getDefaultStarterKit();
 
-  const baseStats = buildBaseStatsForClass(classDef);
-  const derivedStats = buildDerivedStats(baseStats);
+  const stats = buildStatsForOrigin(originDef);
+  const baseStats = calculateBaseStats(stats);
+  const derivedStats = calculateDerivedStats(baseStats);
   const currentState = buildCurrentState(derivedStats);
 
-  const startingMoneyBronze =
-    giftDef.effectType === 'starting_money' ||
-    giftDef.effectType === 'starting_gold'
-      ? giftDef.effectValue
-      : 0;
+  const now = new Date().toISOString();
+
+  const originItemIds: ItemId[] = originDef.startingItemIds;
+  const starterKitItemIds: ItemId[] = starterKitDef.startingItemIds;
+
+  const inventoryItemIds = uniqueIds<ItemId>([
+    ...originItemIds,
+    ...starterKitItemIds,
+  ]);
+
+  const equippedItemIds = uniqueIds<ItemId>(originItemIds);
+
+  const learnedSkillIds = uniqueIds<SkillId>(originDef.startingSkillIds);
+  const equippedSkillIds = uniqueIds<SkillId>(originDef.startingSkillIds);
+
+  const passiveIds = uniqueIds<PassiveId>(originDef.startingPassiveIds);
 
   return {
     id: randomUUID(),
     version: 1,
+
+    userId: input.userId,
+
     name: input.name.trim(),
-    classId: classDef.id,
-    className: classDef.name,
-    level: 1,
-    exp: 0,
-    moneyBronze: startingMoneyBronze,
-    baseStats,
-    derivedStats,
+    originId: originDef.id,
+
+    progression: {
+      level: STARTING_CHARACTER_LEVEL,
+      exp: STARTING_CHARACTER_EXP,
+      milestoneIds: [],
+    },
+
+    moneyBronze: starterKitDef.startingMoneyBronze,
+
+    stats,
     currentState,
-    passive: classDef.passive,
-    skills: classDef.starterSkills,
-    starterGift: giftDef,
-    createdAt: new Date().toISOString(),
+
+    passiveIds,
+
+    learnedSkillIds,
+    equippedSkillIds,
+
+    starterKitId: starterKitDef.id,
+
+    inventoryItemIds,
+    equippedItemIds,
+
+    fatigue: STARTING_FATIGUE,
+    lastRestAt: now,
+
+    createdAt: now,
+    updatedAt: now,
   };
 }

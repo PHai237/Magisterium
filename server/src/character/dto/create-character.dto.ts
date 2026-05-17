@@ -1,40 +1,40 @@
-import {
-  IsIn,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { Transform, type TransformFnParams } from 'class-transformer';
+import { IsIn, IsNotEmpty, IsString, Length } from 'class-validator';
 
-import type {
-  ClassId,
-  GiftId,
-} from '../../game/character/character.types';
+import { ORIGIN_DEFINITIONS } from '../../game/character/character.constants';
+import type { OriginId } from '../../game/character/character.types';
 
-const VALID_CLASS_IDS: ClassId[] = [
-  'warrior',
-  'mage',
-  'archer',
-  'rogue',
-  'healer',
-];
+const VALID_ORIGIN_IDS: OriginId[] = ORIGIN_DEFINITIONS.map(
+  (origin) => origin.id,
+);
 
-const VALID_GIFT_IDS: GiftId[] = [
-  'stale_bread',
-  'guide_book',
-  'small_pouch',
-];
+function trimString({ value }: TransformFnParams): unknown {
+  const rawValue: unknown = value;
+
+  if (typeof rawValue === 'string') {
+    return rawValue.trim();
+  }
+
+  return rawValue;
+}
 
 export class CreateCharacterDto {
+  @Transform(trimString)
   @IsString()
-  @MinLength(2)
-  @MaxLength(20)
+  @IsNotEmpty({
+    message: 'Character name must not be empty.',
+  })
+  @Length(3, 20, {
+    message: 'Character name must be between 3 and 20 characters.',
+  })
   name!: string;
 
   @IsString()
-  @IsIn(VALID_CLASS_IDS)
-  classId!: ClassId;
-
-  @IsString()
-  @IsIn(VALID_GIFT_IDS)
-  giftId!: GiftId;
+  @IsNotEmpty({
+    message: 'Origin must not be empty.',
+  })
+  @IsIn(VALID_ORIGIN_IDS, {
+    message: `Origin must be one of: ${VALID_ORIGIN_IDS.join(', ')}.`,
+  })
+  originId!: OriginId;
 }

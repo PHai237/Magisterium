@@ -1,9 +1,10 @@
-export type StatKey = 'STR' | 'INT' | 'VIT' | 'DEX' | 'LUK';
+export type StatKey = 'STR' | 'DEX' | 'CON' | 'INT' | 'WIS' | 'LUK';
 
-export type DamageType = 'physical' | 'magical' | 'pure';
+export type DamageType = 'physical' | 'magical' | 'true';
+
+export type ResistibleDamageType = Exclude<DamageType, 'true'>;
 
 export type ElementType =
-  | 'neutral'
   | 'fire'
   | 'water'
   | 'wind'
@@ -11,124 +12,162 @@ export type ElementType =
   | 'light'
   | 'dark';
 
-export type ResistanceKey = DamageType | ElementType;
+export type ResistanceKey = ResistibleDamageType | ElementType;
 
 export type ResistanceProfile = Partial<Record<ResistanceKey, number>>;
 
-export type ResourceType = 'HP' | 'MP' | 'Energy';
-
-export type SkillFamily = 'weapon' | 'spell' | 'support' | 'utility';
-
-export type SkillTargetType = 'enemy_single' | 'self';
-
-export type SkillRuneSlotType = 'power' | 'element' | 'utility';
-
-export type ActionType = 'basic_attack' | 'physical_skill' | 'magical_spell';
-
-export type ActionCategory = 'offensive' | 'defensive' | 'utility';
-
-export type EffectType =
-  | 'damage'
-  | 'heal'
-  | 'shield'
-  | 'buff'
-  | 'debuff'
-  | 'status_effect';
-
-export type ClassId = 'warrior' | 'mage' | 'archer' | 'rogue' | 'healer';
-
-export type GiftId = 'stale_bread' | 'guide_book' | 'small_pouch';
-
-export type StarterGiftEffectType =
-  | 'post_battle_heal_percent'
-  | 'weapon_mastery_bonus'
-  | 'starting_money'
-  | 'starting_gold';
+export type ResourceType = 'HP' | 'MP' | 'Stamina';
 
 export interface BaseStats {
   STR: number;
-  INT: number;
-  VIT: number;
   DEX: number;
+  CON: number;
+  INT: number;
+  WIS: number;
   LUK: number;
+}
+
+export interface StatProgress {
+  currentValue: number;
+  fragmentCount: number;
+  accumulatedBonus: number;
 }
 
 export interface DerivedStats {
   maxHp: number;
   maxMp: number;
-  maxEnergy: number;
-  defense: number;
-  damageReduction: number;
+  maxStamina: number;
+
+  pAtk: number;
+  mAtk: number;
+  healingPotency: number;
+
+  pDef: number;
+  mDef: number;
+
   actionSpeed: number;
+  accuracy: number;
+  evasionRate: number;
+
   critRate: number;
-  dropRateBonus: number;
+  critDamageBonus: number;
+
+  fleeRate: number;
+
+  statusResist: number;
+  spiritualPotency: number;
+
+  mpRegen: number;
+  staminaRegen: number;
+
+  secondChanceRate: number;
+  procRate: number;
 }
 
 export interface CurrentState {
   hp: number;
   mp: number;
-  energy: number;
-  shield: number;
+  stamina: number;
 }
 
-export interface PassiveDefinition {
-  id: string;
-  name: string;
-  description: string;
+export type OriginId =
+  | 'scholar'
+  | 'mercenary'
+  | 'wanderer'
+  | 'street_urchin'
+  | 'acolyte';
+
+export type StarterKitId = 'novice_adventurer_kit';
+
+export type SkillId = string;
+
+export type PassiveId = string;
+
+export type ItemId = string;
+
+export type MilestoneId = string;
+
+export type CurrencyUnit = 'bronze' | 'silver' | 'gold';
+
+export interface CurrencyAmount {
+  bronze: number;
+  silver: number;
+  gold: number;
 }
 
-export interface SkillDefinition {
-  id: string;
+export interface StarterKitDefinition {
+  id: StarterKitId;
   name: string;
   description: string;
-  actionType: ActionType;
-  actionCategory: ActionCategory;
-  effectType: EffectType;
-  damageType: DamageType | null;
-  elementType: ElementType | null;
-  skillFamily?: SkillFamily;
-  targetType?: SkillTargetType;
-  runeSlots?: SkillRuneSlotType[];
-  attachedRuneIds?: string[];
-  scalingStat: StatKey | null;
-  baseValue: number;
-  multiplier: number;
-  resourceType: ResourceType | null;
-  resourceCost: number;
+
+  startingMoneyBronze: number;
+
+  startingItemIds: ItemId[];
+
   tags: string[];
 }
 
-export interface StarterGiftDefinition {
-  id: GiftId;
+export interface OriginDefinition {
+  id: OriginId;
   name: string;
   description: string;
-  effectType: StarterGiftEffectType;
-  effectValue: number;
+
+  initialStatBonus: BaseStats;
+
+  startingItemIds: ItemId[];
+  startingSkillIds: SkillId[];
+  startingPassiveIds: PassiveId[];
+
+  tags: string[];
 }
 
-export interface ClassDefinition {
-  id: ClassId;
-  name: string;
-  description: string;
-  statBonus: BaseStats;
-  passive: PassiveDefinition;
-  starterSkills: SkillDefinition[];
+export interface CharacterProgression {
+  level: number;
+  exp: number;
+
+  milestoneIds: MilestoneId[];
 }
 
 export interface Character {
   id: string;
   version: number;
+
+  userId?: string;
+
   name: string;
-  classId: ClassId;
-  className: string;
-  level: number;
-  exp: number;
+  originId: OriginId;
+
+  progression: CharacterProgression;
+
   moneyBronze: number;
+
+  stats: Record<StatKey, StatProgress>;
+  currentState: CurrentState;
+
+  passiveIds: PassiveId[];
+
+  learnedSkillIds: SkillId[];
+  equippedSkillIds: SkillId[];
+
+  starterKitId: StarterKitId;
+
+  inventoryItemIds: ItemId[];
+  equippedItemIds: ItemId[];
+
+  fatigue: number;
+  lastRestAt: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CharacterSnapshot extends Character {
   baseStats: BaseStats;
   derivedStats: DerivedStats;
-  currentState: CurrentState;
-  passive: PassiveDefinition;
-  skills: SkillDefinition[];
-  starterGift: StarterGiftDefinition;
-  createdAt: string;
+}
+
+export interface CreateCharacterInput {
+  name: string;
+  originId: OriginId;
+  userId?: string;
 }
