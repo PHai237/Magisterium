@@ -4,6 +4,8 @@ import type {
   DerivedStats,
   ElementType,
   ResistanceProfile,
+  ResourceType,
+  SkillId,
 } from '../character/character.types';
 
 import type {
@@ -16,8 +18,17 @@ import type { StatusEffectType } from '../status/status.types';
 
 export type BattleActorType = 'character' | 'monster';
 
+export type BattleStatus =
+  | 'created'
+  | 'in_progress'
+  | 'victory'
+  | 'defeat'
+  | 'escaped'
+  | 'cancelled';
+
 export type BattleActionPhase =
   | 'initiation'
+  | 'resource_check'
   | 'accuracy_check'
   | 'damage_calculation'
   | 'mitigation'
@@ -27,6 +38,9 @@ export type BattleActionPhase =
   | 'cancelled';
 
 export type BattleEventType =
+  | 'BATTLE_STARTED'
+  | 'ROUND_STARTED'
+  | 'TURN_STARTED'
   | 'ACTION_STARTED'
   | 'ACTION_CANCELLED'
   | 'RESOURCE_CHECK_FAILED'
@@ -51,7 +65,9 @@ export type BattleEventType =
   | 'EXHAUSTED'
   | 'RECOVERED_FROM_EXHAUSTION'
   | 'ACTOR_DEFEATED'
-  | 'TURN_ENDED';
+  | 'TURN_ENDED'
+  | 'ROUND_ENDED'
+  | 'BATTLE_ENDED';
 
 export interface BattleEvent {
   id: string;
@@ -62,7 +78,7 @@ export interface BattleEvent {
   actorId: string;
   targetId?: string;
 
-  skillId?: string;
+  skillId?: SkillId;
   effectId?: string;
   sourceId?: string;
 
@@ -111,6 +127,92 @@ export interface BattleActorState {
   procCountThisTurn: number;
 }
 
+export interface BattleTurnOrderEntry {
+  actorId: string;
+  actionSpeed: number;
+  initiative: number;
+  turnGauge: number;
+}
+
+export interface BattleState {
+  battleId: string;
+  status: BattleStatus;
+
+  roundNumber: number;
+  turnNumber: number;
+  activeActorId?: string;
+
+  actors: Record<string, BattleActorState>;
+  turnOrder: BattleTurnOrderEntry[];
+
+  randomContext: BattleRandomContext;
+
+  events: BattleEvent[];
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type BattleActionType =
+  | 'basic_attack'
+  | 'use_skill'
+  | 'guard'
+  | 'use_item'
+  | 'flee'
+  | 'skip_turn';
+
+export interface BattleActionCommand {
+  battleId: string;
+
+  actorId: string;
+  targetIds: string[];
+
+  actionType: BattleActionType;
+
+  skillId?: SkillId;
+  itemId?: string;
+}
+
+export interface BattleResourceCost {
+  resourceType: ResourceType;
+  amount: number;
+}
+
+export interface BattleResourceCheckResult {
+  canPay: boolean;
+  missingResources: BattleResourceCost[];
+}
+
+export interface DamageCalculationInput {
+  attacker: BattleActorState;
+  defender: BattleActorState;
+
+  damageType: DamageType;
+  elementType?: ElementType;
+
+  basePower: number;
+  scalingValue: number;
+
+  isCritical: boolean;
+}
+
+export interface DamageCalculationResult {
+  rawDamage: number;
+
+  damageAfterDefense: number;
+  damageAfterResistance: number;
+
+  finalDamage: number;
+
+  damageType: DamageType;
+  elementType?: ElementType;
+
+  isCritical: boolean;
+  isTrueDamage: boolean;
+
+  wasFullyBlocked: boolean;
+}
+
 export interface DerivedStatCalculationInput {
   baseStats: BaseStats;
   modifiers: StatModifier[];
@@ -123,7 +225,6 @@ export type RandomRollType =
   | 'status'
   | 'second_chance'
   | 'proc'
-  | 'drop'
   | 'flee';
 
 export interface BattleRandomContext {
@@ -145,6 +246,7 @@ export interface RandomRollRequest {
 
   baseChance: number;
 
+  luckValue?: number;
   luckScaling?: RandomRollLuckScaling;
 
   sourceId?: string;
