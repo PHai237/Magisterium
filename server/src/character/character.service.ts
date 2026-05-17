@@ -3,7 +3,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCharacterDto } from './dto/create-character.dto';
 
 import { createCharacter } from '../game/character/character.factory';
-import type { Character } from '../game/character/character.types';
+import { createCharacterSnapshot } from '../game/character/character.calculations';
+
+import type {
+  Character,
+  CharacterSnapshot,
+} from '../game/character/character.types';
+
+type CharacterEntityInput = Character &
+  Partial<Pick<CharacterSnapshot, 'baseStats' | 'derivedStats'>>;
 
 @Injectable()
 export class CharacterService {
@@ -18,24 +26,25 @@ export class CharacterService {
     };
   }
 
-  create(dto: CreateCharacterDto): Character {
+  create(dto: CreateCharacterDto): CharacterSnapshot {
     const character = createCharacter({
       name: dto.name,
-      classId: dto.classId,
-      giftId: dto.giftId,
+      originId: dto.originId,
     });
 
     this.characters.set(character.id, character);
     this.currentCharacterId = character.id;
 
-    return character;
+    return createCharacterSnapshot(character);
   }
 
-  findAll(): Character[] {
-    return Array.from(this.characters.values());
+  findAll(): CharacterSnapshot[] {
+    return Array.from(this.characters.values()).map((character) =>
+      createCharacterSnapshot(character),
+    );
   }
 
-  findCurrent(): Character | null {
+  findCurrent(): CharacterSnapshot | null {
     if (!this.currentCharacterId) {
       return null;
     }
@@ -43,7 +52,59 @@ export class CharacterService {
     return this.findById(this.currentCharacterId);
   }
 
-  findById(id: string): Character {
+  findById(id: string): CharacterSnapshot {
+    const character = this.findEntityById(id);
+
+    return createCharacterSnapshot(character);
+  }
+
+  replaceById(
+    id: string,
+    incomingData: CharacterEntityInput,
+  ): CharacterSnapshot {
+    this.findEntityById(id);
+
+    const sanitizedCharacter = this.sanitizeCharacterEntity(incomingData);
+
+    const updatedCharacter: Character = {
+      ...sanitizedCharacter,
+      id,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(id, updatedCharacter);
+
+    if (!this.currentCharacterId) {
+      this.currentCharacterId = id;
+    }
+
+    return createCharacterSnapshot(updatedCharacter);
+  }
+
+  setCurrentCharacter(id: string): CharacterSnapshot {
+    const character = this.findEntityById(id);
+
+    this.currentCharacterId = character.id;
+
+    return createCharacterSnapshot(character);
+  }
+
+  deleteById(id: string) {
+    this.findEntityById(id);
+
+    this.characters.delete(id);
+
+    if (this.currentCharacterId === id) {
+      this.currentCharacterId = null;
+    }
+
+    return {
+      deleted: true,
+      id,
+    };
+  }
+
+  private findEntityById(id: string): Character {
     const character = this.characters.get(id);
 
     if (!character) {
@@ -53,47 +114,38 @@ export class CharacterService {
     return character;
   }
 
-  replaceById(id: string, character: Character): Character {
-    if (!this.characters.has(id)) {
-      throw new NotFoundException(`Character not found: ${id}`);
-    }
-
-    const updatedCharacter: Character = {
-      ...character,
-      id,
-    };
-
-    this.characters.set(id, updatedCharacter);
-
-    if (!this.currentCharacterId) {
-      this.currentCharacterId = id;
-    }
-
-    return updatedCharacter;
-  }
-
-  setCurrentCharacter(id: string): Character {
-    const character = this.findById(id);
-
-    this.currentCharacterId = character.id;
-
-    return character;
-  }
-
-  deleteById(id: string) {
-    const deleted = this.characters.delete(id);
-
-    if (!deleted) {
-      throw new NotFoundException(`Character not found: ${id}`);
-    }
-
-    if (this.currentCharacterId === id) {
-      this.currentCharacterId = null;
-    }
-
+  private sanitizeCharacterEntity(input: CharacterEntityInput): Character {
     return {
-      deleted: true,
-      id,
+      id: input.id,
+      version: input.version,
+
+      userId: input.userId,
+
+      name: input.name,
+      originId: input.originId,
+
+      progression: input.progression,
+
+      moneyBronze: input.moneyBronze,
+
+      stats: input.stats,
+      currentState: input.currentState,
+
+      passiveIds: input.passiveIds,
+
+      learnedSkillIds: input.learnedSkillIds,
+      equippedSkillIds: input.equippedSkillIds,
+
+      starterKitId: input.starterKitId,
+
+      inventoryItemIds: input.inventoryItemIds,
+      equippedItemIds: input.equippedItemIds,
+
+      fatigue: input.fatigue,
+      lastRestAt: input.lastRestAt,
+
+      createdAt: input.createdAt,
+      updatedAt: input.updatedAt,
     };
   }
 }
