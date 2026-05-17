@@ -1,10 +1,10 @@
 import {
-  BASE_CRIT_DAMAGE_MULTIPLIER,
   DAMAGE_VARIANCE_RATIO,
   EXHAUSTED_DEFENSE_MULTIPLIER,
   EXHAUSTED_EVASION_RATE,
   EXHAUSTION_STAMINA_THRESHOLD,
   MAX_HIT_CHANCE_PERCENT,
+  MAX_TURN_GAUGE_ADVANCE_TICKS,
   MIN_FINAL_DAMAGE,
   MIN_HIT_CHANCE_PERCENT,
   RECOVERY_STAMINA_PERCENT,
@@ -79,7 +79,7 @@ export function hashStringToUnitInterval(input: string): number {
     hash = Math.imul(hash, 16777619);
   }
 
-  return (hash >>> 0) / 0xffffffff;
+  return (hash >>> 0) / 0x100000000;
 }
 
 export function calculateRandomFinalChance(request: RandomRollRequest): number {
@@ -250,9 +250,12 @@ export function applyResistanceMitigation(
 export function calculateCriticalMultiplier(
   attacker: BattleActorState,
 ): number {
-  return roundToTwoDecimals(
-    BASE_CRIT_DAMAGE_MULTIPLIER + attacker.derivedStats.critDamageBonus / 100,
+  const critDamageBonusPercent = Math.max(
+    0,
+    toSafeNumber(attacker.derivedStats.critDamageBonus),
   );
+
+  return roundToTwoDecimals(1 + critDamageBonusPercent / 100);
 }
 
 export function calculateRawDamage(input: DamageCalculationInput): number {
@@ -275,8 +278,14 @@ export function finalizeDamage(damageAfterResistance: number): number {
 
 export function calculateDamage(
   input: DamageCalculationInput,
+  varianceRollUnit = 0.5,
 ): DamageCalculationResult {
-  const rawDamage = calculateRawDamage(input);
+  let rawDamage = calculateRawDamage(input);
+
+  const varianceMultiplier =
+    calculateDamageVarianceMultiplier(varianceRollUnit);
+
+  rawDamage = roundToTwoDecimals(rawDamage * varianceMultiplier);
 
   const damageAfterDefense = applyDefenseMitigation(
     rawDamage,
@@ -483,9 +492,17 @@ export function advanceTurnGaugeUntilReady(
   let nextTurnOrder = turnOrder.map((entry) => ({ ...entry }));
   let safetyCounter = 0;
 
+  const hasPositiveActionSpeed = nextTurnOrder.some(
+    (entry) => entry.actionSpeed > 0,
+  );
+
+  if (!hasPositiveActionSpeed) {
+    return nextTurnOrder;
+  }
+
   while (
     getReadyTurnEntries(nextTurnOrder).length === 0 &&
-    safetyCounter < TURN_GAUGE_READY_VALUE
+    safetyCounter < MAX_TURN_GAUGE_ADVANCE_TICKS
   ) {
     nextTurnOrder = advanceTurnGaugeOnce(nextTurnOrder);
     safetyCounter += 1;

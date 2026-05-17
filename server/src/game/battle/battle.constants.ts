@@ -12,8 +12,6 @@ export const MAX_HIT_CHANCE_PERCENT = 98;
 
 export const MIN_FINAL_DAMAGE = 1;
 
-export const BASE_CRIT_DAMAGE_MULTIPLIER = 1.5;
-
 export const TRUE_DAMAGE_DEFENSE_MULTIPLIER = 0;
 export const TRUE_DAMAGE_RESISTANCE_MULTIPLIER = 0;
 
@@ -27,3 +25,4 @@ export const DAMAGE_VARIANCE_RATIO = 0.05;
 
 export const TURN_GAUGE_READY_VALUE = 100;
 export const INITIAL_TURN_GAUGE_VALUE = 0;
+export const MAX_TURN_GAUGE_ADVANCE_TICKS = 5000;
