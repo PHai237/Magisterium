@@ -109,6 +109,17 @@ function sortReadyEntries(
   });
 }
 
+function filterTurnOrderToLivingActors(
+  turnOrder: BattleTurnOrderEntry[],
+  actors: Record<string, BattleActorState>,
+): BattleTurnOrderEntry[] {
+  return turnOrder.filter((entry) => {
+    const actor = actors[entry.actorId];
+
+    return actor && isActorAlive(actor);
+  });
+}
+
 function findNextReadyLivingEntry(
   turnOrder: BattleTurnOrderEntry[],
   actors: Record<string, BattleActorState>,
@@ -276,6 +287,10 @@ export function advanceBattleToNextActor(
         ...battleState,
         status: currentStatus,
         activeActorId: undefined,
+        turnOrder: filterTurnOrderToLivingActors(
+          battleState.turnOrder,
+          battleState.actors,
+        ),
       },
       [
         createSystemEvent(
@@ -288,7 +303,12 @@ export function advanceBattleToNextActor(
     );
   }
 
-  const advancedTurnOrder = advanceTurnGaugeUntilReady(battleState.turnOrder);
+  const livingTurnOrder = filterTurnOrderToLivingActors(
+    battleState.turnOrder,
+    battleState.actors,
+  );
+
+  const advancedTurnOrder = advanceTurnGaugeUntilReady(livingTurnOrder);
 
   const readyEntry = findNextReadyLivingEntry(
     advancedTurnOrder,
@@ -724,6 +744,12 @@ export function resolveBattleAction(
   battleState: BattleState,
   command: BattleActionCommand,
 ): BattleEngineResult {
+  if (command.battleId !== battleState.battleId) {
+    throw new Error(
+      `Battle command id ${command.battleId} does not match current battle ${battleState.battleId}.`,
+    );
+  }
+
   if (battleState.status === 'created') {
     throw new Error('Battle must be started before resolving actions.');
   }
