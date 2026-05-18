@@ -10,7 +10,6 @@ import {
   calculateHitChance,
   consumeTurnGauge,
   getReadyTurnEntries,
-  hashStringToUnitInterval,
   resolveRandomRoll,
 } from './battle.calculations';
 
@@ -236,27 +235,74 @@ function consumeActorTurnGauge(
   battleState: BattleState,
   actorId: string,
 ): BattleTurnOrderEntry[] {
-  return battleState.turnOrder.map((entry) =>
-    entry.actorId === actorId ? consumeTurnGauge(entry) : entry,
+  return battleState.turnOrder.map((entry) => {
+    if (entry.actorId !== actorId) {
+      return entry;
+    }
+
+    return {
+      ...consumeTurnGauge(entry),
+      hasActedThisRound: true,
+    };
+  });
+}
+
+function shouldAdvanceRound(battleState: BattleState): boolean {
+  if (determineBattleStatus(battleState.actors) !== 'in_progress') {
+    return false;
+  }
+
+  const livingTurnOrder = filterTurnOrderToLivingActors(
+    battleState.turnOrder,
+    battleState.actors,
+  );
+
+  return (
+    livingTurnOrder.length > 0 &&
+    livingTurnOrder.every((entry) => entry.hasActedThisRound)
   );
 }
 
-function calculateDamageVarianceRollUnit(
-  battleState: BattleState,
-  actorId: string,
-  targetId: string,
-): number {
-  const context = battleState.randomContext;
+function resetRoundActedFlags(
+  turnOrder: BattleTurnOrderEntry[],
+  actors: Record<string, BattleActorState>,
+): BattleTurnOrderEntry[] {
+  return turnOrder.map((entry) => {
+    const actor = actors[entry.actorId];
 
-  return hashStringToUnitInterval(
+    if (!actor || !isActorAlive(actor)) {
+      return entry;
+    }
+
+    return {
+      ...entry,
+      hasActedThisRound: false,
+    };
+  });
+}
+
+function advanceRoundIfNeeded(battleState: BattleState): BattleState {
+  if (!shouldAdvanceRound(battleState)) {
+    return battleState;
+  }
+
+  const currentRoundNumber = battleState.roundNumber;
+  const nextRoundNumber = currentRoundNumber + 1;
+
+  return appendEvents(
+    {
+      ...battleState,
+      roundNumber: nextRoundNumber,
+      turnOrder: resetRoundActedFlags(
+        battleState.turnOrder,
+        battleState.actors,
+      ),
+      updatedAt: new Date().toISOString(),
+    },
     [
-      context.battleId,
-      context.seed,
-      context.rollIndex,
-      'damage_variance',
-      actorId,
-      targetId,
-    ].join(':'),
+      createSystemEvent('ROUND_ENDED', `Round ${currentRoundNumber} ended.`),
+      createSystemEvent('ROUND_STARTED', `Round ${nextRoundNumber} started.`),
+    ],
   );
 }
 
@@ -345,6 +391,7 @@ export function advanceBattleToNextActor(
         metadata: {
           turnGauge: readyEntry.turnGauge,
           readyValue: TURN_GAUGE_READY_VALUE,
+          roundNumber: battleState.roundNumber,
         },
       }),
     ],
@@ -387,16 +434,18 @@ function resolveSkipTurn(
     }),
   ];
 
+  const stateAfterSkip = appendEvents(
+    {
+      ...battleState,
+      activeActorId: undefined,
+      turnOrder: consumeActorTurnGauge(battleState, command.actorId),
+      updatedAt: new Date().toISOString(),
+    },
+    events,
+  );
+
   const nextState = advanceBattleToNextActor(
-    appendEvents(
-      {
-        ...battleState,
-        activeActorId: undefined,
-        turnOrder: consumeActorTurnGauge(battleState, command.actorId),
-        updatedAt: new Date().toISOString(),
-      },
-      events,
-    ),
+    advanceRoundIfNeeded(stateAfterSkip),
   );
 
   return {
@@ -508,17 +557,23 @@ function resolveBasicAttack(
       }),
     );
 
+    const nextActors = cloneActorRecord(battleState.actors);
+    nextActors[actor.actorId] = actor;
+
+    const stateAfterMiss = appendEvents(
+      {
+        ...battleState,
+        actors: nextActors,
+        activeActorId: undefined,
+        randomContext,
+        turnOrder: consumeActorTurnGauge(battleState, actor.actorId),
+        updatedAt: new Date().toISOString(),
+      },
+      events,
+    );
+
     const nextState = advanceBattleToNextActor(
-      appendEvents(
-        {
-          ...battleState,
-          activeActorId: undefined,
-          randomContext,
-          turnOrder: consumeActorTurnGauge(battleState, actor.actorId),
-          updatedAt: new Date().toISOString(),
-        },
-        events,
-      ),
+      advanceRoundIfNeeded(stateAfterMiss),
     );
 
     return {
@@ -585,16 +640,19 @@ function resolveBasicAttack(
     );
   }
 
-  const varianceRollUnit = calculateDamageVarianceRollUnit(
-    {
-      ...battleState,
-      randomContext,
-    },
-    actor.actorId,
-    target.actorId,
-  );
+  const varianceRoll = resolveRandomRoll({
+    type: 'damage_variance',
+    actorId: actor.actorId,
+    targetId: target.actorId,
+    baseChance: 100,
+    sourceType: 'battle_engine',
+    randomContext,
+  });
 
+  randomRolls.push(varianceRoll);
   randomContext = advanceRandomContext(randomContext);
+
+  const varianceRollUnit = varianceRoll.roll / 100;
 
   const damageResult = calculateDamage(
     {
@@ -623,6 +681,7 @@ function resolveBasicAttack(
       message: 'Damage calculated.',
       metadata: {
         isCritical: damageResult.isCritical,
+        varianceRoll: varianceRoll.roll,
         varianceRollUnit,
       },
     }),
@@ -647,12 +706,18 @@ function resolveBasicAttack(
     damageResult.finalDamage,
   );
 
+  const updatedActor: BattleActorState = {
+    ...actor,
+  };
+
   const updatedTarget = damageApplication.targetState;
 
   if (damageApplication.shieldDamage > 0) {
     events.push(
       createBattleEvent({
-        type: 'SHIELD_BROKEN',
+        type: damageApplication.shieldBroken
+          ? 'SHIELD_BROKEN'
+          : 'SHIELD_DAMAGED',
         phase: 'apply_damage',
         actorId: actor.actorId,
         targetId: target.actorId,
@@ -705,9 +770,10 @@ function resolveBasicAttack(
   );
 
   const nextActors = cloneActorRecord(battleState.actors);
+  nextActors[actor.actorId] = updatedActor;
   nextActors[target.actorId] = updatedTarget;
 
-  const intermediateState = appendEvents(
+  const stateAfterAction = appendEvents(
     {
       ...battleState,
       actors: nextActors,
@@ -719,14 +785,16 @@ function resolveBasicAttack(
     events,
   );
 
-  const nextState = advanceBattleToNextActor(intermediateState);
+  const nextState = advanceBattleToNextActor(
+    advanceRoundIfNeeded(stateAfterAction),
+  );
 
   return {
     battleState: nextState,
     actionResult: {
       phase: 'completed',
 
-      actorState: actor,
+      actorState: updatedActor,
       targetStates: [updatedTarget],
 
       events,

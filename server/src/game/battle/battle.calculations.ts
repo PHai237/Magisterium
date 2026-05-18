@@ -1,4 +1,7 @@
 import {
+  BASE_HIT_CHANCE_PERCENT,
+  DAMAGE_TYPE_DEFENSE_MULTIPLIER,
+  DAMAGE_TYPE_RESISTANCE_MULTIPLIER,
   DAMAGE_VARIANCE_RATIO,
   EXHAUSTED_DEFENSE_MULTIPLIER,
   EXHAUSTED_EVASION_RATE,
@@ -130,9 +133,11 @@ export function calculateHitChance(
     ? EXHAUSTED_EVASION_RATE
     : normalizeChancePercent(defender.derivedStats.evasionRate);
 
+  const accuracyDeltaFromBase = attackerAccuracy - BASE_HIT_CHANCE_PERCENT;
+
   return roundToTwoDecimals(
     clamp(
-      attackerAccuracy - defenderEvasion,
+      BASE_HIT_CHANCE_PERCENT + accuracyDeltaFromBase - defenderEvasion,
       MIN_HIT_CHANCE_PERCENT,
       MAX_HIT_CHANCE_PERCENT,
     ),
@@ -163,22 +168,36 @@ export function calculateProcRate(actor: BattleActorState): number {
   );
 }
 
+function getBaseDefenseForDamageType(
+  defender: BattleActorState,
+  damageType: DamageType,
+): number {
+  switch (damageType) {
+    case 'physical':
+      return defender.derivedStats.pDef;
+
+    case 'magical':
+      return defender.derivedStats.mDef;
+
+    case 'true':
+      return 0;
+  }
+}
+
 export function getDefenseForDamageType(
   defender: BattleActorState,
   damageType: DamageType,
 ): number {
-  if (damageType === 'true') {
-    return 0;
-  }
+  const baseDefense = getBaseDefenseForDamageType(defender, damageType);
 
-  const baseDefense =
-    damageType === 'physical'
-      ? defender.derivedStats.pDef
-      : defender.derivedStats.mDef;
+  const exhaustionMultiplier = defender.isExhausted
+    ? EXHAUSTED_DEFENSE_MULTIPLIER
+    : 1;
 
-  const effectiveDefense = defender.isExhausted
-    ? baseDefense * EXHAUSTED_DEFENSE_MULTIPLIER
-    : baseDefense;
+  const damageTypeMultiplier = DAMAGE_TYPE_DEFENSE_MULTIPLIER[damageType];
+
+  const effectiveDefense =
+    baseDefense * exhaustionMultiplier * damageTypeMultiplier;
 
   return Math.max(0, roundToTwoDecimals(effectiveDefense));
 }
@@ -188,10 +207,6 @@ export function applyDefenseMitigation(
   defender: BattleActorState,
   damageType: DamageType,
 ): number {
-  if (damageType === 'true') {
-    return Math.max(0, roundToTwoDecimals(rawDamage));
-  }
-
   const defense = getDefenseForDamageType(defender, damageType);
 
   return Math.max(0, roundToTwoDecimals(rawDamage - defense));
@@ -200,11 +215,14 @@ export function applyDefenseMitigation(
 export function getDamageResistanceKey(
   damageType: DamageType,
 ): ResistanceKey | null {
-  if (damageType === 'true') {
-    return null;
-  }
+  switch (damageType) {
+    case 'physical':
+    case 'magical':
+      return damageType;
 
-  return damageType;
+    case 'true':
+      return null;
+  }
 }
 
 export function getResistanceValue(
@@ -226,21 +244,23 @@ export function applyResistanceMitigation(
   damageType: DamageType,
   elementType?: ResistanceKey,
 ): number {
-  if (damageType === 'true') {
-    return Math.max(0, roundToTwoDecimals(damageAfterDefense));
-  }
-
   let result = Math.max(0, damageAfterDefense);
+
+  if (DAMAGE_TYPE_RESISTANCE_MULTIPLIER[damageType] === 0) {
+    return Math.max(0, roundToTwoDecimals(result));
+  }
 
   const damageResistanceKey = getDamageResistanceKey(damageType);
 
   if (damageResistanceKey) {
     const resistanceValue = getResistanceValue(defender, damageResistanceKey);
+
     result *= calculateResistanceMultiplier(resistanceValue);
   }
 
   if (elementType) {
     const resistanceValue = getResistanceValue(defender, elementType);
+
     result *= calculateResistanceMultiplier(resistanceValue);
   }
 
@@ -445,6 +465,7 @@ export function createTurnOrderEntry(
     actionSpeed: Math.max(0, actor.derivedStats.actionSpeed),
     initiative,
     turnGauge: 0,
+    hasActedThisRound: false,
   };
 }
 

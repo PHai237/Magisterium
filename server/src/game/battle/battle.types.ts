@@ -53,6 +53,7 @@ export type BattleEventType =
   | 'DAMAGE_MITIGATED'
   | 'DAMAGE_APPLIED'
   | 'SHIELD_GAINED'
+  | 'SHIELD_DAMAGED'
   | 'SHIELD_BROKEN'
   | 'STATUS_RESISTED'
   | 'STATUS_APPLIED'
@@ -132,6 +133,7 @@ export interface BattleTurnOrderEntry {
   actionSpeed: number;
   initiative: number;
   turnGauge: number;
+  hasActedThisRound: boolean;
 }
 
 export interface BattleState {
@@ -225,7 +227,8 @@ export type RandomRollType =
   | 'status'
   | 'second_chance'
   | 'proc'
-  | 'flee';
+  | 'flee'
+  | 'damage_variance';
 
 export interface BattleRandomContext {
   battleId: string;

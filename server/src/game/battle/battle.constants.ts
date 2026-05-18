@@ -1,3 +1,5 @@
+import type { DamageType } from '../character/character.types';
+
 export const MAX_PROC_PER_TURN = 5;
 
 export const MODIFIER_PRIORITY = {
@@ -12,8 +14,23 @@ export const MAX_HIT_CHANCE_PERCENT = 98;
 
 export const MIN_FINAL_DAMAGE = 1;
 
+export const NORMAL_DAMAGE_DEFENSE_MULTIPLIER = 1;
+export const NORMAL_DAMAGE_RESISTANCE_MULTIPLIER = 1;
+
 export const TRUE_DAMAGE_DEFENSE_MULTIPLIER = 0;
 export const TRUE_DAMAGE_RESISTANCE_MULTIPLIER = 0;
+
+export const DAMAGE_TYPE_DEFENSE_MULTIPLIER: Record<DamageType, number> = {
+  physical: NORMAL_DAMAGE_DEFENSE_MULTIPLIER,
+  magical: NORMAL_DAMAGE_DEFENSE_MULTIPLIER,
+  true: TRUE_DAMAGE_DEFENSE_MULTIPLIER,
+};
+
+export const DAMAGE_TYPE_RESISTANCE_MULTIPLIER: Record<DamageType, number> = {
+  physical: NORMAL_DAMAGE_RESISTANCE_MULTIPLIER,
+  magical: NORMAL_DAMAGE_RESISTANCE_MULTIPLIER,
+  true: TRUE_DAMAGE_RESISTANCE_MULTIPLIER,
+};
 
 export const EXHAUSTION_STAMINA_THRESHOLD = 0;
 export const RECOVERY_STAMINA_PERCENT = 0.2;

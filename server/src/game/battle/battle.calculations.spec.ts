@@ -143,6 +143,27 @@ describe('battle calculations', () => {
       expect(firstRoll.finalChance).toBe(75);
     });
 
+    it('should resolve damage variance rolls deterministically', () => {
+      const request: RandomRollRequest = {
+        type: 'damage_variance',
+        actorId: 'actor_1',
+        targetId: 'monster_1',
+        baseChance: 100,
+        randomContext: {
+          battleId: 'battle_1',
+          seed: 'fixed_seed',
+          rollIndex: 2,
+        },
+      };
+
+      const roll = resolveRandomRoll(request);
+
+      expect(roll.type).toBe('damage_variance');
+      expect(roll.roll).toBeGreaterThanOrEqual(0);
+      expect(roll.roll).toBeLessThanOrEqual(100);
+      expect(roll.success).toBe(true);
+    });
+
     it('should apply luck scaling only when enabled', () => {
       const baseRequest: RandomRollRequest = {
         type: 'proc',
@@ -413,6 +434,7 @@ describe('battle calculations', () => {
           actionSpeed: 1,
           initiative: 0,
           turnGauge: 0,
+          hasActedThisRound: false,
         },
       ];
 
@@ -429,6 +451,7 @@ describe('battle calculations', () => {
         actionSpeed: 30,
         initiative: 0,
         turnGauge: 105,
+        hasActedThisRound: false,
       };
 
       expect(consumeTurnGauge(entry).turnGauge).toBe(5);
@@ -441,6 +464,7 @@ describe('battle calculations', () => {
           actionSpeed: 0,
           initiative: 0,
           turnGauge: 0,
+          hasActedThisRound: false,
         },
       ];
 
