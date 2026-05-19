@@ -26,6 +26,7 @@ export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
 
       pAtk: 6,
       mAtk: 0,
+      healingPotency: 0,
 
       pDef: 1,
       mDef: 0,
@@ -104,6 +105,7 @@ export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
 
       pAtk: 13,
       mAtk: 2,
+      healingPotency: 0,
 
       pDef: 3,
       mDef: 1,

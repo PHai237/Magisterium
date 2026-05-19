@@ -1,5 +1,4 @@
 import {
-  BASE_HIT_CHANCE_PERCENT,
   DAMAGE_TYPE_DEFENSE_MULTIPLIER,
   DAMAGE_TYPE_RESISTANCE_MULTIPLIER,
   DAMAGE_VARIANCE_RATIO,
@@ -133,11 +132,9 @@ export function calculateHitChance(
     ? EXHAUSTED_EVASION_RATE
     : normalizeChancePercent(defender.derivedStats.evasionRate);
 
-  const accuracyDeltaFromBase = attackerAccuracy - BASE_HIT_CHANCE_PERCENT;
-
   return roundToTwoDecimals(
     clamp(
-      BASE_HIT_CHANCE_PERCENT + accuracyDeltaFromBase - defenderEvasion,
+      attackerAccuracy - defenderEvasion,
       MIN_HIT_CHANCE_PERCENT,
       MAX_HIT_CHANCE_PERCENT,
     ),
@@ -168,33 +165,24 @@ export function calculateProcRate(actor: BattleActorState): number {
   );
 }
 
-function getBaseDefenseForDamageType(
-  defender: BattleActorState,
-  damageType: DamageType,
-): number {
-  switch (damageType) {
-    case 'physical':
-      return defender.derivedStats.pDef;
-
-    case 'magical':
-      return defender.derivedStats.mDef;
-
-    case 'true':
-      return 0;
-  }
-}
-
 export function getDefenseForDamageType(
   defender: BattleActorState,
   damageType: DamageType,
 ): number {
-  const baseDefense = getBaseDefenseForDamageType(defender, damageType);
+  const damageTypeMultiplier = DAMAGE_TYPE_DEFENSE_MULTIPLIER[damageType];
+
+  if (damageTypeMultiplier === 0) {
+    return 0;
+  }
+
+  const baseDefense =
+    damageType === 'physical'
+      ? defender.derivedStats.pDef
+      : defender.derivedStats.mDef;
 
   const exhaustionMultiplier = defender.isExhausted
     ? EXHAUSTED_DEFENSE_MULTIPLIER
     : 1;
-
-  const damageTypeMultiplier = DAMAGE_TYPE_DEFENSE_MULTIPLIER[damageType];
 
   const effectiveDefense =
     baseDefense * exhaustionMultiplier * damageTypeMultiplier;

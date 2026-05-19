@@ -25,6 +25,8 @@ import {
 
 import type { CreateMonsterBattleActorInput } from '../monster/monster.types';
 
+const MAX_AUTO_MONSTER_ACTIONS = 20;
+
 export interface CreateBattleFromCharacterInput {
   battleId?: string;
   seed?: string;
@@ -33,6 +35,7 @@ export interface CreateBattleFromCharacterInput {
   monsters: CreateMonsterBattleActorInput[];
 
   autoStart?: boolean;
+  autoResolveMonsterTurns?: boolean;
 }
 
 export interface CreateBattleFromActorsInput {
@@ -42,6 +45,11 @@ export interface CreateBattleFromActorsInput {
   actors: BattleActorState[];
 
   autoStart?: boolean;
+  autoResolveMonsterTurns?: boolean;
+}
+
+export interface ResolveBattleActionInput extends BattleActionCommand {
+  autoResolveMonsterTurns?: boolean;
 }
 
 @Injectable()
@@ -66,6 +74,7 @@ export class BattleService {
       seed: input.seed,
       actors: [characterActor, ...monsterActors],
       autoStart: input.autoStart,
+      autoResolveMonsterTurns: input.autoResolveMonsterTurns,
     });
   }
 
@@ -77,7 +86,13 @@ export class BattleService {
     });
 
     const shouldAutoStart = input.autoStart ?? true;
-    const nextBattle = shouldAutoStart ? startBattle(battle) : battle;
+    const shouldAutoResolveMonsterTurns = input.autoResolveMonsterTurns ?? true;
+
+    const startedBattle = shouldAutoStart ? startBattle(battle) : battle;
+
+    const nextBattle = shouldAutoResolveMonsterTurns
+      ? this.resolveAutoMonsterTurns(startedBattle)
+      : startedBattle;
 
     this.battles.set(nextBattle.battleId, nextBattle);
 
@@ -106,14 +121,28 @@ export class BattleService {
     return Array.from(this.battles.values());
   }
 
-  resolveAction(command: BattleActionCommand): BattleEngineResult {
+  resolveAction(command: ResolveBattleActionInput): BattleEngineResult {
     const battle = this.getBattleOrThrow(command.battleId);
+
+    this.assertClientCanControlActor(battle, command.actorId);
 
     const result = resolveBattleAction(battle, command);
 
-    this.battles.set(result.battleState.battleId, result.battleState);
+    const shouldAutoResolveMonsterTurns =
+      command.autoResolveMonsterTurns ?? true;
 
-    return result;
+    const battleAfterMonsterTurns = shouldAutoResolveMonsterTurns
+      ? this.resolveAutoMonsterTurns(result.battleState)
+      : result.battleState;
+
+    const finalResult: BattleEngineResult = {
+      ...result,
+      battleState: battleAfterMonsterTurns,
+    };
+
+    this.battles.set(finalResult.battleState.battleId, finalResult.battleState);
+
+    return finalResult;
   }
 
   saveBattle(battle: BattleState): BattleState {
@@ -128,5 +157,73 @@ export class BattleService {
 
   clearBattles(): void {
     this.battles.clear();
+  }
+
+  private assertClientCanControlActor(
+    battle: BattleState,
+    actorId: string,
+  ): void {
+    const actor = battle.actors[actorId];
+
+    if (!actor) {
+      throw new Error(`Battle actor not found: ${actorId}`);
+    }
+
+    if (actor.actorType !== 'character') {
+      throw new Error(
+        `Client cannot directly control monster actor: ${actorId}`,
+      );
+    }
+  }
+
+  private resolveAutoMonsterTurns(battle: BattleState): BattleState {
+    let nextBattle = battle;
+    let actionCount = 0;
+
+    while (
+      nextBattle.status === 'in_progress' &&
+      nextBattle.activeActorId &&
+      actionCount < MAX_AUTO_MONSTER_ACTIONS
+    ) {
+      const activeActor = nextBattle.actors[nextBattle.activeActorId];
+
+      if (!activeActor || activeActor.actorType !== 'monster') {
+        break;
+      }
+
+      const target = this.findMonsterTarget(nextBattle);
+
+      if (!target) {
+        break;
+      }
+
+      const result = resolveBattleAction(nextBattle, {
+        battleId: nextBattle.battleId,
+        actorId: activeActor.actorId,
+        targetIds: [target.actorId],
+        actionType: 'basic_attack',
+      });
+
+      nextBattle = result.battleState;
+      actionCount += 1;
+    }
+
+    if (actionCount >= MAX_AUTO_MONSTER_ACTIONS) {
+      throw new Error('Auto monster turn limit reached.');
+    }
+
+    return nextBattle;
+  }
+
+  private findMonsterTarget(battle: BattleState): BattleActorState | undefined {
+    return Object.values(battle.actors)
+      .filter((actor) => actor.actorType === 'character' && actor.hp > 0)
+      .sort((left, right) => {
+        if (left.hp !== right.hp) {
+          return left.hp - right.hp;
+        }
+
+        return left.actorId.localeCompare(right.actorId);
+      })[0];
   }
 }

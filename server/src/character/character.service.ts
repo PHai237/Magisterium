@@ -1,9 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { CreateCharacterDto } from './dto/create-character.dto';
+import { UpdateCharacterDto } from './dto/update-character.dto';
 
 import { createCharacter } from '../game/character/character.factory';
-import { createCharacterSnapshot } from '../game/character/character.calculations';
+
+import {
+  clampCurrentState,
+  createCharacterSnapshot,
+} from '../game/character/character.calculations';
 
 import type {
   Character,
@@ -13,10 +18,12 @@ import type {
 type CharacterEntityInput = Character &
   Partial<Pick<CharacterSnapshot, 'baseStats' | 'derivedStats'>>;
 
+const DEFAULT_USER_SCOPE = '__anonymous__';
+
 @Injectable()
 export class CharacterService {
   private readonly characters = new Map<string, Character>();
-  private currentCharacterId: string | null = null;
+  private readonly currentCharacterIdsByUserScope = new Map<string, string>();
 
   ping() {
     return {
@@ -30,32 +37,74 @@ export class CharacterService {
     const character = createCharacter({
       name: dto.name,
       originId: dto.originId,
+      userId: dto.userId,
     });
 
     this.characters.set(character.id, character);
-    this.currentCharacterId = character.id;
+    this.currentCharacterIdsByUserScope.set(
+      this.getUserScope(character.userId),
+      character.id,
+    );
 
     return createCharacterSnapshot(character);
   }
 
-  findAll(): CharacterSnapshot[] {
-    return Array.from(this.characters.values()).map((character) =>
-      createCharacterSnapshot(character),
-    );
+  findAll(userId?: string): CharacterSnapshot[] {
+    const userScope = userId ? this.getUserScope(userId) : undefined;
+
+    return Array.from(this.characters.values())
+      .filter((character) => {
+        if (!userScope) {
+          return true;
+        }
+
+        return this.getUserScope(character.userId) === userScope;
+      })
+      .map((character) => createCharacterSnapshot(character));
   }
 
-  findCurrent(): CharacterSnapshot | null {
-    if (!this.currentCharacterId) {
+  findCurrent(userId?: string): CharacterSnapshot | null {
+    const currentCharacterId = this.currentCharacterIdsByUserScope.get(
+      this.getUserScope(userId),
+    );
+
+    if (!currentCharacterId) {
       return null;
     }
 
-    return this.findById(this.currentCharacterId);
+    return this.findById(currentCharacterId);
   }
 
   findById(id: string): CharacterSnapshot {
     const character = this.findEntityById(id);
 
     return createCharacterSnapshot(character);
+  }
+
+  updateById(id: string, dto: UpdateCharacterDto): CharacterSnapshot {
+    const existingCharacter = this.findEntityById(id);
+    const existingSnapshot = createCharacterSnapshot(existingCharacter);
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      userId: dto.userId ?? existingCharacter.userId,
+      name: dto.name ?? existingCharacter.name,
+      currentState: clampCurrentState(
+        {
+          hp: dto.currentState?.hp ?? existingCharacter.currentState.hp,
+          mp: dto.currentState?.mp ?? existingCharacter.currentState.mp,
+          stamina:
+            dto.currentState?.stamina ?? existingCharacter.currentState.stamina,
+        },
+        existingSnapshot.derivedStats,
+      ),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(id, nextCharacter);
+    this.migrateCurrentCharacterScope(existingCharacter, nextCharacter);
+
+    return createCharacterSnapshot(nextCharacter);
   }
 
   replaceById(
@@ -74,17 +123,29 @@ export class CharacterService {
 
     this.characters.set(id, updatedCharacter);
 
-    if (!this.currentCharacterId) {
-      this.currentCharacterId = id;
+    const userScope = this.getUserScope(updatedCharacter.userId);
+
+    if (!this.currentCharacterIdsByUserScope.has(userScope)) {
+      this.currentCharacterIdsByUserScope.set(userScope, id);
     }
 
     return createCharacterSnapshot(updatedCharacter);
   }
 
-  setCurrentCharacter(id: string): CharacterSnapshot {
+  setCurrentCharacter(id: string, userId?: string): CharacterSnapshot {
     const character = this.findEntityById(id);
 
-    this.currentCharacterId = character.id;
+    if (
+      userId &&
+      character.userId &&
+      this.getUserScope(userId) !== this.getUserScope(character.userId)
+    ) {
+      throw new NotFoundException(`Character not found in user scope: ${id}`);
+    }
+
+    const userScope = this.getUserScope(userId ?? character.userId);
+
+    this.currentCharacterIdsByUserScope.set(userScope, character.id);
 
     return createCharacterSnapshot(character);
   }
@@ -94,14 +155,46 @@ export class CharacterService {
 
     this.characters.delete(id);
 
-    if (this.currentCharacterId === id) {
-      this.currentCharacterId = null;
+    for (const [
+      userScope,
+      currentCharacterId,
+    ] of this.currentCharacterIdsByUserScope.entries()) {
+      if (currentCharacterId === id) {
+        this.currentCharacterIdsByUserScope.delete(userScope);
+      }
     }
 
     return {
       deleted: true,
       id,
     };
+  }
+
+  private migrateCurrentCharacterScope(
+    previousCharacter: Character,
+    nextCharacter: Character,
+  ): void {
+    const previousScope = this.getUserScope(previousCharacter.userId);
+    const nextScope = this.getUserScope(nextCharacter.userId);
+
+    if (previousScope !== nextScope) {
+      const previousCurrentId =
+        this.currentCharacterIdsByUserScope.get(previousScope);
+
+      if (previousCurrentId === nextCharacter.id) {
+        this.currentCharacterIdsByUserScope.delete(previousScope);
+      }
+    }
+
+    if (!this.currentCharacterIdsByUserScope.has(nextScope)) {
+      this.currentCharacterIdsByUserScope.set(nextScope, nextCharacter.id);
+    }
+  }
+
+  private getUserScope(userId?: string | null): string {
+    const normalizedUserId = userId?.trim();
+
+    return normalizedUserId || DEFAULT_USER_SCOPE;
   }
 
   private findEntityById(id: string): Character {

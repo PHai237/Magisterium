@@ -1,6 +1,10 @@
 import { randomUUID } from 'crypto';
 
-import { MAX_PROC_PER_TURN, TURN_GAUGE_READY_VALUE } from './battle.constants';
+import {
+  MAX_BATTLE_EVENTS_RETAINED,
+  MAX_PROC_PER_TURN,
+  TURN_GAUGE_READY_VALUE,
+} from './battle.constants';
 
 import {
   advanceRandomContext,
@@ -11,6 +15,7 @@ import {
   consumeTurnGauge,
   getReadyTurnEntries,
   resolveRandomRoll,
+  updateExhaustionState,
 } from './battle.calculations';
 
 import type {
@@ -160,9 +165,13 @@ function appendEvents(
   battleState: BattleState,
   events: BattleEvent[],
 ): BattleState {
+  const nextEvents = [...battleState.events, ...events].slice(
+    -MAX_BATTLE_EVENTS_RETAINED,
+  );
+
   return {
     ...battleState,
-    events: [...battleState.events, ...events],
+    events: nextEvents,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -306,6 +315,76 @@ function advanceRoundIfNeeded(battleState: BattleState): BattleState {
   );
 }
 
+function restoreTurnStartResources(actor: BattleActorState): {
+  actor: BattleActorState;
+  events: BattleEvent[];
+} {
+  if (isActorDefeated(actor)) {
+    return {
+      actor,
+      events: [],
+    };
+  }
+
+  const nextMp = Math.min(
+    actor.derivedStats.maxMp,
+    actor.mp + actor.derivedStats.mpRegen,
+  );
+
+  const nextStamina = Math.min(
+    actor.derivedStats.maxStamina,
+    actor.stamina + actor.derivedStats.staminaRegen,
+  );
+
+  const restoredMp = nextMp - actor.mp;
+  const restoredStamina = nextStamina - actor.stamina;
+
+  const events: BattleEvent[] = [];
+
+  if (restoredMp > 0) {
+    events.push(
+      createBattleEvent({
+        type: 'RESOURCE_RESTORED',
+        phase: 'resource_check',
+        actorId: actor.actorId,
+        value: restoredMp,
+        message: 'MP restored at turn start.',
+        metadata: {
+          resourceType: 'MP',
+          currentValue: nextMp,
+          maxValue: actor.derivedStats.maxMp,
+        },
+      }),
+    );
+  }
+
+  if (restoredStamina > 0) {
+    events.push(
+      createBattleEvent({
+        type: 'RESOURCE_RESTORED',
+        phase: 'resource_check',
+        actorId: actor.actorId,
+        value: restoredStamina,
+        message: 'Stamina restored at turn start.',
+        metadata: {
+          resourceType: 'Stamina',
+          currentValue: nextStamina,
+          maxValue: actor.derivedStats.maxStamina,
+        },
+      }),
+    );
+  }
+
+  return {
+    actor: updateExhaustionState({
+      ...actor,
+      mp: nextMp,
+      stamina: nextStamina,
+    }),
+    events,
+  };
+}
+
 export function startBattle(battleState: BattleState): BattleState {
   if (battleState.status !== 'created') {
     return battleState;
@@ -373,9 +452,18 @@ export function advanceBattleToNextActor(
 
   const nextTurnNumber = battleState.turnNumber + 1;
 
+  const readyActor = getActorOrThrow(battleState, readyEntry.actorId);
+  const turnStartRestore = restoreTurnStartResources(readyActor);
+
+  const nextActors = {
+    ...battleState.actors,
+    [readyEntry.actorId]: turnStartRestore.actor,
+  };
+
   return appendEvents(
     {
       ...battleState,
+      actors: nextActors,
       status: 'in_progress',
       activeActorId: readyEntry.actorId,
       turnNumber: nextTurnNumber,
@@ -383,6 +471,7 @@ export function advanceBattleToNextActor(
       updatedAt: new Date().toISOString(),
     },
     [
+      ...turnStartRestore.events,
       createBattleEvent({
         type: 'TURN_STARTED',
         phase: 'initiation',

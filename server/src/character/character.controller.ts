@@ -6,12 +6,13 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 
 import { CharacterService } from './character.service';
-import { CreateCharacterDto } from './dto/create-character.dto';
 
-import type { Character } from '../game/character/character.types';
+import { CreateCharacterDto } from './dto/create-character.dto';
+import { UpdateCharacterDto } from './dto/update-character.dto';
 
 @Controller('characters')
 export class CharacterController {
@@ -28,18 +29,21 @@ export class CharacterController {
   }
 
   @Get()
-  findAll() {
-    return this.characterService.findAll();
+  findAll(@Query('userId') userId?: string) {
+    return this.characterService.findAll(userId);
   }
 
   @Get('current')
-  findCurrent() {
-    return this.characterService.findCurrent();
+  findCurrent(@Query('userId') userId?: string) {
+    return this.characterService.findCurrent(userId);
   }
 
   @Post(':id/current')
-  setCurrentCharacter(@Param('id') id: string) {
-    return this.characterService.setCurrentCharacter(id);
+  setCurrentCharacter(
+    @Param('id') id: string,
+    @Query('userId') userId?: string,
+  ) {
+    return this.characterService.setCurrentCharacter(id, userId);
   }
 
   @Get(':id')
@@ -48,8 +52,11 @@ export class CharacterController {
   }
 
   @Put(':id')
-  replaceById(@Param('id') id: string, @Body() character: Character) {
-    return this.characterService.replaceById(id, character);
+  updateById(
+    @Param('id') id: string,
+    @Body() updateCharacterDto: UpdateCharacterDto,
+  ) {
+    return this.characterService.updateById(id, updateCharacterDto);
   }
 
   @Delete(':id')

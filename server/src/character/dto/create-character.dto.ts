@@ -1,5 +1,12 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
-import { IsIn, IsNotEmpty, IsString, Length } from 'class-validator';
+
+import {
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 
 import { ORIGIN_DEFINITIONS } from '../../game/character/character.constants';
 import type { OriginId } from '../../game/character/character.types';
@@ -37,4 +44,9 @@ export class CreateCharacterDto {
     message: `Origin must be one of: ${VALID_ORIGIN_IDS.join(', ')}.`,
   })
   originId!: OriginId;
+
+  @IsOptional()
+  @Transform(trimString)
+  @IsString()
+  userId?: string;
 }
