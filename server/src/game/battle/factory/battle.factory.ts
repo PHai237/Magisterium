@@ -142,6 +142,27 @@ function assertUniqueActorIds(actors: BattleActorState[]): void {
   }
 }
 
+function cloneActiveStatusEffects(
+  effects?: ActiveStatusEffect[],
+): ActiveStatusEffect[] {
+  return effects
+    ? effects.map((effect) => ({
+        ...effect,
+        modifiers: effect.modifiers.map((modifier) => ({
+          ...modifier,
+        })),
+      }))
+    : [];
+}
+
+function cloneStatModifiers(modifiers?: StatModifier[]): StatModifier[] {
+  return modifiers
+    ? modifiers.map((modifier) => ({
+        ...modifier,
+      }))
+    : [];
+}
+
 export function createBattleActorState(
   input: CreateBattleActorStateInput,
 ): BattleActorState {
@@ -181,8 +202,8 @@ export function createBattleActorState(
     shield: normalizeNonNegativeInteger(input.shield),
     isExhausted: input.isExhausted ?? stamina <= 0,
 
-    activeStatusEffects: input.activeStatusEffects ?? [],
-    activeModifiers: input.activeModifiers ?? [],
+    activeStatusEffects: cloneActiveStatusEffects(input.activeStatusEffects),
+    activeModifiers: cloneStatModifiers(input.activeModifiers),
 
     procCountThisTurn: normalizeNonNegativeInteger(input.procCountThisTurn),
   };

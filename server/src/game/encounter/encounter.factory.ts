@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto';
+
 import { ENCOUNTER_DEFINITIONS } from './encounter.definitions';
 
 import type {
@@ -15,6 +17,12 @@ const MIN_MONSTERS_PER_GROUP = 1;
 const MAX_MONSTERS_PER_GROUP = 10;
 const MAX_MONSTERS_PER_ENCOUNTER = 12;
 
+const MONSTER_INSTANCE_ID_SUFFIX_BYTES = 3;
+const MAX_INSTANCE_ID_PREFIX_LENGTH = 48;
+
+const UNSAFE_INSTANCE_ID_PREFIX_PATTERN = /[^A-Za-z0-9_-]+/gu;
+const INSTANCE_ID_SEPARATOR_PATTERN = /_+/gu;
+
 function normalizeMonsterCount(count: number): number {
   if (!Number.isFinite(count)) {
     return MIN_MONSTERS_PER_GROUP;
@@ -30,11 +38,47 @@ function normalizeInstanceIdPrefix(
   prefix: string | undefined,
   fallback: string,
 ): string {
-  const normalizedPrefix = prefix?.trim().replace(/\s+/g, '_');
+  const rawPrefix = prefix && prefix.trim().length > 0 ? prefix : fallback;
 
-  return normalizedPrefix && normalizedPrefix.length > 0
-    ? normalizedPrefix
-    : fallback;
+  const normalizedPrefix = rawPrefix
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/gu, '_')
+    .replace(UNSAFE_INSTANCE_ID_PREFIX_PATTERN, '_')
+    .replace(INSTANCE_ID_SEPARATOR_PATTERN, '_')
+    .replace(/^_+|_+$/gu, '')
+    .slice(0, MAX_INSTANCE_ID_PREFIX_LENGTH);
+
+  return normalizedPrefix.length > 0 ? normalizedPrefix : fallback;
+}
+
+function createMonsterInstanceId(
+  instanceIdPrefix: string,
+  index: number,
+): string {
+  const suffix = randomBytes(MONSTER_INSTANCE_ID_SUFFIX_BYTES).toString('hex');
+
+  return `${instanceIdPrefix}_${index + 1}_${suffix}`;
+}
+
+function cloneEncounterMonsterGroup(
+  group: EncounterMonsterGroup,
+): EncounterMonsterGroup {
+  return {
+    ...group,
+  };
+}
+
+function cloneEncounterDefinition(
+  encounter: Readonly<EncounterDefinition>,
+): EncounterDefinition {
+  return {
+    ...encounter,
+    monsterGroups: encounter.monsterGroups.map((group) =>
+      cloneEncounterMonsterGroup(group),
+    ),
+    tags: [...encounter.tags],
+  };
 }
 
 function assertUniqueMonsterInstanceIds(
@@ -57,19 +101,37 @@ function assertUniqueMonsterInstanceIds(
   }
 }
 
+function calculateEncounterMonsterInputCount(
+  encounter: EncounterDefinition,
+): number {
+  let totalMonsterCount = 0;
+
+  for (const group of encounter.monsterGroups) {
+    totalMonsterCount += normalizeMonsterCount(group.count);
+
+    if (totalMonsterCount > MAX_MONSTERS_PER_ENCOUNTER) {
+      throw new Error(
+        `Encounter ${encounter.id} creates ${totalMonsterCount} monsters, exceeding the limit of ${MAX_MONSTERS_PER_ENCOUNTER}.`,
+      );
+    }
+  }
+
+  return totalMonsterCount;
+}
+
 function assertEncounterMonsterCountLimit(
   encounter: EncounterDefinition,
-  monsterInputs: CreateMonsterBattleActorInput[],
+  monsterCount: number,
 ): void {
-  if (monsterInputs.length === 0) {
+  if (monsterCount === 0) {
     throw new Error(
       `Encounter ${encounter.id} must contain at least one monster.`,
     );
   }
 
-  if (monsterInputs.length > MAX_MONSTERS_PER_ENCOUNTER) {
+  if (monsterCount > MAX_MONSTERS_PER_ENCOUNTER) {
     throw new Error(
-      `Encounter ${encounter.id} creates ${monsterInputs.length} monsters, exceeding the limit of ${MAX_MONSTERS_PER_ENCOUNTER}.`,
+      `Encounter ${encounter.id} creates ${monsterCount} monsters, exceeding the limit of ${MAX_MONSTERS_PER_ENCOUNTER}.`,
     );
   }
 }
@@ -85,29 +147,34 @@ export function getEncounterDefinitionById(
     throw new Error(`Encounter definition not found: ${encounterId}`);
   }
 
-  return encounter;
+  return cloneEncounterDefinition(encounter);
 }
 
 export function buildEncounterMonsterInputs(
   encounter: EncounterDefinition,
 ): CreateMonsterBattleActorInput[] {
-  const monsterInputs = encounter.monsterGroups.flatMap(
-    (group: EncounterMonsterGroup, groupIndex) => {
-      const count = normalizeMonsterCount(group.count);
+  const plannedMonsterCount = calculateEncounterMonsterInputCount(encounter);
 
-      const instanceIdPrefix = normalizeInstanceIdPrefix(
-        group.instanceIdPrefix,
-        `${encounter.id}_${group.monsterId}_${groupIndex + 1}`,
-      );
+  assertEncounterMonsterCountLimit(encounter, plannedMonsterCount);
 
-      return Array.from({ length: count }, (_, index) => ({
+  const monsterInputs: CreateMonsterBattleActorInput[] = [];
+
+  for (const [groupIndex, group] of encounter.monsterGroups.entries()) {
+    const count = normalizeMonsterCount(group.count);
+
+    const instanceIdPrefix = normalizeInstanceIdPrefix(
+      group.instanceIdPrefix,
+      `${encounter.id}_${group.monsterId}_${groupIndex + 1}`,
+    );
+
+    for (let index = 0; index < count; index += 1) {
+      monsterInputs.push({
         monsterId: group.monsterId,
-        instanceId: `${instanceIdPrefix}_${index + 1}`,
-      }));
-    },
-  );
+        instanceId: createMonsterInstanceId(instanceIdPrefix, index),
+      });
+    }
+  }
 
-  assertEncounterMonsterCountLimit(encounter, monsterInputs);
   assertUniqueMonsterInstanceIds(monsterInputs);
 
   return monsterInputs;

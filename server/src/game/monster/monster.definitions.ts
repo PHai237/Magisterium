@@ -1,11 +1,48 @@
-import type { MonsterDefinition, MonsterId } from './monster.types';
+import type {
+  MonsterDefinition,
+  MonsterId,
+  MonsterLootEntry,
+} from './monster.types';
 
 export const MONSTER_IDS = [
   'slime',
   'goblin',
 ] as const satisfies readonly MonsterId[];
 
-export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
+function freezeLootEntry(entry: MonsterLootEntry): Readonly<MonsterLootEntry> {
+  return Object.freeze({
+    ...entry,
+  });
+}
+
+function freezeMonsterDefinition(
+  monster: MonsterDefinition,
+): Readonly<MonsterDefinition> {
+  return Object.freeze({
+    ...monster,
+    baseStats: Object.freeze({
+      ...monster.baseStats,
+    }),
+    derivedStatOverrides: Object.freeze({
+      ...monster.derivedStatOverrides,
+    }),
+    resistances: Object.freeze({
+      ...monster.resistances,
+    }),
+    currentState: Object.freeze({
+      ...monster.currentState,
+    }),
+    reward: Object.freeze({
+      ...monster.reward,
+      lootTable: Object.freeze(
+        monster.reward.lootTable.map((entry) => freezeLootEntry(entry)),
+      ),
+    }),
+    tags: Object.freeze([...monster.tags]),
+  });
+}
+
+const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
   {
     id: 'slime',
     name: 'Slime',
@@ -175,3 +212,7 @@ export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
     tags: ['monster', 'starter', 'humanoid', 'goblin'],
   },
 ];
+
+export const MONSTER_DEFINITIONS = Object.freeze(
+  RAW_MONSTER_DEFINITIONS.map((monster) => freezeMonsterDefinition(monster)),
+) satisfies readonly Readonly<MonsterDefinition>[];

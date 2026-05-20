@@ -25,7 +25,7 @@ export interface EncounterDefinition {
   rank: EncounterRank;
   recommendedLevel: number;
 
-  monsterGroups: EncounterMonsterGroup[];
+  monsterGroups: readonly EncounterMonsterGroup[];
 
-  tags: string[];
+  tags: readonly string[];
 }

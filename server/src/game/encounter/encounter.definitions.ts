@@ -1,4 +1,8 @@
-import type { EncounterDefinition, EncounterId } from './encounter.types';
+import type {
+  EncounterDefinition,
+  EncounterId,
+  EncounterMonsterGroup,
+} from './encounter.types';
 
 export const ENCOUNTER_IDS = [
   'slime_training',
@@ -6,7 +10,27 @@ export const ENCOUNTER_IDS = [
   'forest_edge_mixed',
 ] as const satisfies readonly EncounterId[];
 
-export const ENCOUNTER_DEFINITIONS: EncounterDefinition[] = [
+function freezeMonsterGroup(
+  group: EncounterMonsterGroup,
+): Readonly<EncounterMonsterGroup> {
+  return Object.freeze({
+    ...group,
+  });
+}
+
+function freezeEncounterDefinition(
+  encounter: EncounterDefinition,
+): Readonly<EncounterDefinition> {
+  return Object.freeze({
+    ...encounter,
+    monsterGroups: Object.freeze(
+      encounter.monsterGroups.map((group) => freezeMonsterGroup(group)),
+    ),
+    tags: Object.freeze([...encounter.tags]),
+  });
+}
+
+const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
   {
     id: 'slime_training',
     name: 'Slime Training',
@@ -76,3 +100,9 @@ export const ENCOUNTER_DEFINITIONS: EncounterDefinition[] = [
     tags: ['starter', 'forest-edge', 'multi-monster'],
   },
 ];
+
+export const ENCOUNTER_DEFINITIONS = Object.freeze(
+  RAW_ENCOUNTER_DEFINITIONS.map((encounter) =>
+    freezeEncounterDefinition(encounter),
+  ),
+) satisfies readonly Readonly<EncounterDefinition>[];

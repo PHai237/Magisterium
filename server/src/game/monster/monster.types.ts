@@ -26,7 +26,7 @@ export interface MonsterLootEntry {
 export interface MonsterRewardDefinition {
   exp: number;
   moneyBronze: number;
-  lootTable: MonsterLootEntry[];
+  lootTable: readonly MonsterLootEntry[];
 }
 
 export interface MonsterDefinition {
@@ -49,7 +49,7 @@ export interface MonsterDefinition {
 
   reward: MonsterRewardDefinition;
 
-  tags: string[];
+  tags: readonly string[];
 }
 
 export interface CreateMonsterBattleActorInput {

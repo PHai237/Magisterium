@@ -96,7 +96,8 @@ describe('monster factory', () => {
       expect(actor.actorId).toBe('slime_test_1');
       expect(actor.actorType).toBe('monster');
 
-      expect(actor.baseStats).toBe(slimeDefinition.baseStats);
+      expect(actor.baseStats).toEqual(slimeDefinition.baseStats);
+      expect(actor.baseStats).not.toBe(slimeDefinition.baseStats);
       expect(actor.derivedStats.maxHp).toBe(28);
       expect(actor.derivedStats.pAtk).toBe(6);
 
