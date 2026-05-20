@@ -57,5 +57,8 @@ export class UpdateCharacterDto {
   @IsOptional()
   @Transform(trimString)
   @IsString()
+  @IsNotEmpty({
+    message: 'userId must not be empty when provided.',
+  })
   userId?: string;
 }

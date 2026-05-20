@@ -9,6 +9,11 @@ import type {
 } from '../character/character.types';
 
 import type {
+  EncounterId,
+  EncounterZoneId,
+} from '../encounter/encounter.types';
+
+import type {
   EventType,
   ModifierSourceType,
   StatModifier,
@@ -65,6 +70,7 @@ export type BattleEventType =
   | 'PROC_LIMIT_REACHED'
   | 'EXHAUSTED'
   | 'RECOVERED_FROM_EXHAUSTION'
+  | 'CONTROL_FORCED'
   | 'ACTOR_DEFEATED'
   | 'TURN_ENDED'
   | 'ROUND_ENDED'
@@ -111,6 +117,9 @@ export interface BattleActorState {
   actorId: string;
   actorType: BattleActorType;
 
+  monsterId?: string;
+  aiTargetingMode?: string;
+
   baseStats: BaseStats;
   derivedStats: DerivedStats;
   resistances: ResistanceProfile;
@@ -139,6 +148,9 @@ export interface BattleTurnOrderEntry {
 export interface BattleState {
   battleId: string;
   status: BattleStatus;
+
+  encounterId?: EncounterId;
+  zoneId?: EncounterZoneId;
 
   roundNumber: number;
   turnNumber: number;
@@ -204,6 +216,7 @@ export interface DamageCalculationResult {
   damageAfterDefense: number;
   damageAfterResistance: number;
 
+  absorbedAmount: number;
   finalDamage: number;
 
   damageType: DamageType;

@@ -44,9 +44,12 @@ export function createMonsterBattleActorFromDefinition(
   input: Omit<CreateMonsterBattleActorInput, 'monsterId'> = {},
 ): BattleActorState {
   const derivedStats = calculateMonsterDerivedStats(monster);
+  const actorId = input.instanceId ?? `${monster.id}_${randomUUID()}`;
 
   return createBattleActorFromMonsterInput({
-    monsterId: input.instanceId ?? `${monster.id}_${randomUUID()}`,
+    actorId,
+    monsterId: monster.id,
+    aiTargetingMode: monster.aiTargetingMode,
 
     baseStats: monster.baseStats,
     derivedStats,

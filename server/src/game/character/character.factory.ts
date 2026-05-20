@@ -27,6 +27,16 @@ function uniqueIds<T extends string>(ids: T[]): T[] {
   return Array.from(new Set(ids));
 }
 
+function normalizeRequiredUserId(userId: string): string {
+  const normalizedUserId = userId.trim();
+
+  if (!normalizedUserId) {
+    throw new Error('userId is required to create a character.');
+  }
+
+  return normalizedUserId;
+}
+
 export function createCharacter(input: CreateCharacterInput): Character {
   const originDef = getOriginById(input.originId);
   const starterKitDef = getDefaultStarterKit();
@@ -57,7 +67,7 @@ export function createCharacter(input: CreateCharacterInput): Character {
     id: randomUUID(),
     version: 1,
 
-    userId: input.userId,
+    userId: normalizeRequiredUserId(input.userId),
 
     name: input.name.trim(),
     originId: originDef.id,

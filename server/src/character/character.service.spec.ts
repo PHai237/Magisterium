@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { CharacterService } from './character.service';
@@ -53,6 +53,15 @@ describe('CharacterService', () => {
     });
   });
 
+  it('should reject character creation without userId', () => {
+    expect(() =>
+      service.create({
+        name: 'Magica',
+        originId: 'scholar',
+      } as never),
+    ).toThrow(BadRequestException);
+  });
+
   it('should create a character snapshot from an origin', () => {
     const scholarOrigin = getOriginDefinition('scholar');
     const starterKit = getStarterKitDefinition('novice_adventurer_kit');
@@ -60,9 +69,11 @@ describe('CharacterService', () => {
     const character = service.create({
       name: 'Magica',
       originId: scholarOrigin.id,
+      userId: 'user_1',
     });
 
     expect(character.id).toBeDefined();
+    expect(character.userId).toBe('user_1');
     expect(character.name).toBe('Magica');
     expect(character.originId).toBe(scholarOrigin.id);
 
@@ -105,28 +116,41 @@ describe('CharacterService', () => {
     );
   });
 
-  it('should set the created character as current', () => {
+  it('should set the created character as current for its user', () => {
     const created = service.create({
       name: 'Bell',
       originId: 'mercenary',
+      userId: 'user_1',
     });
 
-    const current = service.findCurrent();
+    const current = service.findCurrent('user_1');
 
     expect(current).not.toBeNull();
     expect(current?.id).toBe(created.id);
     expect(current?.originId).toBe('mercenary');
   });
 
+  it('should reject finding current character without userId', () => {
+    service.create({
+      name: 'Bell',
+      originId: 'mercenary',
+      userId: 'user_1',
+    });
+
+    expect(() => service.findCurrent()).toThrow(BadRequestException);
+  });
+
   it('should return all created character snapshots', () => {
     service.create({
       name: 'Ais',
       originId: 'wanderer',
+      userId: 'user_1',
     });
 
     service.create({
       name: 'Lili',
       originId: 'street_urchin',
+      userId: 'user_2',
     });
 
     const characters = service.findAll();
@@ -140,15 +164,37 @@ describe('CharacterService', () => {
     expect(characters[1].baseStats).toBeDefined();
   });
 
+  it('should return character snapshots filtered by userId', () => {
+    service.create({
+      name: 'Ais',
+      originId: 'wanderer',
+      userId: 'user_1',
+    });
+
+    service.create({
+      name: 'Lili',
+      originId: 'street_urchin',
+      userId: 'user_2',
+    });
+
+    const userOneCharacters = service.findAll('user_1');
+
+    expect(userOneCharacters).toHaveLength(1);
+    expect(userOneCharacters[0].name).toBe('Ais');
+    expect(userOneCharacters[0].userId).toBe('user_1');
+  });
+
   it('should find a character by id', () => {
     const created = service.create({
       name: 'Haruhime',
       originId: 'acolyte',
+      userId: 'user_1',
     });
 
     const found = service.findById(created.id);
 
     expect(found.id).toBe(created.id);
+    expect(found.userId).toBe('user_1');
     expect(found.name).toBe('Haruhime');
     expect(found.originId).toBe('acolyte');
     expect(found.derivedStats.healingPotency).toBeGreaterThan(0);
@@ -160,29 +206,56 @@ describe('CharacterService', () => {
     );
   });
 
-  it('should set current character by id', () => {
+  it('should set current character by id within the same user scope', () => {
     const first = service.create({
       name: 'First',
       originId: 'scholar',
+      userId: 'user_1',
     });
 
     const second = service.create({
       name: 'Second',
       originId: 'mercenary',
+      userId: 'user_1',
     });
 
-    expect(service.findCurrent()?.id).toBe(second.id);
+    expect(service.findCurrent('user_1')?.id).toBe(second.id);
 
-    const current = service.setCurrentCharacter(first.id);
+    const current = service.setCurrentCharacter(first.id, 'user_1');
 
     expect(current.id).toBe(first.id);
-    expect(service.findCurrent()?.id).toBe(first.id);
+    expect(service.findCurrent('user_1')?.id).toBe(first.id);
+  });
+
+  it('should reject setting current character from another user scope', () => {
+    const created = service.create({
+      name: 'First',
+      originId: 'scholar',
+      userId: 'owner_user',
+    });
+
+    expect(() =>
+      service.setCurrentCharacter(created.id, 'different_user'),
+    ).toThrow(NotFoundException);
+  });
+
+  it('should reject setting current character without userId', () => {
+    const created = service.create({
+      name: 'First',
+      originId: 'scholar',
+      userId: 'owner_user',
+    });
+
+    expect(() => service.setCurrentCharacter(created.id)).toThrow(
+      BadRequestException,
+    );
   });
 
   it('should delete a character by id', () => {
     const created = service.create({
       name: 'DeleteMe',
       originId: 'wanderer',
+      userId: 'user_1',
     });
 
     const result = service.deleteById(created.id);
@@ -199,12 +272,13 @@ describe('CharacterService', () => {
     const created = service.create({
       name: 'Current',
       originId: 'street_urchin',
+      userId: 'user_1',
     });
 
-    expect(service.findCurrent()?.id).toBe(created.id);
+    expect(service.findCurrent('user_1')?.id).toBe(created.id);
 
     service.deleteById(created.id);
 
-    expect(service.findCurrent()).toBeNull();
+    expect(service.findCurrent('user_1')).toBeNull();
   });
 });

@@ -8,7 +8,6 @@ export const MODIFIER_PRIORITY = {
   OVERRIDE: 30,
 } as const;
 
-export const BASE_HIT_CHANCE_PERCENT = 90;
 export const MIN_HIT_CHANCE_PERCENT = 15;
 export const MAX_HIT_CHANCE_PERCENT = 98;
 
@@ -32,6 +31,10 @@ export const DAMAGE_TYPE_RESISTANCE_MULTIPLIER: Record<DamageType, number> = {
   true: TRUE_DAMAGE_RESISTANCE_MULTIPLIER,
 };
 
+export const MIN_RESISTANCE_VALUE = -1;
+export const MAX_DAMAGE_REDUCTION_RESISTANCE_VALUE = 0.95;
+export const MAX_ABSORPTION_RATIO = 1;
+
 export const EXHAUSTION_STAMINA_THRESHOLD = 0;
 export const RECOVERY_STAMINA_PERCENT = 0.2;
 
@@ -42,6 +45,10 @@ export const DAMAGE_VARIANCE_RATIO = 0.05;
 
 export const TURN_GAUGE_READY_VALUE = 100;
 export const INITIAL_TURN_GAUGE_VALUE = 0;
+export const MIN_ACTION_SPEED = 1;
 export const MAX_TURN_GAUGE_ADVANCE_TICKS = 5000;
 
 export const MAX_BATTLE_EVENTS_RETAINED = 200;
+
+export const MAX_MANUAL_MONSTERS_PER_BATTLE = 12;
+export const MAX_AUTO_MONSTER_ACTIONS = 20;

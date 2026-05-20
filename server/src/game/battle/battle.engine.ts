@@ -42,6 +42,16 @@ interface DamageApplicationResult {
   shieldBroken: boolean;
 }
 
+interface HealingApplicationResult {
+  targetState: BattleActorState;
+  healingDone: number;
+}
+
+const PINNED_BATTLE_EVENT_TYPES = new Set<BattleEventType>([
+  'BATTLE_STARTED',
+  'BATTLE_ENDED',
+]);
+
 function createBattleEvent(input: Omit<BattleEvent, 'id'>): BattleEvent {
   return {
     id: randomUUID(),
@@ -95,6 +105,13 @@ function isActorDefeated(actor: BattleActorState): boolean {
 
 function isActorAlive(actor: BattleActorState): boolean {
   return !isActorDefeated(actor);
+}
+
+function areOpposingActors(
+  actor: BattleActorState,
+  target: BattleActorState,
+): boolean {
+  return actor.actorType !== target.actorType;
 }
 
 function sortReadyEntries(
@@ -165,9 +182,25 @@ function appendEvents(
   battleState: BattleState,
   events: BattleEvent[],
 ): BattleState {
-  const nextEvents = [...battleState.events, ...events].slice(
-    -MAX_BATTLE_EVENTS_RETAINED,
+  const combinedEvents = [...battleState.events, ...events];
+
+  const pinnedEvents = combinedEvents.filter((event) =>
+    PINNED_BATTLE_EVENT_TYPES.has(event.type),
   );
+
+  const nonPinnedEvents = combinedEvents.filter(
+    (event) => !PINNED_BATTLE_EVENT_TYPES.has(event.type),
+  );
+
+  const recentEventLimit = Math.max(
+    0,
+    MAX_BATTLE_EVENTS_RETAINED - pinnedEvents.length,
+  );
+
+  const nextEvents = [
+    ...pinnedEvents.slice(0, MAX_BATTLE_EVENTS_RETAINED),
+    ...nonPinnedEvents.slice(-recentEventLimit),
+  ];
 
   return {
     ...battleState,
@@ -211,6 +244,22 @@ function applyDamageToActor(
   };
 }
 
+function applyHealingToActor(
+  target: BattleActorState,
+  healingAmount: number,
+): HealingApplicationResult {
+  const safeHealing = Math.max(0, Math.floor(healingAmount));
+  const nextHp = Math.min(target.derivedStats.maxHp, target.hp + safeHealing);
+
+  return {
+    targetState: {
+      ...target,
+      hp: nextHp,
+    },
+    healingDone: nextHp - target.hp,
+  };
+}
+
 function createDefaultProcContext(actorId: string, turnId: string) {
   return {
     actorId,
@@ -226,12 +275,13 @@ function createDefaultProcContext(actorId: string, turnId: string) {
 function createCancelledActionResult(
   actor: BattleActorState,
   events: BattleEvent[],
+  targetStates: BattleActorState[] = [],
 ): BattleActionResult {
   return {
     phase: 'cancelled',
 
     actorState: actor,
-    targetStates: [],
+    targetStates,
 
     events,
     randomRolls: [],
@@ -326,6 +376,8 @@ function restoreTurnStartResources(actor: BattleActorState): {
     };
   }
 
+  const wasExhausted = actor.isExhausted;
+
   const nextMp = Math.min(
     actor.derivedStats.maxMp,
     actor.mp + actor.derivedStats.mpRegen,
@@ -339,13 +391,19 @@ function restoreTurnStartResources(actor: BattleActorState): {
   const restoredMp = nextMp - actor.mp;
   const restoredStamina = nextStamina - actor.stamina;
 
+  const restoredActor = updateExhaustionState({
+    ...actor,
+    mp: nextMp,
+    stamina: nextStamina,
+  });
+
   const events: BattleEvent[] = [];
 
   if (restoredMp > 0) {
     events.push(
       createBattleEvent({
         type: 'RESOURCE_RESTORED',
-        phase: 'resource_check',
+        phase: 'initiation',
         actorId: actor.actorId,
         value: restoredMp,
         message: 'MP restored at turn start.',
@@ -362,7 +420,7 @@ function restoreTurnStartResources(actor: BattleActorState): {
     events.push(
       createBattleEvent({
         type: 'RESOURCE_RESTORED',
-        phase: 'resource_check',
+        phase: 'initiation',
         actorId: actor.actorId,
         value: restoredStamina,
         message: 'Stamina restored at turn start.',
@@ -375,12 +433,23 @@ function restoreTurnStartResources(actor: BattleActorState): {
     );
   }
 
+  if (wasExhausted && !restoredActor.isExhausted) {
+    events.push(
+      createBattleEvent({
+        type: 'RECOVERED_FROM_EXHAUSTION',
+        phase: 'initiation',
+        actorId: actor.actorId,
+        message: 'Actor recovered from exhaustion.',
+        metadata: {
+          stamina: restoredActor.stamina,
+          maxStamina: restoredActor.derivedStats.maxStamina,
+        },
+      }),
+    );
+  }
+
   return {
-    actor: updateExhaustionState({
-      ...actor,
-      mp: nextMp,
-      stamina: nextStamina,
-    }),
+    actor: restoredActor,
     events,
   };
 }
@@ -598,6 +667,57 @@ function resolveBasicAttack(
 
   const target = getActorOrThrow(battleState, targetId);
 
+  if (actor.actorId === target.actorId) {
+    const events = [
+      createBattleEvent({
+        type: 'ACTION_CANCELLED',
+        phase: 'cancelled',
+        actorId: actor.actorId,
+        targetId: target.actorId,
+        message: 'Basic attack cannot target self.',
+      }),
+    ];
+
+    return {
+      battleState: appendEvents(battleState, events),
+      actionResult: createCancelledActionResult(actor, events, [target]),
+    };
+  }
+
+  if (!areOpposingActors(actor, target)) {
+    const events = [
+      createBattleEvent({
+        type: 'ACTION_CANCELLED',
+        phase: 'cancelled',
+        actorId: actor.actorId,
+        targetId: target.actorId,
+        message: 'Basic attack cannot target an ally.',
+      }),
+    ];
+
+    return {
+      battleState: appendEvents(battleState, events),
+      actionResult: createCancelledActionResult(actor, events, [target]),
+    };
+  }
+
+  if (isActorDefeated(target)) {
+    const events = [
+      createBattleEvent({
+        type: 'ACTION_CANCELLED',
+        phase: 'cancelled',
+        actorId: actor.actorId,
+        targetId: target.actorId,
+        message: 'Basic attack cannot target a defeated actor.',
+      }),
+    ];
+
+    return {
+      battleState: appendEvents(battleState, events),
+      actionResult: createCancelledActionResult(actor, events, [target]),
+    };
+  }
+
   const events: BattleEvent[] = [
     createBattleEvent({
       type: 'ACTION_STARTED',
@@ -786,20 +906,49 @@ function resolveBasicAttack(
       metadata: {
         damageAfterDefense: damageResult.damageAfterDefense,
         damageAfterResistance: damageResult.damageAfterResistance,
+        absorbedAmount: damageResult.absorbedAmount,
       },
     }),
-  );
-
-  const damageApplication = applyDamageToActor(
-    target,
-    damageResult.finalDamage,
   );
 
   const updatedActor: BattleActorState = {
     ...actor,
   };
 
-  const updatedTarget = damageApplication.targetState;
+  let updatedTarget = target;
+
+  if (damageResult.absorbedAmount > 0) {
+    const healingApplication = applyHealingToActor(
+      updatedTarget,
+      damageResult.absorbedAmount,
+    );
+
+    updatedTarget = healingApplication.targetState;
+
+    if (healingApplication.healingDone > 0) {
+      events.push(
+        createBattleEvent({
+          type: 'HEAL_APPLIED',
+          phase: 'apply_damage',
+          actorId: actor.actorId,
+          targetId: target.actorId,
+          value: healingApplication.healingDone,
+          message: 'Damage was absorbed and converted into healing.',
+          metadata: {
+            absorbedAmount: damageResult.absorbedAmount,
+            targetHp: updatedTarget.hp,
+          },
+        }),
+      );
+    }
+  }
+
+  const damageApplication = applyDamageToActor(
+    updatedTarget,
+    damageResult.finalDamage,
+  );
+
+  updatedTarget = damageApplication.targetState;
 
   if (damageApplication.shieldDamage > 0) {
     events.push(
@@ -837,7 +986,7 @@ function resolveBasicAttack(
     }),
   );
 
-  if (isActorDefeated(updatedTarget)) {
+  if (isActorAlive(target) && isActorDefeated(updatedTarget)) {
     events.push(
       createBattleEvent({
         type: 'ACTOR_DEFEATED',

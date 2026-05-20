@@ -14,6 +14,8 @@ export type MonsterId = 'slime' | 'goblin';
 
 export type MonsterRank = 'normal' | 'elite' | 'boss';
 
+export type MonsterAiTargetingMode = 'random' | 'lowest_hp' | 'highest_threat';
+
 export interface MonsterLootEntry {
   itemId: ItemId;
   chancePercent: number;
@@ -34,6 +36,8 @@ export interface MonsterDefinition {
 
   rank: MonsterRank;
   level: number;
+
+  aiTargetingMode: MonsterAiTargetingMode;
 
   baseStats: BaseStats;
   derivedStatOverrides?: Partial<DerivedStats>;

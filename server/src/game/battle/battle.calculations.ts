@@ -5,10 +5,14 @@ import {
   EXHAUSTED_DEFENSE_MULTIPLIER,
   EXHAUSTED_EVASION_RATE,
   EXHAUSTION_STAMINA_THRESHOLD,
+  MAX_ABSORPTION_RATIO,
+  MAX_DAMAGE_REDUCTION_RESISTANCE_VALUE,
   MAX_HIT_CHANCE_PERCENT,
   MAX_TURN_GAUGE_ADVANCE_TICKS,
+  MIN_ACTION_SPEED,
   MIN_FINAL_DAMAGE,
   MIN_HIT_CHANCE_PERCENT,
+  MIN_RESISTANCE_VALUE,
   RECOVERY_STAMINA_PERCENT,
   TURN_GAUGE_READY_VALUE,
 } from './battle.constants';
@@ -30,6 +34,11 @@ import type {
   ResistanceKey,
   ResourceType,
 } from '../character/character.types';
+
+interface ResistanceMitigationResult {
+  damageAfterResistance: number;
+  absorbedAmount: number;
+}
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
@@ -221,9 +230,91 @@ export function getResistanceValue(
 }
 
 export function calculateResistanceMultiplier(resistanceValue: number): number {
-  const safeResistance = clamp(toSafeNumber(resistanceValue), -1, 0.95);
+  const safeResistance = clamp(
+    toSafeNumber(resistanceValue),
+    MIN_RESISTANCE_VALUE,
+    MAX_DAMAGE_REDUCTION_RESISTANCE_VALUE,
+  );
 
   return 1 - safeResistance;
+}
+
+function applySingleResistanceLayer(
+  currentDamage: number,
+  resistanceValue: number,
+): ResistanceMitigationResult {
+  const safeResistance = toSafeNumber(resistanceValue);
+
+  if (currentDamage <= 0) {
+    return {
+      damageAfterResistance: 0,
+      absorbedAmount: 0,
+    };
+  }
+
+  if (safeResistance >= 1) {
+    const absorptionRatio = clamp(safeResistance - 1, 0, MAX_ABSORPTION_RATIO);
+
+    return {
+      damageAfterResistance: 0,
+      absorbedAmount: roundToTwoDecimals(currentDamage * absorptionRatio),
+    };
+  }
+
+  const damageAfterResistance =
+    currentDamage * calculateResistanceMultiplier(safeResistance);
+
+  return {
+    damageAfterResistance: Math.max(
+      0,
+      roundToTwoDecimals(damageAfterResistance),
+    ),
+    absorbedAmount: 0,
+  };
+}
+
+export function calculateResistanceMitigation(
+  damageAfterDefense: number,
+  defender: BattleActorState,
+  damageType: DamageType,
+  elementType?: ResistanceKey,
+): ResistanceMitigationResult {
+  let currentDamage = Math.max(0, damageAfterDefense);
+  let absorbedAmount = 0;
+
+  if (DAMAGE_TYPE_RESISTANCE_MULTIPLIER[damageType] === 0) {
+    return {
+      damageAfterResistance: Math.max(0, roundToTwoDecimals(currentDamage)),
+      absorbedAmount: 0,
+    };
+  }
+
+  const damageResistanceKey = getDamageResistanceKey(damageType);
+
+  if (damageResistanceKey) {
+    const layerResult = applySingleResistanceLayer(
+      currentDamage,
+      getResistanceValue(defender, damageResistanceKey),
+    );
+
+    currentDamage = layerResult.damageAfterResistance;
+    absorbedAmount += layerResult.absorbedAmount;
+  }
+
+  if (elementType) {
+    const layerResult = applySingleResistanceLayer(
+      currentDamage,
+      getResistanceValue(defender, elementType),
+    );
+
+    currentDamage = layerResult.damageAfterResistance;
+    absorbedAmount += layerResult.absorbedAmount;
+  }
+
+  return {
+    damageAfterResistance: Math.max(0, roundToTwoDecimals(currentDamage)),
+    absorbedAmount: Math.max(0, roundToTwoDecimals(absorbedAmount)),
+  };
 }
 
 export function applyResistanceMitigation(
@@ -232,27 +323,12 @@ export function applyResistanceMitigation(
   damageType: DamageType,
   elementType?: ResistanceKey,
 ): number {
-  let result = Math.max(0, damageAfterDefense);
-
-  if (DAMAGE_TYPE_RESISTANCE_MULTIPLIER[damageType] === 0) {
-    return Math.max(0, roundToTwoDecimals(result));
-  }
-
-  const damageResistanceKey = getDamageResistanceKey(damageType);
-
-  if (damageResistanceKey) {
-    const resistanceValue = getResistanceValue(defender, damageResistanceKey);
-
-    result *= calculateResistanceMultiplier(resistanceValue);
-  }
-
-  if (elementType) {
-    const resistanceValue = getResistanceValue(defender, elementType);
-
-    result *= calculateResistanceMultiplier(resistanceValue);
-  }
-
-  return Math.max(0, roundToTwoDecimals(result));
+  return calculateResistanceMitigation(
+    damageAfterDefense,
+    defender,
+    damageType,
+    elementType,
+  ).damageAfterResistance;
 }
 
 export function calculateCriticalMultiplier(
@@ -301,21 +377,22 @@ export function calculateDamage(
     input.damageType,
   );
 
-  const damageAfterResistance = applyResistanceMitigation(
+  const resistanceResult = calculateResistanceMitigation(
     damageAfterDefense,
     input.defender,
     input.damageType,
     input.elementType,
   );
 
-  const finalDamage = finalizeDamage(damageAfterResistance);
+  const finalDamage = finalizeDamage(resistanceResult.damageAfterResistance);
 
   return {
     rawDamage,
 
     damageAfterDefense,
-    damageAfterResistance,
+    damageAfterResistance: resistanceResult.damageAfterResistance,
 
+    absorbedAmount: resistanceResult.absorbedAmount,
     finalDamage,
 
     damageType: input.damageType,
@@ -444,13 +521,29 @@ export function updateExhaustionState(
   return actor;
 }
 
+function normalizeTurnOrderEntry(
+  entry: BattleTurnOrderEntry,
+): BattleTurnOrderEntry {
+  return {
+    ...entry,
+    actionSpeed: Math.max(
+      MIN_ACTION_SPEED,
+      toSafeNumber(entry.actionSpeed, MIN_ACTION_SPEED),
+    ),
+    turnGauge: Math.max(0, toSafeNumber(entry.turnGauge, 0)),
+  };
+}
+
 export function createTurnOrderEntry(
   actor: BattleActorState,
   initiative: number,
 ): BattleTurnOrderEntry {
   return {
     actorId: actor.actorId,
-    actionSpeed: Math.max(0, actor.derivedStats.actionSpeed),
+    actionSpeed: Math.max(
+      MIN_ACTION_SPEED,
+      toSafeNumber(actor.derivedStats.actionSpeed, MIN_ACTION_SPEED),
+    ),
     initiative,
     turnGauge: 0,
     hasActedThisRound: false,
@@ -480,32 +573,34 @@ export function getReadyTurnEntries(
 export function consumeTurnGauge(
   entry: BattleTurnOrderEntry,
 ): BattleTurnOrderEntry {
+  const normalizedEntry = normalizeTurnOrderEntry(entry);
+
   return {
-    ...entry,
-    turnGauge: Math.max(0, entry.turnGauge - TURN_GAUGE_READY_VALUE),
+    ...normalizedEntry,
+    turnGauge: Math.max(0, normalizedEntry.turnGauge - TURN_GAUGE_READY_VALUE),
   };
 }
 
 export function advanceTurnGaugeOnce(
   turnOrder: BattleTurnOrderEntry[],
 ): BattleTurnOrderEntry[] {
-  return turnOrder.map((entry) => ({
-    ...entry,
-    turnGauge: entry.turnGauge + entry.actionSpeed,
-  }));
+  return turnOrder.map((entry) => {
+    const normalizedEntry = normalizeTurnOrderEntry(entry);
+
+    return {
+      ...normalizedEntry,
+      turnGauge: normalizedEntry.turnGauge + normalizedEntry.actionSpeed,
+    };
+  });
 }
 
 export function advanceTurnGaugeUntilReady(
   turnOrder: BattleTurnOrderEntry[],
 ): BattleTurnOrderEntry[] {
-  let nextTurnOrder = turnOrder.map((entry) => ({ ...entry }));
+  let nextTurnOrder = turnOrder.map((entry) => normalizeTurnOrderEntry(entry));
   let safetyCounter = 0;
 
-  const hasPositiveActionSpeed = nextTurnOrder.some(
-    (entry) => entry.actionSpeed > 0,
-  );
-
-  if (!hasPositiveActionSpeed) {
+  if (nextTurnOrder.length === 0) {
     return nextTurnOrder;
   }
 

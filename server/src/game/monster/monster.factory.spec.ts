@@ -126,7 +126,7 @@ describe('monster factory', () => {
 
       expect(actor.actorId).toBe('wounded_goblin');
       expect(actor.hp).toBe(10);
-      expect(actor.mp).toBe(5);
+      expect(actor.mp).toBe(0);
       expect(actor.stamina).toBe(20);
       expect(actor.shield).toBe(5);
     });

@@ -132,7 +132,7 @@ export interface Character {
   id: string;
   version: number;
 
-  userId?: string;
+  userId: string;
 
   name: string;
   originId: OriginId;
@@ -169,5 +169,5 @@ export interface CharacterSnapshot extends Character {
 export interface CreateCharacterInput {
   name: string;
   originId: OriginId;
-  userId?: string;
+  userId: string;
 }

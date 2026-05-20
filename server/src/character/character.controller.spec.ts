@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { CharacterController } from './character.controller';
@@ -56,16 +57,27 @@ describe('CharacterController', () => {
     });
   });
 
-  it('should create a character from name and originId', () => {
+  it('should reject creating a character without userId', () => {
+    expect(() =>
+      controller.create({
+        name: 'Magica',
+        originId: 'scholar',
+      } as never),
+    ).toThrow(BadRequestException);
+  });
+
+  it('should create a character from name, originId, and userId', () => {
     const scholarOrigin = getOriginDefinition('scholar');
     const starterKit = getStarterKitDefinition('novice_adventurer_kit');
 
     const character = controller.create({
       name: 'Magica',
       originId: scholarOrigin.id,
+      userId: 'user_1',
     });
 
     expect(character.id).toBeDefined();
+    expect(character.userId).toBe('user_1');
     expect(character.name).toBe('Magica');
     expect(character.originId).toBe(scholarOrigin.id);
 
@@ -99,11 +111,13 @@ describe('CharacterController', () => {
     controller.create({
       name: 'Ais',
       originId: 'wanderer',
+      userId: 'user_1',
     });
 
     controller.create({
       name: 'Lili',
       originId: 'street_urchin',
+      userId: 'user_2',
     });
 
     const characters = controller.findAll();
@@ -117,47 +131,82 @@ describe('CharacterController', () => {
     expect(characters[1].derivedStats).toBeDefined();
   });
 
-  it('should return the current character', () => {
+  it('should return characters filtered by userId', () => {
+    controller.create({
+      name: 'Ais',
+      originId: 'wanderer',
+      userId: 'user_1',
+    });
+
+    controller.create({
+      name: 'Lili',
+      originId: 'street_urchin',
+      userId: 'user_2',
+    });
+
+    const characters = controller.findAll('user_1');
+
+    expect(characters).toHaveLength(1);
+    expect(characters[0].name).toBe('Ais');
+    expect(characters[0].userId).toBe('user_1');
+  });
+
+  it('should return the current character for a user scope', () => {
     const created = controller.create({
       name: 'Bell',
       originId: 'mercenary',
+      userId: 'user_1',
     });
 
-    const current = controller.findCurrent();
+    const current = controller.findCurrent('user_1');
 
     expect(current).not.toBeNull();
     expect(current?.id).toBe(created.id);
     expect(current?.originId).toBe('mercenary');
   });
 
-  it('should set current character by id', () => {
+  it('should reject finding current character without userId', () => {
+    controller.create({
+      name: 'Bell',
+      originId: 'mercenary',
+      userId: 'user_1',
+    });
+
+    expect(() => controller.findCurrent()).toThrow(BadRequestException);
+  });
+
+  it('should set current character by id within a user scope', () => {
     const first = controller.create({
       name: 'First',
       originId: 'scholar',
+      userId: 'user_1',
     });
 
     const second = controller.create({
       name: 'Second',
       originId: 'acolyte',
+      userId: 'user_1',
     });
 
-    expect(controller.findCurrent()?.id).toBe(second.id);
+    expect(controller.findCurrent('user_1')?.id).toBe(second.id);
 
-    const current = controller.setCurrentCharacter(first.id);
+    const current = controller.setCurrentCharacter(first.id, 'user_1');
 
     expect(current.id).toBe(first.id);
-    expect(controller.findCurrent()?.id).toBe(first.id);
+    expect(controller.findCurrent('user_1')?.id).toBe(first.id);
   });
 
   it('should find a character by id', () => {
     const created = controller.create({
       name: 'Haru',
       originId: 'acolyte',
+      userId: 'user_1',
     });
 
     const found = controller.findById(created.id);
 
     expect(found.id).toBe(created.id);
+    expect(found.userId).toBe('user_1');
     expect(found.name).toBe('Haru');
     expect(found.originId).toBe('acolyte');
     expect(found.derivedStats.healingPotency).toBeGreaterThan(0);
@@ -167,6 +216,7 @@ describe('CharacterController', () => {
     const created = controller.create({
       name: 'DeleteMe',
       originId: 'wanderer',
+      userId: 'user_1',
     });
 
     const result = controller.deleteById(created.id);
@@ -176,6 +226,6 @@ describe('CharacterController', () => {
       id: created.id,
     });
 
-    expect(controller.findCurrent()).toBeNull();
+    expect(controller.findCurrent('user_1')).toBeNull();
   });
 });

@@ -457,7 +457,7 @@ describe('battle calculations', () => {
       expect(consumeTurnGauge(entry).turnGauge).toBe(5);
     });
 
-    it('should not loop forever when all actors have zero action speed', () => {
+    it('should normalize zero action speed to minimum speed instead of softlocking', () => {
       const turnOrder: BattleTurnOrderEntry[] = [
         {
           actorId: 'stuck_actor',
@@ -470,7 +470,10 @@ describe('battle calculations', () => {
 
       const advancedTurnOrder = advanceTurnGaugeUntilReady(turnOrder);
 
-      expect(advancedTurnOrder[0].turnGauge).toBe(0);
+      expect(advancedTurnOrder[0].actionSpeed).toBe(1);
+      expect(advancedTurnOrder[0].turnGauge).toBeGreaterThanOrEqual(
+        TURN_GAUGE_READY_VALUE,
+      );
     });
   });
 });

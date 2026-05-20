@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
@@ -18,8 +22,6 @@ import type {
 type CharacterEntityInput = Character &
   Partial<Pick<CharacterSnapshot, 'baseStats' | 'derivedStats'>>;
 
-const DEFAULT_USER_SCOPE = '__anonymous__';
-
 @Injectable()
 export class CharacterService {
   private readonly characters = new Map<string, Character>();
@@ -34,23 +36,22 @@ export class CharacterService {
   }
 
   create(dto: CreateCharacterDto): CharacterSnapshot {
+    const userId = this.normalizeRequiredUserId(dto.userId);
+
     const character = createCharacter({
       name: dto.name,
       originId: dto.originId,
-      userId: dto.userId,
+      userId,
     });
 
     this.characters.set(character.id, character);
-    this.currentCharacterIdsByUserScope.set(
-      this.getUserScope(character.userId),
-      character.id,
-    );
+    this.currentCharacterIdsByUserScope.set(userId, character.id);
 
     return createCharacterSnapshot(character);
   }
 
   findAll(userId?: string): CharacterSnapshot[] {
-    const userScope = userId ? this.getUserScope(userId) : undefined;
+    const userScope = this.normalizeOptionalUserId(userId);
 
     return Array.from(this.characters.values())
       .filter((character) => {
@@ -58,15 +59,16 @@ export class CharacterService {
           return true;
         }
 
-        return this.getUserScope(character.userId) === userScope;
+        return character.userId === userScope;
       })
       .map((character) => createCharacterSnapshot(character));
   }
 
   findCurrent(userId?: string): CharacterSnapshot | null {
-    const currentCharacterId = this.currentCharacterIdsByUserScope.get(
-      this.getUserScope(userId),
-    );
+    const userScope = this.normalizeRequiredUserId(userId);
+
+    const currentCharacterId =
+      this.currentCharacterIdsByUserScope.get(userScope);
 
     if (!currentCharacterId) {
       return null;
@@ -85,9 +87,13 @@ export class CharacterService {
     const existingCharacter = this.findEntityById(id);
     const existingSnapshot = createCharacterSnapshot(existingCharacter);
 
+    const nextUserId = dto.userId
+      ? this.normalizeRequiredUserId(dto.userId)
+      : existingCharacter.userId;
+
     const nextCharacter: Character = {
       ...existingCharacter,
-      userId: dto.userId ?? existingCharacter.userId,
+      userId: nextUserId,
       name: dto.name ?? existingCharacter.name,
       currentState: clampCurrentState(
         {
@@ -118,32 +124,29 @@ export class CharacterService {
     const updatedCharacter: Character = {
       ...sanitizedCharacter,
       id,
+      userId: this.normalizeRequiredUserId(sanitizedCharacter.userId),
       updatedAt: new Date().toISOString(),
     };
 
     this.characters.set(id, updatedCharacter);
 
-    const userScope = this.getUserScope(updatedCharacter.userId);
-
-    if (!this.currentCharacterIdsByUserScope.has(userScope)) {
-      this.currentCharacterIdsByUserScope.set(userScope, id);
+    if (!this.currentCharacterIdsByUserScope.has(updatedCharacter.userId)) {
+      this.currentCharacterIdsByUserScope.set(
+        updatedCharacter.userId,
+        updatedCharacter.id,
+      );
     }
 
     return createCharacterSnapshot(updatedCharacter);
   }
 
   setCurrentCharacter(id: string, userId?: string): CharacterSnapshot {
+    const userScope = this.normalizeRequiredUserId(userId);
     const character = this.findEntityById(id);
 
-    if (
-      userId &&
-      character.userId &&
-      this.getUserScope(userId) !== this.getUserScope(character.userId)
-    ) {
+    if (character.userId !== userScope) {
       throw new NotFoundException(`Character not found in user scope: ${id}`);
     }
-
-    const userScope = this.getUserScope(userId ?? character.userId);
 
     this.currentCharacterIdsByUserScope.set(userScope, character.id);
 
@@ -174,8 +177,8 @@ export class CharacterService {
     previousCharacter: Character,
     nextCharacter: Character,
   ): void {
-    const previousScope = this.getUserScope(previousCharacter.userId);
-    const nextScope = this.getUserScope(nextCharacter.userId);
+    const previousScope = previousCharacter.userId;
+    const nextScope = nextCharacter.userId;
 
     if (previousScope !== nextScope) {
       const previousCurrentId =
@@ -191,10 +194,20 @@ export class CharacterService {
     }
   }
 
-  private getUserScope(userId?: string | null): string {
+  private normalizeRequiredUserId(userId?: string | null): string {
     const normalizedUserId = userId?.trim();
 
-    return normalizedUserId || DEFAULT_USER_SCOPE;
+    if (!normalizedUserId) {
+      throw new BadRequestException('userId is required.');
+    }
+
+    return normalizedUserId;
+  }
+
+  private normalizeOptionalUserId(userId?: string | null): string | undefined {
+    const normalizedUserId = userId?.trim();
+
+    return normalizedUserId || undefined;
   }
 
   private findEntityById(id: string): Character {

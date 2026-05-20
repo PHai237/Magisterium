@@ -1,16 +1,14 @@
 import { randomUUID } from 'crypto';
 
-import {
-  createInitialTurnOrder,
-  updateExhaustionState,
-} from './battle.calculations';
+import { INITIAL_TURN_GAUGE_VALUE } from './battle.constants';
+
+import { createInitialTurnOrder } from './battle.calculations';
 
 import type {
   ActiveStatusEffect,
   BattleActorState,
   BattleActorType,
   BattleState,
-  BattleStatus,
 } from './battle.types';
 
 import type {
@@ -21,22 +19,35 @@ import type {
   ResistanceProfile,
 } from '../character/character.types';
 
+import type {
+  EncounterId,
+  EncounterZoneId,
+} from '../encounter/encounter.types';
+
+import type { MonsterAiTargetingMode } from '../monster/monster.types';
+
 import type { StatModifier } from '../passive/passive.types';
 
 export type CharacterBattleSnapshot = CharacterSnapshot & {
   resistances?: ResistanceProfile;
 };
 
-export interface CreateBattleActorInput {
+export interface CreateBattleActorStateInput {
   actorId: string;
   actorType: BattleActorType;
 
+  monsterId?: string;
+  aiTargetingMode?: MonsterAiTargetingMode;
+
   baseStats: BaseStats;
   derivedStats: DerivedStats;
-
   resistances?: ResistanceProfile;
 
   currentState?: Partial<CurrentState>;
+
+  hp?: number;
+  mp?: number;
+  stamina?: number;
 
   shield?: number;
   isExhausted?: boolean;
@@ -47,109 +58,131 @@ export interface CreateBattleActorInput {
   procCountThisTurn?: number;
 }
 
-export interface CreateMonsterBattleActorInput {
+export interface CreateBattleActorFromMonsterInput {
+  actorId?: string;
   monsterId: string;
+  aiTargetingMode?: MonsterAiTargetingMode;
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;
-
   resistances?: ResistanceProfile;
 
   currentState?: Partial<CurrentState>;
 
+  hp?: number;
+  mp?: number;
+  stamina?: number;
+
   shield?: number;
+  isExhausted?: boolean;
+
   activeStatusEffects?: ActiveStatusEffect[];
   activeModifiers?: StatModifier[];
+
+  procCountThisTurn?: number;
 }
 
 export interface CreateBattleStateInput {
   battleId?: string;
   seed?: string;
 
-  status?: BattleStatus;
+  encounterId?: EncounterId;
+  zoneId?: EncounterZoneId;
 
   actors: BattleActorState[];
 }
 
-function toSafeInteger(value: number | undefined, fallback: number): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return fallback;
-  }
-
-  return Math.floor(value);
+function createDefaultResistances(): ResistanceProfile {
+  return {};
 }
 
-function clampResource(
-  value: number | undefined,
-  fallback: number,
+function normalizeCurrentResource(
+  inputValue: number | undefined,
+  fallbackValue: number,
   maxValue: number,
 ): number {
-  const safeValue = toSafeInteger(value, fallback);
+  const value = inputValue ?? fallbackValue;
 
-  return Math.min(Math.max(safeValue, 0), maxValue);
+  if (!Number.isFinite(value)) {
+    return Math.max(0, Math.floor(maxValue));
+  }
+
+  return Math.min(
+    Math.max(0, Math.floor(value)),
+    Math.max(0, Math.floor(maxValue)),
+  );
+}
+
+function normalizeNonNegativeInteger(value: number | undefined): number {
+  if (!Number.isFinite(value ?? 0)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.floor(value ?? 0));
+}
+
+function assertBattleActors(actors: BattleActorState[]): void {
+  if (actors.length === 0) {
+    throw new Error('Cannot create a battle without actors.');
+  }
 }
 
 function assertUniqueActorIds(actors: BattleActorState[]): void {
-  const seenActorIds = new Set<string>();
+  const actorIds = new Set<string>();
 
   for (const actor of actors) {
-    if (seenActorIds.has(actor.actorId)) {
+    if (actorIds.has(actor.actorId)) {
       throw new Error(`Duplicate battle actor id: ${actor.actorId}`);
     }
 
-    seenActorIds.add(actor.actorId);
+    actorIds.add(actor.actorId);
   }
 }
 
-function buildActorRecord(
-  actors: BattleActorState[],
-): Record<string, BattleActorState> {
-  return actors.reduce<Record<string, BattleActorState>>((record, actor) => {
-    record[actor.actorId] = actor;
-
-    return record;
-  }, {});
-}
-
 export function createBattleActorState(
-  input: CreateBattleActorInput,
+  input: CreateBattleActorStateInput,
 ): BattleActorState {
-  const currentState = input.currentState ?? {};
+  const hp = normalizeCurrentResource(
+    input.hp ?? input.currentState?.hp,
+    input.derivedStats.maxHp,
+    input.derivedStats.maxHp,
+  );
 
-  const actor: BattleActorState = {
+  const mp = normalizeCurrentResource(
+    input.mp ?? input.currentState?.mp,
+    input.derivedStats.maxMp,
+    input.derivedStats.maxMp,
+  );
+
+  const stamina = normalizeCurrentResource(
+    input.stamina ?? input.currentState?.stamina,
+    input.derivedStats.maxStamina,
+    input.derivedStats.maxStamina,
+  );
+
+  return {
     actorId: input.actorId,
     actorType: input.actorType,
 
+    monsterId: input.monsterId,
+    aiTargetingMode: input.aiTargetingMode,
+
     baseStats: input.baseStats,
     derivedStats: input.derivedStats,
-    resistances: input.resistances ?? {},
+    resistances: input.resistances ?? createDefaultResistances(),
 
-    hp: clampResource(
-      currentState.hp,
-      input.derivedStats.maxHp,
-      input.derivedStats.maxHp,
-    ),
-    mp: clampResource(
-      currentState.mp,
-      input.derivedStats.maxMp,
-      input.derivedStats.maxMp,
-    ),
-    stamina: clampResource(
-      currentState.stamina,
-      input.derivedStats.maxStamina,
-      input.derivedStats.maxStamina,
-    ),
+    hp,
+    mp,
+    stamina,
 
-    shield: Math.max(0, toSafeInteger(input.shield, 0)),
-    isExhausted: input.isExhausted ?? false,
+    shield: normalizeNonNegativeInteger(input.shield),
+    isExhausted: input.isExhausted ?? stamina <= 0,
 
     activeStatusEffects: input.activeStatusEffects ?? [],
     activeModifiers: input.activeModifiers ?? [],
 
-    procCountThisTurn: Math.max(0, toSafeInteger(input.procCountThisTurn, 0)),
+    procCountThisTurn: normalizeNonNegativeInteger(input.procCountThisTurn),
   };
-
-  return updateExhaustionState(actor);
 }
 
 export function createBattleActorFromCharacterSnapshot(
@@ -161,13 +194,11 @@ export function createBattleActorFromCharacterSnapshot(
 
     baseStats: character.baseStats,
     derivedStats: character.derivedStats,
-
     resistances: character.resistances ?? {},
 
     currentState: character.currentState,
 
     shield: 0,
-    isExhausted: false,
 
     activeStatusEffects: [],
     activeModifiers: [],
@@ -177,56 +208,68 @@ export function createBattleActorFromCharacterSnapshot(
 }
 
 export function createBattleActorFromMonsterInput(
-  input: CreateMonsterBattleActorInput,
+  input: CreateBattleActorFromMonsterInput,
 ): BattleActorState {
   return createBattleActorState({
-    actorId: input.monsterId,
+    actorId: input.actorId ?? input.monsterId,
     actorType: 'monster',
+
+    monsterId: input.monsterId,
+    aiTargetingMode: input.aiTargetingMode,
 
     baseStats: input.baseStats,
     derivedStats: input.derivedStats,
-
     resistances: input.resistances ?? {},
 
     currentState: input.currentState,
 
-    shield: input.shield ?? 0,
-    isExhausted: false,
+    hp: input.hp,
+    mp: input.mp,
+    stamina: input.stamina,
+
+    shield: input.shield,
+    isExhausted: input.isExhausted,
 
     activeStatusEffects: input.activeStatusEffects ?? [],
     activeModifiers: input.activeModifiers ?? [],
 
-    procCountThisTurn: 0,
+    procCountThisTurn: input.procCountThisTurn ?? 0,
   });
 }
 
 export function createBattleState(input: CreateBattleStateInput): BattleState {
-  if (input.actors.length === 0) {
-    throw new Error('Cannot create a battle without actors.');
-  }
-
+  assertBattleActors(input.actors);
   assertUniqueActorIds(input.actors);
 
   const battleId = input.battleId ?? randomUUID();
   const now = new Date().toISOString();
 
-  const actorRecord = buildActorRecord(input.actors);
-  const turnOrder = createInitialTurnOrder(input.actors);
+  const actors = Object.fromEntries(
+    input.actors.map((actor) => [actor.actorId, actor]),
+  );
+
+  const turnOrder = createInitialTurnOrder(input.actors).map((entry) => ({
+    ...entry,
+    turnGauge: INITIAL_TURN_GAUGE_VALUE,
+  }));
 
   return {
     battleId,
-    status: input.status ?? 'created',
+    status: 'created',
+
+    encounterId: input.encounterId,
+    zoneId: input.zoneId,
 
     roundNumber: 1,
     turnNumber: 0,
     activeActorId: undefined,
 
-    actors: actorRecord,
+    actors,
     turnOrder,
 
     randomContext: {
       battleId,
-      seed: input.seed ?? randomUUID(),
+      seed: input.seed ?? battleId,
       rollIndex: 0,
     },
 

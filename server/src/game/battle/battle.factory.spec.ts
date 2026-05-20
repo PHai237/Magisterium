@@ -124,6 +124,7 @@ function createCharacterSnapshot(
 
     baseStats: DEFAULT_BASE_STATS,
     derivedStats: DEFAULT_DERIVED_STATS,
+    userId: '',
   };
 
   return {
@@ -273,7 +274,8 @@ describe('battle factory', () => {
       };
 
       const actor = createBattleActorFromMonsterInput({
-        monsterId: 'slime_1',
+        actorId: 'slime_1',
+        monsterId: 'slime',
 
         baseStats: DEFAULT_BASE_STATS,
         derivedStats: DEFAULT_DERIVED_STATS,
@@ -291,6 +293,7 @@ describe('battle factory', () => {
 
       expect(actor.actorId).toBe('slime_1');
       expect(actor.actorType).toBe('monster');
+      expect(actor.monsterId).toBe('slime');
 
       expect(actor.resistances).toEqual(resistances);
 

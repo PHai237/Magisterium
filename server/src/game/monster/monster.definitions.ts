@@ -1,4 +1,9 @@
-import type { MonsterDefinition } from './monster.types';
+import type { MonsterDefinition, MonsterId } from './monster.types';
+
+export const MONSTER_IDS = [
+  'slime',
+  'goblin',
+] as const satisfies readonly MonsterId[];
 
 export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
   {
@@ -9,6 +14,8 @@ export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
 
     rank: 'normal',
     level: 1,
+
+    aiTargetingMode: 'random',
 
     baseStats: {
       STR: 2,
@@ -89,6 +96,8 @@ export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
     rank: 'normal',
     level: 2,
 
+    aiTargetingMode: 'highest_threat',
+
     baseStats: {
       STR: 6,
       DEX: 7,
@@ -100,46 +109,46 @@ export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
 
     derivedStatOverrides: {
       maxHp: 45,
-      maxMp: 5,
-      maxStamina: 70,
+      maxMp: 0,
+      maxStamina: 55,
 
       pAtk: 13,
-      mAtk: 2,
+      mAtk: 0,
       healingPotency: 0,
 
       pDef: 3,
       mDef: 1,
 
-      actionSpeed: 17,
+      actionSpeed: 14,
       accuracy: 82,
       evasionRate: 6,
 
       critRate: 4,
-      critDamageBonus: 40,
+      critDamageBonus: 35,
 
-      fleeRate: 8,
+      fleeRate: 0,
 
-      statusResist: 2,
-      spiritualPotency: 1,
+      statusResist: 1,
+      spiritualPotency: 0,
 
       mpRegen: 0,
       staminaRegen: 5,
 
       secondChanceRate: 0,
-      procRate: 2,
+      procRate: 1,
     },
 
     resistances: {
-      physical: 0.05,
+      physical: 0,
       magical: 0,
-      light: -0.1,
-      dark: 0.1,
+      fire: 0,
+      water: 0,
     },
 
     currentState: {
       hp: 45,
-      mp: 5,
-      stamina: 70,
+      mp: 0,
+      stamina: 55,
     },
 
     shield: 0,
@@ -156,13 +165,13 @@ export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
         },
         {
           itemId: 'cracked_dagger',
-          chancePercent: 10,
+          chancePercent: 8,
           minQuantity: 1,
           maxQuantity: 1,
         },
       ],
     },
 
-    tags: ['monster', 'starter', 'humanoid', 'physical'],
+    tags: ['monster', 'starter', 'humanoid', 'goblin'],
   },
 ];

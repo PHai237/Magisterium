@@ -346,43 +346,30 @@ describe('BattleController', () => {
     expect(battleService.createBattleFromCharacter).not.toHaveBeenCalled();
   });
 
-  it('should allow battle creation when dto userId is omitted', () => {
+  it('should reject battle creation when dto userId is omitted for an owned character', () => {
     const character = createMockCharacter({
       userId: 'owner_user',
     });
 
-    const battle = createMockBattleState();
-
     characterService.findById.mockReturnValue(character);
-    battleService.createBattleFromCharacter.mockReturnValue(battle);
 
-    const result = controller.createBattle({
-      battleId: 'battle_1',
-      seed: 'seed_1',
-      characterId: 'character_1',
-      monsters: [
-        {
-          monsterId: 'goblin',
-          instanceId: 'goblin_1',
-        },
-      ],
-    });
+    expect(() =>
+      controller.createBattle({
+        battleId: 'battle_1',
+        seed: 'seed_1',
+        characterId: 'character_1',
+        monsters: [
+          {
+            monsterId: 'goblin',
+            instanceId: 'goblin_1',
+          },
+        ],
+        userId: '',
+      }),
+    ).toThrow(BadRequestException);
 
-    expect(result).toBe(battle);
-
-    expect(battleService.createBattleFromCharacter).toHaveBeenCalledWith({
-      battleId: 'battle_1',
-      seed: 'seed_1',
-      character,
-      monsters: [
-        {
-          monsterId: 'goblin',
-          instanceId: 'goblin_1',
-        },
-      ],
-      autoStart: undefined,
-      autoResolveMonsterTurns: undefined,
-    });
+    expect(characterService.findById).toHaveBeenCalledWith('character_1');
+    expect(battleService.createBattleFromCharacter).not.toHaveBeenCalled();
   });
 
   it('should list battles', () => {

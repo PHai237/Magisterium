@@ -15,6 +15,8 @@ import { BattleService } from './battle.service';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { ResolveBattleActionDto } from './dto/resolve-battle-action.dto';
 
+import type { CharacterSnapshot } from '../character/character.types';
+
 @Controller('battles')
 export class BattleController {
   constructor(
@@ -26,13 +28,28 @@ export class BattleController {
   createBattle(@Body() dto: CreateBattleDto) {
     const character = this.characterService.findById(dto.characterId);
 
-    if (
-      dto.userId &&
-      character.userId &&
-      character.userId.trim() !== dto.userId.trim()
-    ) {
+    this.assertCharacterCanBeUsedForBattle(character, dto.userId);
+
+    if (dto.encounterId && dto.monsters && dto.monsters.length > 0) {
       throw new BadRequestException(
-        `Character ${dto.characterId} does not belong to user scope ${dto.userId}.`,
+        'Battle creation accepts either encounterId or monsters, not both.',
+      );
+    }
+
+    if (dto.encounterId) {
+      return this.battleService.createBattleFromEncounter({
+        battleId: dto.battleId,
+        seed: dto.seed,
+        character,
+        encounterId: dto.encounterId,
+        autoStart: dto.autoStart,
+        autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
+      });
+    }
+
+    if (!dto.monsters || dto.monsters.length === 0) {
+      throw new BadRequestException(
+        'Battle creation requires either encounterId or monsters.',
       );
     }
 
@@ -77,5 +94,29 @@ export class BattleController {
     return {
       deleted: this.battleService.deleteBattle(battleId),
     };
+  }
+
+  private assertCharacterCanBeUsedForBattle(
+    character: CharacterSnapshot,
+    requestUserId?: string,
+  ): void {
+    const characterUserId = character.userId.trim();
+    const normalizedRequestUserId = requestUserId?.trim();
+
+    if (!normalizedRequestUserId) {
+      throw new BadRequestException('userId is required to create a battle.');
+    }
+
+    if (!characterUserId) {
+      throw new BadRequestException(
+        `Character ${character.id} does not have an owner user scope.`,
+      );
+    }
+
+    if (characterUserId !== normalizedRequestUserId) {
+      throw new BadRequestException(
+        `Character ${character.id} does not belong to user scope ${normalizedRequestUserId}.`,
+      );
+    }
   }
 }

@@ -1,19 +1,16 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
 
-import {
-  IsIn,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Length,
-} from 'class-validator';
+import { IsIn, IsNotEmpty, IsString, Length } from 'class-validator';
 
-import { ORIGIN_DEFINITIONS } from '../../game/character/character.constants';
 import type { OriginId } from '../../game/character/character.types';
 
-const VALID_ORIGIN_IDS: OriginId[] = ORIGIN_DEFINITIONS.map(
-  (origin) => origin.id,
-);
+const VALID_ORIGIN_IDS: readonly OriginId[] = [
+  'scholar',
+  'mercenary',
+  'wanderer',
+  'street_urchin',
+  'acolyte',
+];
 
 function trimString({ value }: TransformFnParams): unknown {
   const rawValue: unknown = value;
@@ -45,8 +42,10 @@ export class CreateCharacterDto {
   })
   originId!: OriginId;
 
-  @IsOptional()
   @Transform(trimString)
   @IsString()
-  userId?: string;
+  @IsNotEmpty({
+    message: 'userId is required to create a character.',
+  })
+  userId!: string;
 }
