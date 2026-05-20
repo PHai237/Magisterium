@@ -6,7 +6,7 @@ import {
   type CharacterBattleSnapshot,
 } from './battle.factory';
 
-import type { BattleActorState } from './battle.types';
+import type { BattleActorState } from '../battle.types';
 
 import type {
   BaseStats,
@@ -16,7 +16,7 @@ import type {
   ResistanceProfile,
   StatKey,
   StatProgress,
-} from '../character/character.types';
+} from '../../character/character.types';
 
 const DEFAULT_BASE_STATS: BaseStats = {
   STR: 10,
@@ -124,7 +124,7 @@ function createCharacterSnapshot(
 
     baseStats: DEFAULT_BASE_STATS,
     derivedStats: DEFAULT_DERIVED_STATS,
-    userId: '',
+    userId: 'test_user_1',
   };
 
   return {

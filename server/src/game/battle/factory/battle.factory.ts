@@ -1,15 +1,15 @@
 import { randomUUID } from 'crypto';
 
-import { INITIAL_TURN_GAUGE_VALUE } from './battle.constants';
+import { INITIAL_TURN_GAUGE_VALUE } from '../battle.constants';
 
-import { createInitialTurnOrder } from './battle.calculations';
+import { createInitialTurnOrder } from '../calculations/battle.calculations';
 
 import type {
   ActiveStatusEffect,
   BattleActorState,
   BattleActorType,
   BattleState,
-} from './battle.types';
+} from '../battle.types';
 
 import type {
   BaseStats,
@@ -17,16 +17,16 @@ import type {
   CurrentState,
   DerivedStats,
   ResistanceProfile,
-} from '../character/character.types';
+} from '../../character/character.types';
 
 import type {
   EncounterId,
   EncounterZoneId,
-} from '../encounter/encounter.types';
+} from '../../encounter/encounter.types';
 
-import type { MonsterAiTargetingMode } from '../monster/monster.types';
+import type { MonsterAiTargetingMode } from '../../monster/monster.types';
 
-import type { StatModifier } from '../passive/passive.types';
+import type { StatModifier } from '../../passive/passive.types';
 
 export type CharacterBattleSnapshot = CharacterSnapshot & {
   resistances?: ResistanceProfile;

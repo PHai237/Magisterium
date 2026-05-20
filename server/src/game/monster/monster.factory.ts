@@ -10,7 +10,7 @@ import type {
 
 import { calculateDerivedStats } from '../character/character.calculations';
 
-import { createBattleActorFromMonsterInput } from '../battle/battle.factory';
+import { createBattleActorFromMonsterInput } from '../battle/factory/battle.factory';
 
 import type { BattleActorState } from '../battle/battle.types';
 

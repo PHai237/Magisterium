@@ -16,19 +16,19 @@ import {
 import {
   RECOVERY_STAMINA_PERCENT,
   TURN_GAUGE_READY_VALUE,
-} from './battle.constants';
+} from '../battle.constants';
 
 import type {
   BattleActorState,
   BattleTurnOrderEntry,
   RandomRollRequest,
-} from './battle.types';
+} from '../battle.types';
 
 import type {
   BaseStats,
   DerivedStats,
   ResistanceProfile,
-} from '../character/character.types';
+} from '../../character/character.types';
 
 const DEFAULT_BASE_STATS: BaseStats = {
   STR: 10,

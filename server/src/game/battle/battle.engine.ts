@@ -16,7 +16,7 @@ import {
   getReadyTurnEntries,
   resolveRandomRoll,
   updateExhaustionState,
-} from './battle.calculations';
+} from './calculations/battle.calculations';
 
 import type {
   BattleActionCommand,

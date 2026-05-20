@@ -4,7 +4,7 @@ import { createCharacterSnapshot } from '../character/character.calculations';
 
 import { createCharacter } from '../character/character.factory';
 
-import type { CharacterBattleSnapshot } from './battle.factory';
+import type { CharacterBattleSnapshot } from './factory/battle.factory';
 
 function createTestCharacterSnapshot(): CharacterBattleSnapshot {
   const character = createCharacter({

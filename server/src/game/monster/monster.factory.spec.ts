@@ -9,7 +9,7 @@ import {
 import {
   createBattleActorState,
   createBattleState,
-} from '../battle/battle.factory';
+} from '../battle/factory/battle.factory';
 
 import { startBattle } from '../battle/battle.engine';
 

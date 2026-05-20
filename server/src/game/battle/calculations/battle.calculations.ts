@@ -15,7 +15,7 @@ import {
   MIN_RESISTANCE_VALUE,
   RECOVERY_STAMINA_PERCENT,
   TURN_GAUGE_READY_VALUE,
-} from './battle.constants';
+} from '../battle.constants';
 
 import type {
   BattleActorState,
@@ -27,13 +27,13 @@ import type {
   DamageCalculationResult,
   RandomRollRequest,
   RandomRollResult,
-} from './battle.types';
+} from '../battle.types';
 
 import type {
   DamageType,
   ResistanceKey,
   ResourceType,
-} from '../character/character.types';
+} from '../../character/character.types';
 
 interface ResistanceMitigationResult {
   damageAfterResistance: number;

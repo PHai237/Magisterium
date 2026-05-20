@@ -12,7 +12,7 @@ import {
   createBattleActorFromCharacterSnapshot,
   createBattleState,
   type CharacterBattleSnapshot,
-} from './battle.factory';
+} from './factory/battle.factory';
 
 import {
   resolveBattleAction,
@@ -28,7 +28,7 @@ import {
   TURN_GAUGE_READY_VALUE,
 } from './battle.constants';
 
-import { hashStringToUnitInterval } from './battle.calculations';
+import { hashStringToUnitInterval } from './calculations/battle.calculations';
 
 import type {
   BattleActionCommand,

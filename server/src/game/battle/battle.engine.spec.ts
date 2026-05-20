@@ -4,12 +4,15 @@ import {
   startBattle,
 } from './battle.engine';
 
-import { createBattleActorState, createBattleState } from './battle.factory';
+import {
+  createBattleActorState,
+  createBattleState,
+} from './factory/battle.factory';
 
 import {
   calculateHitChance,
   hashStringToUnitInterval,
-} from './battle.calculations';
+} from './calculations/battle.calculations';
 
 import type { BattleActorState, BattleActorType } from './battle.types';
 
