@@ -2,7 +2,10 @@ import { randomUUID } from 'crypto';
 
 import { INITIAL_TURN_GAUGE_VALUE } from '../battle.constants';
 
-import { createInitialTurnOrder } from '../calculations/battle.calculations';
+import {
+  createInitialTurnOrder,
+  updateExhaustionState,
+} from '../calculations/battle.calculations';
 
 import type {
   ActiveStatusEffect,
@@ -160,7 +163,7 @@ export function createBattleActorState(
     input.derivedStats.maxStamina,
   );
 
-  return {
+  const actor: BattleActorState = {
     actorId: input.actorId,
     actorType: input.actorType,
 
@@ -183,6 +186,8 @@ export function createBattleActorState(
 
     procCountThisTurn: normalizeNonNegativeInteger(input.procCountThisTurn),
   };
+
+  return updateExhaustionState(actor);
 }
 
 export function createBattleActorFromCharacterSnapshot(
@@ -269,7 +274,7 @@ export function createBattleState(input: CreateBattleStateInput): BattleState {
 
     randomContext: {
       battleId,
-      seed: input.seed ?? battleId,
+      seed: input.seed ?? randomUUID(),
       rollIndex: 0,
     },
 

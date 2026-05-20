@@ -126,7 +126,7 @@ export const MONSTER_DEFINITIONS: MonsterDefinition[] = [
       critRate: 4,
       critDamageBonus: 35,
 
-      fleeRate: 0,
+      fleeRate: 8,
 
       statusResist: 1,
       spiritualPotency: 0,

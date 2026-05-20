@@ -21,6 +21,8 @@ import type {
 
 import type { StatusEffectType } from '../status/status.types';
 
+import type { MonsterAiTargetingMode } from '../monster/monster.types';
+
 export type BattleActorType = 'character' | 'monster';
 
 export type BattleStatus =
@@ -118,7 +120,7 @@ export interface BattleActorState {
   actorType: BattleActorType;
 
   monsterId?: string;
-  aiTargetingMode?: string;
+  aiTargetingMode?: MonsterAiTargetingMode;
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;

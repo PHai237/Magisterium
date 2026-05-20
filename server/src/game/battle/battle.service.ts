@@ -6,8 +6,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { randomUUID } from 'crypto';
-
 import {
   createBattleActorFromCharacterSnapshot,
   createBattleState,
@@ -15,6 +13,8 @@ import {
 } from './factory/battle.factory';
 
 import {
+  appendEvents,
+  createBattleEvent,
   resolveBattleAction,
   startBattle,
   type BattleEngineResult,
@@ -22,7 +22,6 @@ import {
 
 import {
   MAX_AUTO_MONSTER_ACTIONS,
-  MAX_BATTLE_EVENTS_RETAINED,
   MAX_MANUAL_MONSTERS_PER_BATTLE,
   MIN_ACTION_SPEED,
   TURN_GAUGE_READY_VALUE,
@@ -33,8 +32,6 @@ import { hashStringToUnitInterval } from './calculations/battle.calculations';
 import type {
   BattleActionCommand,
   BattleActorState,
-  BattleEvent,
-  BattleEventType,
   BattleState,
   BattleTurnOrderEntry,
 } from './battle.types';
@@ -54,15 +51,7 @@ import {
   createMonsterBattleActors,
 } from '../monster/monster.factory';
 
-import type {
-  CreateMonsterBattleActorInput,
-  MonsterAiTargetingMode,
-} from '../monster/monster.types';
-
-const PINNED_BATTLE_EVENT_TYPES = new Set<BattleEventType>([
-  'BATTLE_STARTED',
-  'BATTLE_ENDED',
-]);
+import type { CreateMonsterBattleActorInput } from '../monster/monster.types';
 
 export interface CreateBattleFromCharacterInput {
   battleId?: string;
@@ -340,8 +329,8 @@ export class BattleService {
       updatedAt: new Date().toISOString(),
     };
 
-    return this.appendEvents(nextBattle, [
-      this.createBattleEvent({
+    return appendEvents(nextBattle, [
+      createBattleEvent({
         type: 'CONTROL_FORCED',
         phase: 'initiation',
         actorId: livingCharacter.actorId,
@@ -352,7 +341,7 @@ export class BattleService {
           reason: 'auto_monster_turn_limit',
         },
       }),
-      this.createBattleEvent({
+      createBattleEvent({
         type: 'TURN_STARTED',
         phase: 'initiation',
         actorId: livingCharacter.actorId,
@@ -413,9 +402,7 @@ export class BattleService {
       return undefined;
     }
 
-    const targetingMode =
-      (monsterActor.aiTargetingMode as MonsterAiTargetingMode | undefined) ??
-      'lowest_hp';
+    const targetingMode = monsterActor.aiTargetingMode ?? 'lowest_hp';
 
     switch (targetingMode) {
       case 'highest_threat':
@@ -483,41 +470,5 @@ export class BattleService {
     );
 
     return livingCharacters[targetIndex] ?? livingCharacters[0];
-  }
-
-  private createBattleEvent(input: Omit<BattleEvent, 'id'>): BattleEvent {
-    return {
-      id: randomUUID(),
-      ...input,
-    };
-  }
-
-  private appendEvents(
-    battle: BattleState,
-    events: BattleEvent[],
-  ): BattleState {
-    const combinedEvents = [...battle.events, ...events];
-
-    const pinnedEvents = combinedEvents.filter((event) =>
-      PINNED_BATTLE_EVENT_TYPES.has(event.type),
-    );
-
-    const nonPinnedEvents = combinedEvents.filter(
-      (event) => !PINNED_BATTLE_EVENT_TYPES.has(event.type),
-    );
-
-    const recentEventLimit = Math.max(
-      0,
-      MAX_BATTLE_EVENTS_RETAINED - pinnedEvents.length,
-    );
-
-    return {
-      ...battle,
-      events: [
-        ...pinnedEvents.slice(0, MAX_BATTLE_EVENTS_RETAINED),
-        ...nonPinnedEvents.slice(-recentEventLimit),
-      ],
-      updatedAt: new Date().toISOString(),
-    };
   }
 }

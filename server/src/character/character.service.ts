@@ -187,26 +187,55 @@ export class CharacterService {
     );
   }
 
+  private selectLatestCharacter(
+    currentCandidate: Character | undefined,
+    nextCandidate: Character,
+  ): Character {
+    if (!currentCandidate) {
+      return nextCandidate;
+    }
+
+    const currentUpdatedAt = Date.parse(currentCandidate.updatedAt);
+    const nextUpdatedAt = Date.parse(nextCandidate.updatedAt);
+
+    if (Number.isFinite(currentUpdatedAt) && Number.isFinite(nextUpdatedAt)) {
+      if (nextUpdatedAt > currentUpdatedAt) {
+        return nextCandidate;
+      }
+
+      if (nextUpdatedAt < currentUpdatedAt) {
+        return currentCandidate;
+      }
+    }
+
+    const currentCreatedAt = Date.parse(currentCandidate.createdAt);
+    const nextCreatedAt = Date.parse(nextCandidate.createdAt);
+
+    if (Number.isFinite(currentCreatedAt) && Number.isFinite(nextCreatedAt)) {
+      if (nextCreatedAt > currentCreatedAt) {
+        return nextCandidate;
+      }
+
+      if (nextCreatedAt < currentCreatedAt) {
+        return currentCandidate;
+      }
+    }
+
+    return nextCandidate.id.localeCompare(currentCandidate.id) > 0
+      ? nextCandidate
+      : currentCandidate;
+  }
+
   private findLatestCharacterForUserScope(
     userScope: string,
   ): Character | undefined {
-    return this.findCharactersByUserScope(userScope).sort((left, right) => {
-      const rightUpdatedAt = new Date(right.updatedAt).getTime();
-      const leftUpdatedAt = new Date(left.updatedAt).getTime();
+    let latestCharacter: Character | undefined;
 
-      if (rightUpdatedAt !== leftUpdatedAt) {
-        return rightUpdatedAt - leftUpdatedAt;
-      }
+    for (const character of this.findCharactersByUserScope(userScope)) {
+      latestCharacter = this.selectLatestCharacter(latestCharacter, character);
+    }
 
-      const rightCreatedAt = new Date(right.createdAt).getTime();
-      const leftCreatedAt = new Date(left.createdAt).getTime();
-
-      if (rightCreatedAt !== leftCreatedAt) {
-        return rightCreatedAt - leftCreatedAt;
-      }
-
-      return right.id.localeCompare(left.id);
-    })[0];
+    return latestCharacter;
   }
 
   private findFallbackCurrentCharacter(
@@ -229,31 +258,24 @@ export class CharacterService {
     const currentCharacterId =
       this.currentCharacterIdsByUserScope.get(userScope);
 
-    if (!currentCharacterId) {
-      const fallbackCharacter = this.findLatestCharacterForUserScope(userScope);
+    if (currentCharacterId) {
+      const currentCharacter = this.characters.get(currentCharacterId);
 
-      if (fallbackCharacter) {
-        this.currentCharacterIdsByUserScope.set(
-          userScope,
-          fallbackCharacter.id,
-        );
+      if (currentCharacter && currentCharacter.userId === userScope) {
+        return;
       }
 
-      return;
+      this.currentCharacterIdsByUserScope.delete(userScope);
     }
-
-    const currentCharacter = this.characters.get(currentCharacterId);
-
-    if (currentCharacter && currentCharacter.userId === userScope) {
-      return;
-    }
-
-    this.currentCharacterIdsByUserScope.delete(userScope);
 
     const fallbackCharacter = this.findLatestCharacterForUserScope(userScope);
 
-    if (fallbackCharacter) {
-      this.currentCharacterIdsByUserScope.set(userScope, fallbackCharacter.id);
+    if (!fallbackCharacter) {
+      this.currentCharacterIdsByUserScope.delete(userScope);
+
+      return;
     }
+
+    this.currentCharacterIdsByUserScope.set(userScope, fallbackCharacter.id);
   }
 }

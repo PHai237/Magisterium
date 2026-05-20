@@ -1,4 +1,5 @@
 import type { DamageType } from '../character/character.types';
+import type { BattleEventType } from './battle.types';
 
 export const MAX_PROC_PER_TURN = 5;
 
@@ -49,6 +50,10 @@ export const MIN_ACTION_SPEED = 1;
 export const MAX_TURN_GAUGE_ADVANCE_TICKS = 5000;
 
 export const MAX_BATTLE_EVENTS_RETAINED = 200;
+export const PINNED_BATTLE_EVENT_TYPES = new Set<BattleEventType>([
+  'BATTLE_STARTED',
+  'BATTLE_ENDED',
+]);
 
 export const MAX_MANUAL_MONSTERS_PER_BATTLE = 12;
 export const MAX_AUTO_MONSTER_ACTIONS = 20;

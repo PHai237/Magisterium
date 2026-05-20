@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import {
   MAX_BATTLE_EVENTS_RETAINED,
   MAX_PROC_PER_TURN,
+  PINNED_BATTLE_EVENT_TYPES,
   TURN_GAUGE_READY_VALUE,
 } from './battle.constants';
 
@@ -47,12 +48,7 @@ interface HealingApplicationResult {
   healingDone: number;
 }
 
-const PINNED_BATTLE_EVENT_TYPES = new Set<BattleEventType>([
-  'BATTLE_STARTED',
-  'BATTLE_ENDED',
-]);
-
-function createBattleEvent(input: Omit<BattleEvent, 'id'>): BattleEvent {
+export function createBattleEvent(input: Omit<BattleEvent, 'id'>): BattleEvent {
   return {
     id: randomUUID(),
     ...input,
@@ -178,7 +174,7 @@ function determineBattleStatus(
   return 'in_progress';
 }
 
-function appendEvents(
+export function appendEvents(
   battleState: BattleState,
   events: BattleEvent[],
 ): BattleState {
