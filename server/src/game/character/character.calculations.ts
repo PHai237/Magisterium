@@ -2,8 +2,14 @@ import {
   BRONZE_PER_GOLD,
   BRONZE_PER_SILVER,
   DEFAULT_STARTER_KIT_ID,
+  FALNA_ACCUMULATED_BONUS_MAX,
+  FALNA_FRAGMENT_COUNT_MAX,
   FALNA_VISIBLE_STAT_MAX,
   FALNA_VISIBLE_STAT_MIN,
+  MAX_SAFE_BRONZE_INPUT,
+  MAX_SAFE_BRONZE_TOTAL,
+  MAX_SAFE_GOLD_INPUT,
+  MAX_SAFE_SILVER_INPUT,
   ORIGIN_DEFINITIONS,
   STARTER_KIT_DEFINITIONS,
   STAT_KEYS,
@@ -41,6 +47,50 @@ export function roundToTwoDecimals(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+export function assertSafeNonNegativeInteger(
+  value: number,
+  label: string,
+): number {
+  const normalizedValue = toSafeInteger(value);
+
+  if (!Number.isSafeInteger(normalizedValue)) {
+    throw new Error(`${label} must be a safe integer.`);
+  }
+
+  if (normalizedValue < 0) {
+    throw new Error(`${label} must not be negative.`);
+  }
+
+  return normalizedValue;
+}
+
+export function assertSafeCurrencyTotal(totalBronze: number): number {
+  const normalizedTotal = assertSafeNonNegativeInteger(
+    totalBronze,
+    'Currency total',
+  );
+
+  if (normalizedTotal > MAX_SAFE_BRONZE_TOTAL) {
+    throw new Error('Currency total exceeds the safe integer limit.');
+  }
+
+  return normalizedTotal;
+}
+
+function assertSafeCurrencyUnitAmount(
+  value: number,
+  maxValue: number,
+  label: string,
+): number {
+  const normalizedValue = assertSafeNonNegativeInteger(value, label);
+
+  if (normalizedValue > maxValue) {
+    throw new Error(`${label} exceeds the safe currency conversion limit.`);
+  }
+
+  return normalizedValue;
+}
+
 export function createStatProgress(
   currentValue = 0,
   fragmentCount = 0,
@@ -52,8 +102,16 @@ export function createStatProgress(
       FALNA_VISIBLE_STAT_MIN,
       FALNA_VISIBLE_STAT_MAX,
     ),
-    fragmentCount: Math.max(0, toSafeInteger(fragmentCount)),
-    accumulatedBonus: Math.max(0, toSafeInteger(accumulatedBonus)),
+    fragmentCount: clamp(
+      toSafeInteger(fragmentCount),
+      0,
+      FALNA_FRAGMENT_COUNT_MAX,
+    ),
+    accumulatedBonus: clamp(
+      toSafeInteger(accumulatedBonus),
+      0,
+      FALNA_ACCUMULATED_BONUS_MAX,
+    ),
   };
 }
 
@@ -133,7 +191,11 @@ export function buildStatsForOrigin(
 export function getEffectiveStatValue(progress: StatProgress): number {
   const normalized = normalizeStatProgress(progress);
 
-  return normalized.currentValue + normalized.accumulatedBonus;
+  return clamp(
+    normalized.currentValue + normalized.accumulatedBonus,
+    FALNA_VISIBLE_STAT_MIN,
+    FALNA_VISIBLE_STAT_MAX,
+  );
 }
 
 export function calculateBaseStats(
@@ -271,7 +333,7 @@ export function createCharacterSnapshot(
 }
 
 export function breakDownBronze(totalBronze: number): CurrencyAmount {
-  const normalizedTotal = Math.max(0, toSafeInteger(totalBronze));
+  const normalizedTotal = assertSafeCurrencyTotal(totalBronze);
 
   const gold = Math.floor(normalizedTotal / BRONZE_PER_GOLD);
   const remainderAfterGold = normalizedTotal % BRONZE_PER_GOLD;
@@ -287,11 +349,28 @@ export function breakDownBronze(totalBronze: number): CurrencyAmount {
 }
 
 export function convertToBronze(amount: CurrencyAmount): number {
-  const bronze = Math.max(0, toSafeInteger(amount.bronze));
-  const silver = Math.max(0, toSafeInteger(amount.silver));
-  const gold = Math.max(0, toSafeInteger(amount.gold));
+  const bronze = assertSafeCurrencyUnitAmount(
+    amount.bronze,
+    MAX_SAFE_BRONZE_INPUT,
+    'Bronze amount',
+  );
 
-  return gold * BRONZE_PER_GOLD + silver * BRONZE_PER_SILVER + bronze;
+  const silver = assertSafeCurrencyUnitAmount(
+    amount.silver,
+    MAX_SAFE_SILVER_INPUT,
+    'Silver amount',
+  );
+
+  const gold = assertSafeCurrencyUnitAmount(
+    amount.gold,
+    MAX_SAFE_GOLD_INPUT,
+    'Gold amount',
+  );
+
+  const totalBronze =
+    gold * BRONZE_PER_GOLD + silver * BRONZE_PER_SILVER + bronze;
+
+  return assertSafeCurrencyTotal(totalBronze);
 }
 
 export function normalizeCurrency(amount: CurrencyAmount): CurrencyAmount {
@@ -302,8 +381,22 @@ export function addBronze(
   currentMoneyBronze: number,
   deltaBronze: number,
 ): number {
-  return Math.max(
-    0,
-    toSafeInteger(currentMoneyBronze) + toSafeInteger(deltaBronze),
-  );
+  const current = assertSafeCurrencyTotal(currentMoneyBronze);
+  const delta = toSafeInteger(deltaBronze);
+
+  if (!Number.isSafeInteger(delta)) {
+    throw new Error('Currency delta must be a safe integer.');
+  }
+
+  const nextTotal = current + delta;
+
+  if (!Number.isSafeInteger(nextTotal)) {
+    throw new Error('Currency operation exceeds the safe integer limit.');
+  }
+
+  if (nextTotal < 0) {
+    return 0;
+  }
+
+  return assertSafeCurrencyTotal(nextTotal);
 }

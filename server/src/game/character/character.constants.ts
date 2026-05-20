@@ -37,6 +37,21 @@ export const BRONZE_PER_SILVER = 100;
 export const SILVER_PER_GOLD = 100;
 export const BRONZE_PER_GOLD = BRONZE_PER_SILVER * SILVER_PER_GOLD;
 
+export const MAX_SAFE_BRONZE_TOTAL = Number.MAX_SAFE_INTEGER;
+
+export const MAX_SAFE_GOLD_INPUT = Math.floor(
+  MAX_SAFE_BRONZE_TOTAL / BRONZE_PER_GOLD,
+);
+
+export const MAX_SAFE_SILVER_INPUT = Math.floor(
+  MAX_SAFE_BRONZE_TOTAL / BRONZE_PER_SILVER,
+);
+
+export const MAX_SAFE_BRONZE_INPUT = MAX_SAFE_BRONZE_TOTAL;
+
+export const FALNA_FRAGMENT_COUNT_MAX = 999_999;
+export const FALNA_ACCUMULATED_BONUS_MAX = FALNA_VISIBLE_STAT_MAX;
+
 export const DEFAULT_STARTER_KIT_ID: StarterKitId = 'novice_adventurer_kit';
 
 export const STARTER_KIT_DEFINITIONS: StarterKitDefinition[] = [
