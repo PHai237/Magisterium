@@ -7,20 +7,24 @@ import {
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
 
+import {
+  normalizeCharacterName,
+  normalizeOptionalCharacterName,
+  normalizeRequiredUserId,
+} from './character.validation';
+
 import { createCharacter } from '../game/character/character.factory';
 
-import {
-  clampCurrentState,
-  createCharacterSnapshot,
-} from '../game/character/character.calculations';
+import { createCharacterSnapshot } from '../game/character/character.calculations';
 
 import type {
   Character,
   CharacterSnapshot,
 } from '../game/character/character.types';
 
-type CharacterEntityInput = Character &
-  Partial<Pick<CharacterSnapshot, 'baseStats' | 'derivedStats'>>;
+type CreateCharacterCommand = CreateCharacterDto & {
+  userId: string;
+};
 
 @Injectable()
 export class CharacterService {
@@ -35,11 +39,12 @@ export class CharacterService {
     };
   }
 
-  create(dto: CreateCharacterDto): CharacterSnapshot {
-    const userId = this.normalizeRequiredUserId(dto.userId);
+  create(dto: CreateCharacterCommand): CharacterSnapshot {
+    const userId = normalizeRequiredUserId(dto.userId);
+    const name = normalizeCharacterName(dto.name);
 
     const character = createCharacter({
-      name: dto.name,
+      name,
       originId: dto.originId,
       userId,
     });
@@ -50,31 +55,32 @@ export class CharacterService {
     return createCharacterSnapshot(character);
   }
 
-  findAll(userId?: string): CharacterSnapshot[] {
-    const userScope = this.normalizeOptionalUserId(userId);
+  findAll(userId: string): CharacterSnapshot[] {
+    const userScope = normalizeRequiredUserId(userId);
 
     return Array.from(this.characters.values())
-      .filter((character) => {
-        if (!userScope) {
-          return true;
-        }
-
-        return character.userId === userScope;
-      })
+      .filter((character) => character.userId === userScope)
       .map((character) => createCharacterSnapshot(character));
   }
 
-  findCurrent(userId?: string): CharacterSnapshot | null {
-    const userScope = this.normalizeRequiredUserId(userId);
-
+  findCurrent(userId: string): CharacterSnapshot | null {
+    const userScope = normalizeRequiredUserId(userId);
     const currentCharacterId =
       this.currentCharacterIdsByUserScope.get(userScope);
 
     if (!currentCharacterId) {
-      return null;
+      return this.findFallbackCurrentCharacter(userScope);
     }
 
-    return this.findById(currentCharacterId);
+    const currentCharacter = this.characters.get(currentCharacterId);
+
+    if (!currentCharacter || currentCharacter.userId !== userScope) {
+      this.currentCharacterIdsByUserScope.delete(userScope);
+
+      return this.findFallbackCurrentCharacter(userScope);
+    }
+
+    return createCharacterSnapshot(currentCharacter);
   }
 
   findById(id: string): CharacterSnapshot {
@@ -83,89 +89,59 @@ export class CharacterService {
     return createCharacterSnapshot(character);
   }
 
-  updateById(id: string, dto: UpdateCharacterDto): CharacterSnapshot {
-    const existingCharacter = this.findEntityById(id);
-    const existingSnapshot = createCharacterSnapshot(existingCharacter);
+  findByIdForUserScope(id: string, userId: string): CharacterSnapshot {
+    const userScope = normalizeRequiredUserId(userId);
+    const character = this.findEntityById(id);
 
-    const nextUserId = dto.userId
-      ? this.normalizeRequiredUserId(dto.userId)
-      : existingCharacter.userId;
+    this.assertCharacterBelongsToUserScope(character, userScope);
+
+    return createCharacterSnapshot(character);
+  }
+
+  updateById(
+    id: string,
+    dto: UpdateCharacterDto,
+    userId: string,
+  ): CharacterSnapshot {
+    const userScope = normalizeRequiredUserId(userId);
+    const existingCharacter = this.findEntityById(id);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+
+    const nextName =
+      normalizeOptionalCharacterName(dto.name) ?? existingCharacter.name;
 
     const nextCharacter: Character = {
       ...existingCharacter,
-      userId: nextUserId,
-      name: dto.name ?? existingCharacter.name,
-      currentState: clampCurrentState(
-        {
-          hp: dto.currentState?.hp ?? existingCharacter.currentState.hp,
-          mp: dto.currentState?.mp ?? existingCharacter.currentState.mp,
-          stamina:
-            dto.currentState?.stamina ?? existingCharacter.currentState.stamina,
-        },
-        existingSnapshot.derivedStats,
-      ),
+      name: nextName,
       updatedAt: new Date().toISOString(),
     };
 
     this.characters.set(id, nextCharacter);
-    this.migrateCurrentCharacterScope(existingCharacter, nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
 
     return createCharacterSnapshot(nextCharacter);
   }
 
-  replaceById(
-    id: string,
-    incomingData: CharacterEntityInput,
-  ): CharacterSnapshot {
-    this.findEntityById(id);
-
-    const sanitizedCharacter = this.sanitizeCharacterEntity(incomingData);
-
-    const updatedCharacter: Character = {
-      ...sanitizedCharacter,
-      id,
-      userId: this.normalizeRequiredUserId(sanitizedCharacter.userId),
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.characters.set(id, updatedCharacter);
-
-    if (!this.currentCharacterIdsByUserScope.has(updatedCharacter.userId)) {
-      this.currentCharacterIdsByUserScope.set(
-        updatedCharacter.userId,
-        updatedCharacter.id,
-      );
-    }
-
-    return createCharacterSnapshot(updatedCharacter);
-  }
-
-  setCurrentCharacter(id: string, userId?: string): CharacterSnapshot {
-    const userScope = this.normalizeRequiredUserId(userId);
+  setCurrentCharacter(id: string, userId: string): CharacterSnapshot {
+    const userScope = normalizeRequiredUserId(userId);
     const character = this.findEntityById(id);
 
-    if (character.userId !== userScope) {
-      throw new NotFoundException(`Character not found in user scope: ${id}`);
-    }
+    this.assertCharacterBelongsToUserScope(character, userScope);
 
     this.currentCharacterIdsByUserScope.set(userScope, character.id);
 
     return createCharacterSnapshot(character);
   }
 
-  deleteById(id: string) {
-    this.findEntityById(id);
+  deleteById(id: string, userId: string) {
+    const userScope = normalizeRequiredUserId(userId);
+    const character = this.findEntityById(id);
+
+    this.assertCharacterBelongsToUserScope(character, userScope);
 
     this.characters.delete(id);
-
-    for (const [
-      userScope,
-      currentCharacterId,
-    ] of this.currentCharacterIdsByUserScope.entries()) {
-      if (currentCharacterId === id) {
-        this.currentCharacterIdsByUserScope.delete(userScope);
-      }
-    }
+    this.repairCurrentCharacterForUserScope(userScope);
 
     return {
       deleted: true,
@@ -173,41 +149,9 @@ export class CharacterService {
     };
   }
 
-  private migrateCurrentCharacterScope(
-    previousCharacter: Character,
-    nextCharacter: Character,
-  ): void {
-    const previousScope = previousCharacter.userId;
-    const nextScope = nextCharacter.userId;
-
-    if (previousScope !== nextScope) {
-      const previousCurrentId =
-        this.currentCharacterIdsByUserScope.get(previousScope);
-
-      if (previousCurrentId === nextCharacter.id) {
-        this.currentCharacterIdsByUserScope.delete(previousScope);
-      }
-    }
-
-    if (!this.currentCharacterIdsByUserScope.has(nextScope)) {
-      this.currentCharacterIdsByUserScope.set(nextScope, nextCharacter.id);
-    }
-  }
-
-  private normalizeRequiredUserId(userId?: string | null): string {
-    const normalizedUserId = userId?.trim();
-
-    if (!normalizedUserId) {
-      throw new BadRequestException('userId is required.');
-    }
-
-    return normalizedUserId;
-  }
-
-  private normalizeOptionalUserId(userId?: string | null): string | undefined {
-    const normalizedUserId = userId?.trim();
-
-    return normalizedUserId || undefined;
+  clearCharacters(): void {
+    this.characters.clear();
+    this.currentCharacterIdsByUserScope.clear();
   }
 
   private findEntityById(id: string): Character {
@@ -220,38 +164,96 @@ export class CharacterService {
     return character;
   }
 
-  private sanitizeCharacterEntity(input: CharacterEntityInput): Character {
-    return {
-      id: input.id,
-      version: input.version,
+  private assertCharacterBelongsToUserScope(
+    character: Character,
+    userScope: string,
+  ): void {
+    if (!character.userId) {
+      throw new BadRequestException(
+        `Character ${character.id} does not have an owner user scope.`,
+      );
+    }
 
-      userId: input.userId,
+    if (character.userId !== userScope) {
+      throw new NotFoundException(
+        `Character not found in user scope: ${character.id}`,
+      );
+    }
+  }
 
-      name: input.name,
-      originId: input.originId,
+  private findCharactersByUserScope(userScope: string): Character[] {
+    return Array.from(this.characters.values()).filter(
+      (character) => character.userId === userScope,
+    );
+  }
 
-      progression: input.progression,
+  private findLatestCharacterForUserScope(
+    userScope: string,
+  ): Character | undefined {
+    return this.findCharactersByUserScope(userScope).sort((left, right) => {
+      const rightUpdatedAt = new Date(right.updatedAt).getTime();
+      const leftUpdatedAt = new Date(left.updatedAt).getTime();
 
-      moneyBronze: input.moneyBronze,
+      if (rightUpdatedAt !== leftUpdatedAt) {
+        return rightUpdatedAt - leftUpdatedAt;
+      }
 
-      stats: input.stats,
-      currentState: input.currentState,
+      const rightCreatedAt = new Date(right.createdAt).getTime();
+      const leftCreatedAt = new Date(left.createdAt).getTime();
 
-      passiveIds: input.passiveIds,
+      if (rightCreatedAt !== leftCreatedAt) {
+        return rightCreatedAt - leftCreatedAt;
+      }
 
-      learnedSkillIds: input.learnedSkillIds,
-      equippedSkillIds: input.equippedSkillIds,
+      return right.id.localeCompare(left.id);
+    })[0];
+  }
 
-      starterKitId: input.starterKitId,
+  private findFallbackCurrentCharacter(
+    userScope: string,
+  ): CharacterSnapshot | null {
+    const fallbackCharacter = this.findLatestCharacterForUserScope(userScope);
 
-      inventoryItemIds: input.inventoryItemIds,
-      equippedItemIds: input.equippedItemIds,
+    if (!fallbackCharacter) {
+      this.currentCharacterIdsByUserScope.delete(userScope);
 
-      fatigue: input.fatigue,
-      lastRestAt: input.lastRestAt,
+      return null;
+    }
 
-      createdAt: input.createdAt,
-      updatedAt: input.updatedAt,
-    };
+    this.currentCharacterIdsByUserScope.set(userScope, fallbackCharacter.id);
+
+    return createCharacterSnapshot(fallbackCharacter);
+  }
+
+  private repairCurrentCharacterForUserScope(userScope: string): void {
+    const currentCharacterId =
+      this.currentCharacterIdsByUserScope.get(userScope);
+
+    if (!currentCharacterId) {
+      const fallbackCharacter = this.findLatestCharacterForUserScope(userScope);
+
+      if (fallbackCharacter) {
+        this.currentCharacterIdsByUserScope.set(
+          userScope,
+          fallbackCharacter.id,
+        );
+      }
+
+      return;
+    }
+
+    const currentCharacter = this.characters.get(currentCharacterId);
+
+    if (currentCharacter && currentCharacter.userId === userScope) {
+      return;
+    }
+
+    this.currentCharacterIdsByUserScope.delete(userScope);
+
+    const fallbackCharacter = this.findLatestCharacterForUserScope(userScope);
+
+    if (fallbackCharacter) {
+      this.currentCharacterIdsByUserScope.set(userScope, fallbackCharacter.id);
+    }
   }
 }

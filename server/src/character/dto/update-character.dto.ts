@@ -1,64 +1,33 @@
-import { Transform, Type, type TransformFnParams } from 'class-transformer';
+import { Transform } from 'class-transformer';
 
 import {
-  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   Length,
-  Min,
-  ValidateNested,
+  Matches,
 } from 'class-validator';
 
-function trimString({ value }: TransformFnParams): unknown {
-  const rawValue: unknown = value;
-
-  if (typeof rawValue === 'string') {
-    return rawValue.trim();
-  }
-
-  return rawValue;
-}
-
-export class UpdateCurrentStateDto {
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  hp?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  mp?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  stamina?: number;
-}
+import {
+  CHARACTER_NAME_MAX_LENGTH,
+  CHARACTER_NAME_MIN_LENGTH,
+  CHARACTER_NAME_PATTERN,
+  CHARACTER_NAME_PATTERN_MESSAGE,
+  normalizeCharacterNameInput,
+} from '../character.validation';
 
 export class UpdateCharacterDto {
   @IsOptional()
-  @Transform(trimString)
+  @Transform(({ value }) => normalizeCharacterNameInput(value))
   @IsString()
   @IsNotEmpty({
     message: 'Character name must not be empty.',
   })
-  @Length(3, 20, {
-    message: 'Character name must be between 3 and 20 characters.',
+  @Length(CHARACTER_NAME_MIN_LENGTH, CHARACTER_NAME_MAX_LENGTH, {
+    message: `Character name must be between ${CHARACTER_NAME_MIN_LENGTH} and ${CHARACTER_NAME_MAX_LENGTH} characters.`,
+  })
+  @Matches(CHARACTER_NAME_PATTERN, {
+    message: CHARACTER_NAME_PATTERN_MESSAGE,
   })
   name?: string;
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UpdateCurrentStateDto)
-  currentState?: UpdateCurrentStateDto;
-
-  @IsOptional()
-  @Transform(trimString)
-  @IsString()
-  @IsNotEmpty({
-    message: 'userId must not be empty when provided.',
-  })
-  userId?: string;
 }

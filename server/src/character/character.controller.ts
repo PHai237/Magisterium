@@ -3,16 +3,21 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Post,
   Put,
-  Query,
 } from '@nestjs/common';
 
 import { CharacterService } from './character.service';
 
 import { CreateCharacterDto } from './dto/create-character.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
+
+import {
+  normalizeRequiredUserId,
+  USER_ID_HEADER,
+} from './character.validation';
 
 @Controller('characters')
 export class CharacterController {
@@ -24,43 +29,81 @@ export class CharacterController {
   }
 
   @Post()
-  create(@Body() createCharacterDto: CreateCharacterDto) {
-    return this.characterService.create(createCharacterDto);
+  create(
+    @Body() createCharacterDto: CreateCharacterDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.create({
+      ...createCharacterDto,
+      userId: this.readRequiredUserIdHeader(userIdHeader),
+    });
   }
 
   @Get()
-  findAll(@Query('userId') userId?: string) {
-    return this.characterService.findAll(userId);
+  findAll(@Headers(USER_ID_HEADER) userIdHeader?: string | string[]) {
+    return this.characterService.findAll(
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
   }
 
   @Get('current')
-  findCurrent(@Query('userId') userId?: string) {
-    return this.characterService.findCurrent(userId);
+  findCurrent(@Headers(USER_ID_HEADER) userIdHeader?: string | string[]) {
+    return this.characterService.findCurrent(
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
   }
 
   @Post(':id/current')
   setCurrentCharacter(
     @Param('id') id: string,
-    @Query('userId') userId?: string,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.setCurrentCharacter(id, userId);
+    return this.characterService.setCurrentCharacter(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
   }
 
   @Get(':id')
-  findById(@Param('id') id: string) {
-    return this.characterService.findById(id);
+  findById(
+    @Param('id') id: string,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.findByIdForUserScope(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
   }
 
   @Put(':id')
   updateById(
     @Param('id') id: string,
     @Body() updateCharacterDto: UpdateCharacterDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.updateById(id, updateCharacterDto);
+    return this.characterService.updateById(
+      id,
+      updateCharacterDto,
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
   }
 
   @Delete(':id')
-  deleteById(@Param('id') id: string) {
-    return this.characterService.deleteById(id);
+  deleteById(
+    @Param('id') id: string,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.deleteById(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
+  }
+
+  private readRequiredUserIdHeader(userIdHeader?: string | string[]): string {
+    const rawUserId = Array.isArray(userIdHeader)
+      ? userIdHeader[0]
+      : userIdHeader;
+
+    return normalizeRequiredUserId(rawUserId);
   }
 }

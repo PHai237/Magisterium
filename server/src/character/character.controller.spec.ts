@@ -35,6 +35,7 @@ function getStarterKitDefinition(starterKitId: StarterKitId) {
 
 describe('CharacterController', () => {
   let controller: CharacterController;
+  let service: CharacterService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,6 +44,11 @@ describe('CharacterController', () => {
     }).compile();
 
     controller = module.get<CharacterController>(CharacterController);
+    service = module.get<CharacterService>(CharacterService);
+  });
+
+  afterEach(() => {
+    service.clearCharacters();
   });
 
   it('should be defined', () => {
@@ -57,24 +63,26 @@ describe('CharacterController', () => {
     });
   });
 
-  it('should reject creating a character without userId', () => {
+  it('should reject creating a character without x-user-id header', () => {
     expect(() =>
       controller.create({
         name: 'Magica',
         originId: 'scholar',
-      } as never),
+      }),
     ).toThrow(BadRequestException);
   });
 
-  it('should create a character from name, originId, and userId', () => {
+  it('should create a character from name, originId, and x-user-id header', () => {
     const scholarOrigin = getOriginDefinition('scholar');
     const starterKit = getStarterKitDefinition('novice_adventurer_kit');
 
-    const character = controller.create({
-      name: 'Magica',
-      originId: scholarOrigin.id,
-      userId: 'user_1',
-    });
+    const character = controller.create(
+      {
+        name: 'Magica',
+        originId: scholarOrigin.id,
+      },
+      'user_1',
+    );
 
     expect(character.id).toBeDefined();
     expect(character.userId).toBe('user_1');
@@ -107,56 +115,57 @@ describe('CharacterController', () => {
     );
   });
 
-  it('should return all created characters', () => {
-    controller.create({
-      name: 'Ais',
-      originId: 'wanderer',
-      userId: 'user_1',
-    });
+  it('should read the first x-user-id header when header value is an array', () => {
+    const character = controller.create(
+      {
+        name: 'Magica',
+        originId: 'scholar',
+      },
+      ['user_1', 'user_2'],
+    );
 
-    controller.create({
-      name: 'Lili',
-      originId: 'street_urchin',
-      userId: 'user_2',
-    });
-
-    const characters = controller.findAll();
-
-    expect(characters).toHaveLength(2);
-    expect(characters.map((character) => character.originId)).toEqual([
-      'wanderer',
-      'street_urchin',
-    ]);
-    expect(characters[0].baseStats).toBeDefined();
-    expect(characters[1].derivedStats).toBeDefined();
+    expect(character.userId).toBe('user_1');
   });
 
-  it('should return characters filtered by userId', () => {
-    controller.create({
-      name: 'Ais',
-      originId: 'wanderer',
-      userId: 'user_1',
-    });
+  it('should return only characters owned by the request user scope', () => {
+    controller.create(
+      {
+        name: 'Ais',
+        originId: 'wanderer',
+      },
+      'user_1',
+    );
 
-    controller.create({
-      name: 'Lili',
-      originId: 'street_urchin',
-      userId: 'user_2',
-    });
+    controller.create(
+      {
+        name: 'Lili',
+        originId: 'street_urchin',
+      },
+      'user_2',
+    );
 
-    const characters = controller.findAll('user_1');
+    const userOneCharacters = controller.findAll('user_1');
+    const userTwoCharacters = controller.findAll('user_2');
 
-    expect(characters).toHaveLength(1);
-    expect(characters[0].name).toBe('Ais');
-    expect(characters[0].userId).toBe('user_1');
+    expect(userOneCharacters).toHaveLength(1);
+    expect(userOneCharacters[0].name).toBe('Ais');
+
+    expect(userTwoCharacters).toHaveLength(1);
+    expect(userTwoCharacters[0].name).toBe('Lili');
+  });
+
+  it('should reject listing characters without x-user-id header', () => {
+    expect(() => controller.findAll()).toThrow(BadRequestException);
   });
 
   it('should return the current character for a user scope', () => {
-    const created = controller.create({
-      name: 'Bell',
-      originId: 'mercenary',
-      userId: 'user_1',
-    });
+    const created = controller.create(
+      {
+        name: 'Bell',
+        originId: 'mercenary',
+      },
+      'user_1',
+    );
 
     const current = controller.findCurrent('user_1');
 
@@ -165,28 +174,34 @@ describe('CharacterController', () => {
     expect(current?.originId).toBe('mercenary');
   });
 
-  it('should reject finding current character without userId', () => {
-    controller.create({
-      name: 'Bell',
-      originId: 'mercenary',
-      userId: 'user_1',
-    });
+  it('should reject finding current character without x-user-id header', () => {
+    controller.create(
+      {
+        name: 'Bell',
+        originId: 'mercenary',
+      },
+      'user_1',
+    );
 
     expect(() => controller.findCurrent()).toThrow(BadRequestException);
   });
 
   it('should set current character by id within a user scope', () => {
-    const first = controller.create({
-      name: 'First',
-      originId: 'scholar',
-      userId: 'user_1',
-    });
+    const first = controller.create(
+      {
+        name: 'First',
+        originId: 'scholar',
+      },
+      'user_1',
+    );
 
-    const second = controller.create({
-      name: 'Second',
-      originId: 'acolyte',
-      userId: 'user_1',
-    });
+    const second = controller.create(
+      {
+        name: 'Second',
+        originId: 'acolyte',
+      },
+      'user_1',
+    );
 
     expect(controller.findCurrent('user_1')?.id).toBe(second.id);
 
@@ -196,14 +211,30 @@ describe('CharacterController', () => {
     expect(controller.findCurrent('user_1')?.id).toBe(first.id);
   });
 
-  it('should find a character by id', () => {
-    const created = controller.create({
-      name: 'Haru',
-      originId: 'acolyte',
-      userId: 'user_1',
-    });
+  it('should reject setting current character without x-user-id header', () => {
+    const created = controller.create(
+      {
+        name: 'First',
+        originId: 'scholar',
+      },
+      'user_1',
+    );
 
-    const found = controller.findById(created.id);
+    expect(() => controller.setCurrentCharacter(created.id)).toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('should find a character by id within a user scope', () => {
+    const created = controller.create(
+      {
+        name: 'Haru',
+        originId: 'acolyte',
+      },
+      'user_1',
+    );
+
+    const found = controller.findById(created.id, 'user_1');
 
     expect(found.id).toBe(created.id);
     expect(found.userId).toBe('user_1');
@@ -212,14 +243,95 @@ describe('CharacterController', () => {
     expect(found.derivedStats.healingPotency).toBeGreaterThan(0);
   });
 
-  it('should delete a character by id', () => {
-    const created = controller.create({
-      name: 'DeleteMe',
-      originId: 'wanderer',
-      userId: 'user_1',
-    });
+  it('should reject finding a character without x-user-id header', () => {
+    const created = controller.create(
+      {
+        name: 'Haru',
+        originId: 'acolyte',
+      },
+      'user_1',
+    );
 
-    const result = controller.deleteById(created.id);
+    expect(() => controller.findById(created.id)).toThrow(BadRequestException);
+  });
+
+  it('should update a character name within a user scope', () => {
+    const created = controller.create(
+      {
+        name: 'OldName',
+        originId: 'scholar',
+      },
+      'user_1',
+    );
+
+    const updated = controller.updateById(
+      created.id,
+      {
+        name: 'New Name',
+      },
+      'user_1',
+    );
+
+    expect(updated.id).toBe(created.id);
+    expect(updated.userId).toBe('user_1');
+    expect(updated.name).toBe('New Name');
+    expect(updated.currentState).toEqual(created.currentState);
+  });
+
+  it('should not allow public update to change owner or current state', () => {
+    const created = controller.create(
+      {
+        name: 'SafeChar',
+        originId: 'mercenary',
+      },
+      'owner_user',
+    );
+
+    const updated = controller.updateById(
+      created.id,
+      {
+        name: 'Renamed',
+        userId: 'attacker_user',
+        currentState: {
+          hp: 0,
+          mp: 0,
+          stamina: 0,
+        },
+      } as never,
+      'owner_user',
+    );
+
+    expect(updated.userId).toBe('owner_user');
+    expect(updated.name).toBe('Renamed');
+    expect(updated.currentState).toEqual(created.currentState);
+  });
+
+  it('should reject updating without x-user-id header', () => {
+    const created = controller.create(
+      {
+        name: 'OldName',
+        originId: 'scholar',
+      },
+      'user_1',
+    );
+
+    expect(() =>
+      controller.updateById(created.id, {
+        name: 'New Name',
+      }),
+    ).toThrow(BadRequestException);
+  });
+
+  it('should delete a character by id within a user scope', () => {
+    const created = controller.create(
+      {
+        name: 'DeleteMe',
+        originId: 'wanderer',
+      },
+      'user_1',
+    );
+
+    const result = controller.deleteById(created.id, 'user_1');
 
     expect(result).toEqual({
       deleted: true,
@@ -227,5 +339,43 @@ describe('CharacterController', () => {
     });
 
     expect(controller.findCurrent('user_1')).toBeNull();
+  });
+
+  it('should fallback current character after deleting current when another character remains', () => {
+    const first = controller.create(
+      {
+        name: 'First',
+        originId: 'wanderer',
+      },
+      'user_1',
+    );
+
+    const second = controller.create(
+      {
+        name: 'Second',
+        originId: 'street_urchin',
+      },
+      'user_1',
+    );
+
+    expect(controller.findCurrent('user_1')?.id).toBe(second.id);
+
+    controller.deleteById(second.id, 'user_1');
+
+    expect(controller.findCurrent('user_1')?.id).toBe(first.id);
+  });
+
+  it('should reject deleting without x-user-id header', () => {
+    const created = controller.create(
+      {
+        name: 'DeleteMe',
+        originId: 'wanderer',
+      },
+      'user_1',
+    );
+
+    expect(() => controller.deleteById(created.id)).toThrow(
+      BadRequestException,
+    );
   });
 });
