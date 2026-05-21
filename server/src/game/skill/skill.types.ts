@@ -1,6 +1,7 @@
 import type {
   DamageType,
   ElementType,
+  SkillId,
   StatKey,
 } from '../character/character.types';
 
@@ -99,17 +100,17 @@ export interface SkillEffect {
   baseValue: number;
   scaling?: SkillScaling;
 
-  modifiers?: StatModifier[];
+  modifiers?: readonly StatModifier[];
 
   statusEffectType?: StatusEffectType;
   durationTurns?: number;
   chance?: number;
 
-  tags: string[];
+  tags: readonly string[];
 }
 
 export interface SkillDefinition {
-  id: string;
+  id: SkillId;
   name: string;
   description: string;
 
@@ -120,13 +121,13 @@ export interface SkillDefinition {
 
   cost: SkillCost;
 
-  effects: SkillEffect[];
+  effects: readonly SkillEffect[];
 
   runeCapacity: number;
-  runeSlots: SkillRuneSlotType[];
-  attachedRuneIds: string[];
+  runeSlots: readonly SkillRuneSlotType[];
+  attachedRuneIds: readonly string[];
 
   cooldownTurns?: number;
 
-  tags: string[];
+  tags: readonly string[];
 }
