@@ -156,6 +156,8 @@ function createMockBattleActorState(
     actorId: 'character_1',
     actorType: 'character',
 
+    skillIds: ['heavy_strike'],
+
     baseStats: MOCK_BASE_STATS,
     derivedStats: MOCK_DERIVED_STATS,
     resistances: {},

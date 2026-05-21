@@ -87,6 +87,8 @@ function createActor(
     actorId: 'actor_1',
     actorType: 'character',
 
+    skillIds: [],
+
     baseStats: {
       ...DEFAULT_BASE_STATS,
       ...baseStats,
