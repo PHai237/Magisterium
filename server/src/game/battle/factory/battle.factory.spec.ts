@@ -140,6 +140,8 @@ function createBattleActor(
     actorId: 'actor_1',
     actorType: 'character',
 
+    skillIds: [],
+
     baseStats: DEFAULT_BASE_STATS,
     derivedStats: DEFAULT_DERIVED_STATS,
     resistances: {},
@@ -186,6 +188,7 @@ describe('battle factory', () => {
 
       expect(actor.shield).toBe(0);
       expect(actor.procCountThisTurn).toBe(0);
+      expect(actor.skillIds).toEqual([]);
     });
 
     it('should default resources to max values when currentState is missing', () => {
@@ -200,6 +203,23 @@ describe('battle factory', () => {
       expect(actor.hp).toBe(DEFAULT_DERIVED_STATS.maxHp);
       expect(actor.mp).toBe(DEFAULT_DERIVED_STATS.maxMp);
       expect(actor.stamina).toBe(DEFAULT_DERIVED_STATS.maxStamina);
+    });
+
+    it('should clone skill ids instead of reusing the input array', () => {
+      const skillIds = ['spark', 'minor_heal'];
+
+      const actor = createBattleActorState({
+        actorId: 'actor_1',
+        actorType: 'character',
+
+        skillIds,
+
+        baseStats: DEFAULT_BASE_STATS,
+        derivedStats: DEFAULT_DERIVED_STATS,
+      });
+
+      expect(actor.skillIds).toEqual(skillIds);
+      expect(actor.skillIds).not.toBe(skillIds);
     });
 
     it('should mark actor as exhausted when stamina starts at zero', () => {
@@ -228,6 +248,9 @@ describe('battle factory', () => {
 
       expect(actor.actorId).toBe(snapshot.id);
       expect(actor.actorType).toBe('character');
+
+      expect(actor.skillIds).toEqual(snapshot.equippedSkillIds);
+      expect(actor.skillIds).not.toBe(snapshot.equippedSkillIds);
 
       expect(actor.baseStats).toBe(snapshot.baseStats);
       expect(actor.derivedStats).toBe(snapshot.derivedStats);
@@ -294,6 +317,7 @@ describe('battle factory', () => {
       expect(actor.actorId).toBe('slime_1');
       expect(actor.actorType).toBe('monster');
       expect(actor.monsterId).toBe('slime');
+      expect(actor.skillIds).toEqual([]);
 
       expect(actor.resistances).toEqual(resistances);
 
@@ -301,6 +325,23 @@ describe('battle factory', () => {
       expect(actor.mp).toBe(0);
       expect(actor.stamina).toBe(30);
       expect(actor.shield).toBe(3);
+    });
+
+    it('should clone optional monster skill ids', () => {
+      const skillIds = ['monster_bite', 'monster_guard'];
+
+      const actor = createBattleActorFromMonsterInput({
+        actorId: 'goblin_1',
+        monsterId: 'goblin',
+
+        skillIds,
+
+        baseStats: DEFAULT_BASE_STATS,
+        derivedStats: DEFAULT_DERIVED_STATS,
+      });
+
+      expect(actor.skillIds).toEqual(skillIds);
+      expect(actor.skillIds).not.toBe(skillIds);
     });
   });
 

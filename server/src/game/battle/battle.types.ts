@@ -122,6 +122,8 @@ export interface BattleActorState {
   monsterId?: string;
   aiTargetingMode?: MonsterAiTargetingMode;
 
+  skillIds: SkillId[];
+
   baseStats: BaseStats;
   derivedStats: DerivedStats;
   resistances: ResistanceProfile;

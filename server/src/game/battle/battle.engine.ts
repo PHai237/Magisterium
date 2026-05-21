@@ -13,9 +13,11 @@ import {
   calculateCritChance,
   calculateDamage,
   calculateHitChance,
+  calculateResourceCheck,
   consumeTurnGauge,
   getReadyTurnEntries,
   resolveRandomRoll,
+  spendResources,
   updateExhaustionState,
 } from './calculations/battle.calculations';
 
@@ -25,11 +27,22 @@ import type {
   BattleActorState,
   BattleEvent,
   BattleEventType,
+  BattleResourceCost,
   BattleState,
   BattleStatus,
   BattleTurnOrderEntry,
   RandomRollResult,
 } from './battle.types';
+
+import { getSkillDefinitionById } from '../skill/skill.registry';
+
+import type {
+  SkillDefinition,
+  SkillEffect,
+  SkillTargetType,
+} from '../skill/skill.types';
+
+import type { StatKey } from '../character/character.types';
 
 export interface BattleEngineResult {
   battleState: BattleState;
@@ -254,6 +267,136 @@ function applyHealingToActor(
     },
     healingDone: nextHp - target.hp,
   };
+}
+
+function buildSkillResourceCosts(skill: SkillDefinition): BattleResourceCost[] {
+  const costs: BattleResourceCost[] = [];
+
+  if ((skill.cost.hpCost ?? 0) > 0) {
+    costs.push({
+      resourceType: 'HP',
+      amount: skill.cost.hpCost ?? 0,
+    });
+  }
+
+  if (skill.cost.mpCost > 0) {
+    costs.push({
+      resourceType: 'MP',
+      amount: skill.cost.mpCost,
+    });
+  }
+
+  if (skill.cost.staminaCost > 0) {
+    costs.push({
+      resourceType: 'Stamina',
+      amount: skill.cost.staminaCost,
+    });
+  }
+
+  return costs;
+}
+
+function getActorStatValue(actor: BattleActorState, statKey: StatKey): number {
+  return actor.baseStats[statKey] ?? 0;
+}
+
+function calculateSkillScalingValue(
+  effect: SkillEffect,
+  actor: BattleActorState,
+): number {
+  if (!effect.scaling) {
+    return 0;
+  }
+
+  switch (effect.scaling.mode) {
+    case 'flat':
+      return 0;
+
+    case 'single_stat': {
+      if (!effect.scaling.primaryStat) {
+        return 0;
+      }
+
+      return (
+        getActorStatValue(actor, effect.scaling.primaryStat) *
+        (effect.scaling.primaryMultiplier ?? 0)
+      );
+    }
+
+    case 'dual_stat': {
+      const primaryValue = effect.scaling.primaryStat
+        ? getActorStatValue(actor, effect.scaling.primaryStat) *
+          (effect.scaling.primaryMultiplier ?? 0)
+        : 0;
+
+      const secondaryValue = effect.scaling.secondaryStat
+        ? getActorStatValue(actor, effect.scaling.secondaryStat) *
+          (effect.scaling.secondaryMultiplier ?? 0)
+        : 0;
+
+      return primaryValue + secondaryValue;
+    }
+  }
+}
+
+function calculateSkillEffectValue(
+  effect: SkillEffect,
+  actor: BattleActorState,
+): number {
+  return Math.max(
+    0,
+    effect.baseValue + calculateSkillScalingValue(effect, actor),
+  );
+}
+
+function getSkillOrCreateCancelledResult(
+  battleState: BattleState,
+  actor: BattleActorState,
+  skillId?: string,
+): {
+  skill?: SkillDefinition;
+  result?: BattleEngineResult;
+} {
+  if (!skillId) {
+    const events = [
+      createBattleEvent({
+        type: 'ACTION_CANCELLED',
+        phase: 'cancelled',
+        actorId: actor.actorId,
+        message: 'use_skill requires skillId.',
+      }),
+    ];
+
+    return {
+      result: {
+        battleState: appendEvents(battleState, events),
+        actionResult: createCancelledActionResult(actor, events),
+      },
+    };
+  }
+
+  try {
+    return {
+      skill: getSkillDefinitionById(skillId),
+    };
+  } catch {
+    const events = [
+      createBattleEvent({
+        type: 'ACTION_CANCELLED',
+        phase: 'cancelled',
+        actorId: actor.actorId,
+        skillId,
+        message: `Skill definition not found: ${skillId}.`,
+      }),
+    ];
+
+    return {
+      result: {
+        battleState: appendEvents(battleState, events),
+        actionResult: createCancelledActionResult(actor, events),
+      },
+    };
+  }
 }
 
 function createDefaultProcContext(actorId: string, turnId: string) {
@@ -573,6 +716,104 @@ function resolveUnsupportedAction(
   };
 }
 
+function resolveSkillTargets(
+  battleState: BattleState,
+  actor: BattleActorState,
+  targetType: SkillTargetType,
+  targetIds: string[],
+): BattleActorState[] {
+  switch (targetType) {
+    case 'self':
+      return [actor];
+
+    case 'enemy_single': {
+      const targetId = targetIds[0];
+
+      if (!targetId) {
+        throw new Error('Skill requires an enemy target.');
+      }
+
+      const target = getActorOrThrow(battleState, targetId);
+
+      if (actor.actorId === target.actorId) {
+        throw new Error('Skill cannot target self as an enemy.');
+      }
+
+      if (!areOpposingActors(actor, target)) {
+        throw new Error('Skill enemy target must be an opposing actor.');
+      }
+
+      if (isActorDefeated(target)) {
+        throw new Error('Skill cannot target a defeated enemy.');
+      }
+
+      return [target];
+    }
+
+    case 'ally_single': {
+      const targetId = targetIds[0] ?? actor.actorId;
+      const target = getActorOrThrow(battleState, targetId);
+
+      if (areOpposingActors(actor, target)) {
+        throw new Error('Skill ally target must be on the same side.');
+      }
+
+      if (isActorDefeated(target)) {
+        throw new Error('Skill cannot target a defeated ally.');
+      }
+
+      return [target];
+    }
+
+    case 'enemy_all': {
+      const targets = Object.values(battleState.actors).filter(
+        (target) => areOpposingActors(actor, target) && isActorAlive(target),
+      );
+
+      if (targets.length === 0) {
+        throw new Error('Skill requires at least one living enemy target.');
+      }
+
+      return targets;
+    }
+
+    case 'ally_all': {
+      const targets = Object.values(battleState.actors).filter(
+        (target) => !areOpposingActors(actor, target) && isActorAlive(target),
+      );
+
+      if (targets.length === 0) {
+        throw new Error('Skill requires at least one living ally target.');
+      }
+
+      return targets;
+    }
+  }
+}
+
+function createSkillActionCancelledResult(
+  battleState: BattleState,
+  actor: BattleActorState,
+  message: string,
+  skillId?: string,
+  targetStates: BattleActorState[] = [],
+): BattleEngineResult {
+  const events = [
+    createBattleEvent({
+      type: 'ACTION_CANCELLED',
+      phase: 'cancelled',
+      actorId: actor.actorId,
+      skillId,
+      message,
+    }),
+  ];
+
+  return {
+    battleState: appendEvents(battleState, events),
+    actionResult: createCancelledActionResult(actor, events, targetStates),
+  };
+}
+
 function resolveSkipTurn(
   battleState: BattleState,
   command: BattleActionCommand,
@@ -612,6 +853,538 @@ function resolveSkipTurn(
 
       events,
       randomRolls: [],
+
+      procContext: createDefaultProcContext(
+        actor.actorId,
+        `${battleState.battleId}:turn:${battleState.turnNumber}`,
+      ),
+    },
+  };
+}
+
+function resolveUseSkill(
+  battleState: BattleState,
+  command: BattleActionCommand,
+): BattleEngineResult {
+  const actor = getActorOrThrow(battleState, command.actorId);
+
+  if (isActorDefeated(actor)) {
+    return createSkillActionCancelledResult(
+      battleState,
+      actor,
+      'Defeated actor cannot act.',
+      command.skillId,
+    );
+  }
+
+  const skillLookup = getSkillOrCreateCancelledResult(
+    battleState,
+    actor,
+    command.skillId,
+  );
+
+  if (skillLookup.result) {
+    return skillLookup.result;
+  }
+
+  const skill = skillLookup.skill;
+
+  if (!skill) {
+    return createSkillActionCancelledResult(
+      battleState,
+      actor,
+      'Skill definition could not be loaded.',
+      command.skillId,
+    );
+  }
+
+  if (!actor.skillIds.includes(skill.id)) {
+    return createSkillActionCancelledResult(
+      battleState,
+      actor,
+      `Actor ${actor.actorId} has not equipped skill: ${skill.id}.`,
+      skill.id,
+    );
+  }
+
+  let initialTargetStates: BattleActorState[];
+
+  try {
+    initialTargetStates = skill.effects.flatMap((effect) =>
+      resolveSkillTargets(
+        battleState,
+        actor,
+        effect.targetType,
+        command.targetIds,
+      ),
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Invalid skill target.';
+
+    return createSkillActionCancelledResult(
+      battleState,
+      actor,
+      message,
+      skill.id,
+    );
+  }
+
+  const resourceCosts = buildSkillResourceCosts(skill);
+  const resourceCheck = calculateResourceCheck(actor, resourceCosts);
+
+  if (!resourceCheck.canPay) {
+    const events = [
+      createBattleEvent({
+        type: 'RESOURCE_CHECK_FAILED',
+        phase: 'resource_check',
+        actorId: actor.actorId,
+        skillId: skill.id,
+        message: 'Not enough resources to use skill.',
+        metadata: {
+          missingResources: resourceCheck.missingResources,
+        },
+      }),
+    ];
+
+    return {
+      battleState: appendEvents(battleState, events),
+      actionResult: createCancelledActionResult(
+        actor,
+        events,
+        initialTargetStates,
+      ),
+    };
+  }
+
+  const events: BattleEvent[] = [
+    createBattleEvent({
+      type: 'ACTION_STARTED',
+      phase: 'initiation',
+      actorId: actor.actorId,
+      skillId: skill.id,
+      message: `Skill started: ${skill.name}.`,
+    }),
+  ];
+
+  for (const cost of resourceCosts) {
+    if (cost.amount <= 0) {
+      continue;
+    }
+
+    events.push(
+      createBattleEvent({
+        type: 'RESOURCE_SPENT',
+        phase: 'resource_check',
+        actorId: actor.actorId,
+        skillId: skill.id,
+        value: cost.amount,
+        message: `${cost.resourceType} spent.`,
+        metadata: {
+          resourceType: cost.resourceType,
+          amount: cost.amount,
+        },
+      }),
+    );
+  }
+
+  const actorAfterResourceSpend = spendResources(actor, resourceCosts);
+
+  const nextActors = cloneActorRecord(battleState.actors);
+  nextActors[actor.actorId] = actorAfterResourceSpend;
+
+  const affectedTargetIds = new Set<string>();
+  let randomContext = battleState.randomContext;
+  const randomRolls: RandomRollResult[] = [];
+
+  for (const effect of skill.effects) {
+    const currentActor = nextActors[actor.actorId];
+
+    let effectTargets: BattleActorState[];
+
+    try {
+      effectTargets = resolveSkillTargets(
+        {
+          ...battleState,
+          actors: nextActors,
+        },
+        currentActor,
+        effect.targetType,
+        command.targetIds,
+      );
+    } catch {
+      continue;
+    }
+
+    for (const target of effectTargets) {
+      affectedTargetIds.add(target.actorId);
+
+      if (effect.type === 'damage') {
+        const currentTarget = nextActors[target.actorId];
+
+        if (!currentTarget || isActorDefeated(currentTarget)) {
+          continue;
+        }
+
+        const hitChance = calculateHitChance(currentActor, currentTarget);
+
+        const hitRoll = resolveRandomRoll({
+          type: 'hit',
+          actorId: currentActor.actorId,
+          targetId: currentTarget.actorId,
+          baseChance: hitChance,
+          sourceId: skill.id,
+          randomContext,
+        });
+
+        randomRolls.push(hitRoll);
+        randomContext = advanceRandomContext(randomContext);
+
+        if (!hitRoll.success) {
+          events.push(
+            createBattleEvent({
+              type: 'MISS',
+              phase: 'accuracy_check',
+              actorId: currentActor.actorId,
+              targetId: currentTarget.actorId,
+              skillId: skill.id,
+              effectId: effect.id,
+              value: hitChance,
+              message: `${skill.name} missed.`,
+              metadata: {
+                roll: hitRoll.roll,
+                finalChance: hitRoll.finalChance,
+              },
+            }),
+          );
+
+          continue;
+        }
+
+        events.push(
+          createBattleEvent({
+            type: 'HIT',
+            phase: 'accuracy_check',
+            actorId: currentActor.actorId,
+            targetId: currentTarget.actorId,
+            skillId: skill.id,
+            effectId: effect.id,
+            value: hitChance,
+            message: `${skill.name} hit.`,
+            metadata: {
+              roll: hitRoll.roll,
+              finalChance: hitRoll.finalChance,
+            },
+          }),
+        );
+
+        const critChance = calculateCritChance(currentActor);
+
+        const critRoll = resolveRandomRoll({
+          type: 'crit',
+          actorId: currentActor.actorId,
+          targetId: currentTarget.actorId,
+          baseChance: critChance,
+          sourceId: skill.id,
+          randomContext,
+        });
+
+        randomRolls.push(critRoll);
+        randomContext = advanceRandomContext(randomContext);
+
+        if (critRoll.success) {
+          events.push(
+            createBattleEvent({
+              type: 'CRIT',
+              phase: 'damage_calculation',
+              actorId: currentActor.actorId,
+              targetId: currentTarget.actorId,
+              skillId: skill.id,
+              effectId: effect.id,
+              value: critChance,
+              message: `${skill.name} critically hit.`,
+              metadata: {
+                roll: critRoll.roll,
+                finalChance: critRoll.finalChance,
+              },
+            }),
+          );
+        }
+
+        const varianceRoll = resolveRandomRoll({
+          type: 'damage_variance',
+          actorId: currentActor.actorId,
+          targetId: currentTarget.actorId,
+          baseChance: 100,
+          sourceId: skill.id,
+          sourceType: 'battle_engine',
+          randomContext,
+        });
+
+        randomRolls.push(varianceRoll);
+        randomContext = advanceRandomContext(randomContext);
+
+        const varianceRollUnit = varianceRoll.roll / 100;
+
+        const damageResult = calculateDamage(
+          {
+            attacker: currentActor,
+            defender: currentTarget,
+
+            damageType: effect.damageType ?? 'physical',
+            elementType: effect.elementType,
+
+            basePower: effect.baseValue,
+            scalingValue: calculateSkillScalingValue(effect, currentActor),
+
+            isCritical: critRoll.success,
+          },
+          varianceRollUnit,
+        );
+
+        events.push(
+          createBattleEvent({
+            type: 'DAMAGE_CALCULATED',
+            phase: 'damage_calculation',
+            actorId: currentActor.actorId,
+            targetId: currentTarget.actorId,
+            skillId: skill.id,
+            effectId: effect.id,
+            value: damageResult.rawDamage,
+            damageType: damageResult.damageType,
+            elementType: damageResult.elementType,
+            message: 'Skill damage calculated.',
+            metadata: {
+              isCritical: damageResult.isCritical,
+              varianceRoll: varianceRoll.roll,
+              varianceRollUnit,
+            },
+          }),
+          createBattleEvent({
+            type: 'DAMAGE_MITIGATED',
+            phase: 'mitigation',
+            actorId: currentActor.actorId,
+            targetId: currentTarget.actorId,
+            skillId: skill.id,
+            effectId: effect.id,
+            value: damageResult.damageAfterResistance,
+            damageType: damageResult.damageType,
+            elementType: damageResult.elementType,
+            message: 'Skill damage mitigated.',
+            metadata: {
+              damageAfterDefense: damageResult.damageAfterDefense,
+              damageAfterResistance: damageResult.damageAfterResistance,
+              absorbedAmount: damageResult.absorbedAmount,
+            },
+          }),
+        );
+
+        let updatedTarget = currentTarget;
+
+        if (damageResult.absorbedAmount > 0) {
+          const healingApplication = applyHealingToActor(
+            updatedTarget,
+            damageResult.absorbedAmount,
+          );
+
+          updatedTarget = healingApplication.targetState;
+
+          if (healingApplication.healingDone > 0) {
+            events.push(
+              createBattleEvent({
+                type: 'HEAL_APPLIED',
+                phase: 'apply_damage',
+                actorId: currentActor.actorId,
+                targetId: currentTarget.actorId,
+                skillId: skill.id,
+                effectId: effect.id,
+                value: healingApplication.healingDone,
+                message: 'Damage was absorbed and converted into healing.',
+                metadata: {
+                  absorbedAmount: damageResult.absorbedAmount,
+                  targetHp: updatedTarget.hp,
+                },
+              }),
+            );
+          }
+        }
+
+        const damageApplication = applyDamageToActor(
+          updatedTarget,
+          damageResult.finalDamage,
+        );
+
+        updatedTarget = damageApplication.targetState;
+
+        if (damageApplication.shieldDamage > 0) {
+          events.push(
+            createBattleEvent({
+              type: damageApplication.shieldBroken
+                ? 'SHIELD_BROKEN'
+                : 'SHIELD_DAMAGED',
+              phase: 'apply_damage',
+              actorId: currentActor.actorId,
+              targetId: currentTarget.actorId,
+              skillId: skill.id,
+              effectId: effect.id,
+              value: damageApplication.shieldDamage,
+              message: damageApplication.shieldBroken
+                ? 'Shield was broken.'
+                : 'Shield absorbed damage.',
+            }),
+          );
+        }
+
+        events.push(
+          createBattleEvent({
+            type: 'DAMAGE_APPLIED',
+            phase: 'apply_damage',
+            actorId: currentActor.actorId,
+            targetId: currentTarget.actorId,
+            skillId: skill.id,
+            effectId: effect.id,
+            value: damageApplication.hpDamage,
+            damageType: damageResult.damageType,
+            elementType: damageResult.elementType,
+            message: 'Skill damage applied.',
+            metadata: {
+              finalDamage: damageResult.finalDamage,
+              shieldDamage: damageApplication.shieldDamage,
+              hpDamage: damageApplication.hpDamage,
+              targetHp: updatedTarget.hp,
+            },
+          }),
+        );
+
+        if (isActorAlive(currentTarget) && isActorDefeated(updatedTarget)) {
+          events.push(
+            createBattleEvent({
+              type: 'ACTOR_DEFEATED',
+              phase: 'apply_damage',
+              actorId: currentActor.actorId,
+              targetId: currentTarget.actorId,
+              skillId: skill.id,
+              effectId: effect.id,
+              message: 'Actor defeated.',
+            }),
+          );
+        }
+
+        nextActors[currentTarget.actorId] = updatedTarget;
+      }
+
+      if (effect.type === 'heal') {
+        const currentTarget = nextActors[target.actorId];
+
+        if (!currentTarget || isActorDefeated(currentTarget)) {
+          continue;
+        }
+
+        const healingApplication = applyHealingToActor(
+          currentTarget,
+          calculateSkillEffectValue(effect, currentActor),
+        );
+
+        nextActors[currentTarget.actorId] = healingApplication.targetState;
+
+        events.push(
+          createBattleEvent({
+            type: 'HEAL_APPLIED',
+            phase: 'apply_damage',
+            actorId: currentActor.actorId,
+            targetId: currentTarget.actorId,
+            skillId: skill.id,
+            effectId: effect.id,
+            value: healingApplication.healingDone,
+            message: `${skill.name} restored HP.`,
+            metadata: {
+              targetHp: healingApplication.targetState.hp,
+              maxHp: healingApplication.targetState.derivedStats.maxHp,
+            },
+          }),
+        );
+      }
+
+      if (effect.type === 'shield') {
+        const currentTarget = nextActors[target.actorId];
+
+        if (!currentTarget || isActorDefeated(currentTarget)) {
+          continue;
+        }
+
+        const shieldAmount = Math.floor(
+          calculateSkillEffectValue(effect, currentActor),
+        );
+
+        const updatedTarget: BattleActorState = {
+          ...currentTarget,
+          shield: currentTarget.shield + shieldAmount,
+        };
+
+        nextActors[currentTarget.actorId] = updatedTarget;
+
+        events.push(
+          createBattleEvent({
+            type: 'SHIELD_GAINED',
+            phase: 'apply_damage',
+            actorId: currentActor.actorId,
+            targetId: currentTarget.actorId,
+            skillId: skill.id,
+            effectId: effect.id,
+            value: shieldAmount,
+            message: `${skill.name} granted shield.`,
+            metadata: {
+              targetShield: updatedTarget.shield,
+            },
+          }),
+        );
+      }
+    }
+  }
+
+  events.push(
+    createBattleEvent({
+      type: 'TURN_ENDED',
+      phase: 'completed',
+      actorId: actor.actorId,
+      skillId: skill.id,
+      message: 'Turn ended.',
+    }),
+  );
+
+  const stateAfterAction = appendEvents(
+    {
+      ...battleState,
+      actors: nextActors,
+      activeActorId: undefined,
+      randomContext,
+      turnOrder: consumeActorTurnGauge(battleState, actor.actorId),
+      updatedAt: new Date().toISOString(),
+    },
+    events,
+  );
+
+  const nextState = advanceBattleToNextActor(
+    advanceRoundIfNeeded(stateAfterAction),
+  );
+
+  const finalActorState =
+    nextState.actors[actor.actorId] ?? nextActors[actor.actorId];
+
+  const targetStates = Array.from(affectedTargetIds)
+    .map((targetId) => nextState.actors[targetId] ?? nextActors[targetId])
+    .filter((target): target is BattleActorState => Boolean(target));
+
+  return {
+    battleState: nextState,
+    actionResult: {
+      phase: 'completed',
+
+      actorState: finalActorState,
+      targetStates,
+
+      events,
+      randomRolls,
 
       procContext: createDefaultProcContext(
         actor.actorId,
@@ -1075,6 +1848,9 @@ export function resolveBattleAction(
   switch (command.actionType) {
     case 'basic_attack':
       return resolveBasicAttack(battleState, command);
+
+    case 'use_skill':
+      return resolveUseSkill(battleState, command);
 
     case 'skip_turn':
       return resolveSkipTurn(battleState, command);

@@ -20,6 +20,7 @@ import type {
   CurrentState,
   DerivedStats,
   ResistanceProfile,
+  SkillId,
 } from '../../character/character.types';
 
 import type {
@@ -41,6 +42,8 @@ export interface CreateBattleActorStateInput {
 
   monsterId?: string;
   aiTargetingMode?: MonsterAiTargetingMode;
+
+  skillIds?: SkillId[];
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;
@@ -65,6 +68,8 @@ export interface CreateBattleActorFromMonsterInput {
   actorId?: string;
   monsterId: string;
   aiTargetingMode?: MonsterAiTargetingMode;
+
+  skillIds?: SkillId[];
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;
@@ -163,6 +168,10 @@ function cloneStatModifiers(modifiers?: StatModifier[]): StatModifier[] {
     : [];
 }
 
+function cloneSkillIds(skillIds?: readonly SkillId[]): SkillId[] {
+  return skillIds ? [...skillIds] : [];
+}
+
 export function createBattleActorState(
   input: CreateBattleActorStateInput,
 ): BattleActorState {
@@ -191,6 +200,8 @@ export function createBattleActorState(
     monsterId: input.monsterId,
     aiTargetingMode: input.aiTargetingMode,
 
+    skillIds: cloneSkillIds(input.skillIds),
+
     baseStats: input.baseStats,
     derivedStats: input.derivedStats,
     resistances: input.resistances ?? createDefaultResistances(),
@@ -218,6 +229,8 @@ export function createBattleActorFromCharacterSnapshot(
     actorId: character.id,
     actorType: 'character',
 
+    skillIds: character.equippedSkillIds,
+
     baseStats: character.baseStats,
     derivedStats: character.derivedStats,
     resistances: character.resistances ?? {},
@@ -242,6 +255,8 @@ export function createBattleActorFromMonsterInput(
 
     monsterId: input.monsterId,
     aiTargetingMode: input.aiTargetingMode,
+
+    skillIds: input.skillIds ?? [],
 
     baseStats: input.baseStats,
     derivedStats: input.derivedStats,
