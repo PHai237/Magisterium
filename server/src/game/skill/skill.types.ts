@@ -1,5 +1,6 @@
 import type {
   DamageType,
+  DerivedStats,
   ElementType,
   SkillId,
   StatKey,
@@ -72,6 +73,10 @@ export type SkillEffectType =
 
 export type SkillScalingMode = 'flat' | 'single_stat' | 'dual_stat';
 
+export type DerivedStatKey = keyof DerivedStats;
+
+export type SkillScalingSource = StatKey | DerivedStatKey;
+
 export interface SkillCost {
   hpCost?: number;
   mpCost: number;
@@ -81,10 +86,10 @@ export interface SkillCost {
 export interface SkillScaling {
   mode: SkillScalingMode;
 
-  primaryStat?: StatKey;
+  primaryStat?: SkillScalingSource;
   primaryMultiplier?: number;
 
-  secondaryStat?: StatKey;
+  secondaryStat?: SkillScalingSource;
   secondaryMultiplier?: number;
 }
 

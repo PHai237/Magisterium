@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -49,9 +50,17 @@ import type {
 import {
   createMonsterBattleActor,
   createMonsterBattleActors,
+  getMonsterDefinitionById,
 } from '../monster/monster.factory';
 
 import type { CreateMonsterBattleActorInput } from '../monster/monster.types';
+
+import { calculateBattleReward } from '../reward/reward.calculations';
+
+import type {
+  BattleRewardSummary,
+  DefeatedMonsterRewardInput,
+} from '../reward/reward.types';
 
 export interface CreateBattleFromCharacterInput {
   battleId?: string;
@@ -93,6 +102,16 @@ export interface CreateBattleFromActorsInput {
 
 export interface ResolveBattleActionInput extends BattleActionCommand {
   autoResolveMonsterTurns?: boolean;
+}
+
+export interface ClaimBattleRewardInput {
+  battleId: string;
+  characterId: string;
+}
+
+export interface ClaimBattleRewardResult {
+  battle: BattleState;
+  reward: BattleRewardSummary;
 }
 
 @Injectable()
@@ -218,6 +237,61 @@ export class BattleService {
     return finalResult;
   }
 
+  claimBattleReward(input: ClaimBattleRewardInput): ClaimBattleRewardResult {
+    const battle = this.getBattleOrThrow(input.battleId);
+
+    if (battle.status !== 'victory') {
+      throw new BadRequestException(
+        `Cannot claim reward while battle is ${battle.status}.`,
+      );
+    }
+
+    if (battle.rewardClaim) {
+      throw new ConflictException(
+        `Battle reward has already been claimed: ${battle.battleId}`,
+      );
+    }
+
+    const characterActor = battle.actors[input.characterId];
+
+    if (!characterActor || characterActor.actorType !== 'character') {
+      throw new BadRequestException(
+        `Character actor ${input.characterId} did not participate in battle ${battle.battleId}.`,
+      );
+    }
+
+    const defeatedMonsters = this.buildDefeatedMonsterRewardInputs(battle);
+
+    if (defeatedMonsters.length === 0) {
+      throw new BadRequestException(
+        `Battle ${battle.battleId} has no defeated monsters to reward.`,
+      );
+    }
+
+    const reward = calculateBattleReward({
+      battleId: battle.battleId,
+      seed: battle.randomContext.seed,
+      defeatedMonsters,
+    });
+
+    const nextBattle: BattleState = {
+      ...battle,
+      rewardClaim: {
+        claimedAt: new Date().toISOString(),
+        claimedByCharacterId: input.characterId,
+        reward,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.battles.set(nextBattle.battleId, nextBattle);
+
+    return {
+      battle: nextBattle,
+      reward,
+    };
+  }
+
   saveBattle(battle: BattleState): BattleState {
     this.battles.set(battle.battleId, battle);
 
@@ -230,6 +304,28 @@ export class BattleService {
 
   clearBattles(): void {
     this.battles.clear();
+  }
+
+  private buildDefeatedMonsterRewardInputs(
+    battle: BattleState,
+  ): DefeatedMonsterRewardInput[] {
+    return Object.values(battle.actors)
+      .filter((actor) => actor.actorType === 'monster' && actor.hp <= 0)
+      .map((actor) => {
+        if (!actor.monsterId) {
+          throw new BadRequestException(
+            `Defeated monster actor ${actor.actorId} does not have monsterId.`,
+          );
+        }
+
+        const monsterDefinition = getMonsterDefinitionById(actor.monsterId);
+
+        return {
+          actorId: actor.actorId,
+          monsterId: monsterDefinition.id,
+          reward: monsterDefinition.reward,
+        };
+      });
   }
 
   private assertClientCanControlActor(

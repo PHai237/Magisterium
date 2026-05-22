@@ -64,11 +64,11 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
         damageType: 'magical',
         elementType: 'fire',
 
-        baseValue: 8,
+        baseValue: 6,
         scaling: {
           mode: 'single_stat',
-          primaryStat: 'INT',
-          primaryMultiplier: 1.15,
+          primaryStat: 'mAtk',
+          primaryMultiplier: 1.25,
         },
 
         tags: ['starter', 'damage', 'magic', 'fire'],
@@ -105,11 +105,11 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
 
         damageType: 'physical',
 
-        baseValue: 10,
+        baseValue: 6,
         scaling: {
           mode: 'single_stat',
-          primaryStat: 'STR',
-          primaryMultiplier: 1.25,
+          primaryStat: 'pAtk',
+          primaryMultiplier: 1.3,
         },
 
         tags: ['starter', 'damage', 'physical'],
@@ -146,13 +146,13 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
 
         damageType: 'physical',
 
-        baseValue: 7,
+        baseValue: 4,
         scaling: {
           mode: 'dual_stat',
-          primaryStat: 'STR',
-          primaryMultiplier: 0.75,
-          secondaryStat: 'DEX',
-          secondaryMultiplier: 0.45,
+          primaryStat: 'pAtk',
+          primaryMultiplier: 0.9,
+          secondaryStat: 'actionSpeed',
+          secondaryMultiplier: 0.15,
         },
 
         tags: ['starter', 'damage', 'physical'],
@@ -189,11 +189,13 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
 
         damageType: 'physical',
 
-        baseValue: 6,
+        baseValue: 4,
         scaling: {
-          mode: 'single_stat',
-          primaryStat: 'DEX',
-          primaryMultiplier: 1.2,
+          mode: 'dual_stat',
+          primaryStat: 'actionSpeed',
+          primaryMultiplier: 1,
+          secondaryStat: 'pAtk',
+          secondaryMultiplier: 0.25,
         },
 
         tags: ['starter', 'damage', 'physical', 'precision'],
@@ -228,13 +230,11 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
         type: 'heal',
         targetType: 'self',
 
-        baseValue: 14,
+        baseValue: 10,
         scaling: {
-          mode: 'dual_stat',
-          primaryStat: 'WIS',
-          primaryMultiplier: 1.25,
-          secondaryStat: 'INT',
-          secondaryMultiplier: 0.35,
+          mode: 'single_stat',
+          primaryStat: 'healingPotency',
+          primaryMultiplier: 1.15,
         },
 
         tags: ['starter', 'heal', 'support'],

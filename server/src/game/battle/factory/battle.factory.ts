@@ -28,7 +28,10 @@ import type {
   EncounterZoneId,
 } from '../../encounter/encounter.types';
 
-import type { MonsterAiTargetingMode } from '../../monster/monster.types';
+import type {
+  MonsterAiTargetingMode,
+  MonsterId,
+} from '../../monster/monster.types';
 
 import type { StatModifier } from '../../passive/passive.types';
 
@@ -40,7 +43,7 @@ export interface CreateBattleActorStateInput {
   actorId: string;
   actorType: BattleActorType;
 
-  monsterId?: string;
+  monsterId?: MonsterId;
   aiTargetingMode?: MonsterAiTargetingMode;
 
   skillIds?: SkillId[];
@@ -66,7 +69,7 @@ export interface CreateBattleActorStateInput {
 
 export interface CreateBattleActorFromMonsterInput {
   actorId?: string;
-  monsterId: string;
+  monsterId: MonsterId;
   aiTargetingMode?: MonsterAiTargetingMode;
 
   skillIds?: SkillId[];

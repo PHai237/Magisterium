@@ -15,16 +15,31 @@ import {
 
 import { createCharacter } from '../game/character/character.factory';
 
-import { createCharacterSnapshot } from '../game/character/character.calculations';
+import {
+  addBronze,
+  createCharacterSnapshot,
+} from '../game/character/character.calculations';
 
 import type {
   Character,
   CharacterSnapshot,
+  ItemId,
 } from '../game/character/character.types';
+
+import type {
+  AppliedBattleRewardResult,
+  BattleRewardSummary,
+  CharacterProgressionRewardResult,
+  RewardItemStack,
+} from '../game/reward/reward.types';
 
 type CreateCharacterCommand = CreateCharacterDto & {
   userId: string;
 };
+
+const BASE_EXP_REQUIRED_FOR_LEVEL_UP = 100;
+const EXP_LEVEL_GROWTH_FACTOR = 1.5;
+const MAX_CHARACTER_LEVEL = 100;
 
 @Injectable()
 export class CharacterService {
@@ -123,6 +138,53 @@ export class CharacterService {
     return createCharacterSnapshot(nextCharacter);
   }
 
+  applyBattleReward(
+    characterId: string,
+    userId: string,
+    reward: BattleRewardSummary,
+  ): AppliedBattleRewardResult & {
+    character: CharacterSnapshot;
+  } {
+    const userScope = normalizeRequiredUserId(userId);
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+
+    const progressionResult = this.calculateProgressionReward(
+      existingCharacter.progression.level,
+      existingCharacter.progression.exp,
+      reward.exp,
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+
+      progression: {
+        ...existingCharacter.progression,
+        level: progressionResult.nextLevel,
+        exp: progressionResult.nextExp,
+      },
+
+      moneyBronze: addBronze(existingCharacter.moneyBronze, reward.moneyBronze),
+
+      inventoryItemIds: [
+        ...existingCharacter.inventoryItemIds,
+        ...this.expandRewardItemStacks(reward.items),
+      ],
+
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+      reward,
+      progression: progressionResult,
+    };
+  }
+
   setCurrentCharacter(id: string, userId: string): CharacterSnapshot {
     const userScope = normalizeRequiredUserId(userId);
     const character = this.findEntityById(id);
@@ -152,6 +214,87 @@ export class CharacterService {
   clearCharacters(): void {
     this.characters.clear();
     this.currentCharacterIdsByUserScope.clear();
+  }
+
+  private expandRewardItemStacks(items: RewardItemStack[]): ItemId[] {
+    const expandedItemIds: ItemId[] = [];
+
+    for (const item of items) {
+      const quantity = Math.max(0, Math.floor(item.quantity));
+
+      for (let index = 0; index < quantity; index += 1) {
+        expandedItemIds.push(item.itemId);
+      }
+    }
+
+    return expandedItemIds;
+  }
+
+  private calculateTotalExpRequiredForLevel(level: number): number {
+    const normalizedLevel = Math.max(1, Math.floor(level));
+
+    if (normalizedLevel <= 1) {
+      return 0;
+    }
+
+    let totalExp = 0;
+
+    for (
+      let currentLevel = 1;
+      currentLevel < normalizedLevel;
+      currentLevel += 1
+    ) {
+      totalExp += Math.floor(
+        BASE_EXP_REQUIRED_FOR_LEVEL_UP *
+          currentLevel *
+          EXP_LEVEL_GROWTH_FACTOR ** (currentLevel - 1),
+      );
+    }
+
+    return totalExp;
+  }
+
+  private calculateLevelFromTotalExp(totalExp: number): number {
+    const safeTotalExp = Math.max(0, Math.floor(totalExp));
+    let nextLevel = 1;
+
+    while (
+      nextLevel < MAX_CHARACTER_LEVEL &&
+      safeTotalExp >= this.calculateTotalExpRequiredForLevel(nextLevel + 1)
+    ) {
+      nextLevel += 1;
+    }
+
+    return nextLevel;
+  }
+
+  private calculateProgressionReward(
+    previousLevel: number,
+    previousExp: number,
+    expGained: number,
+  ): CharacterProgressionRewardResult {
+    const safePreviousLevel = Math.max(1, Math.floor(previousLevel));
+    const safePreviousExp = Math.max(0, Math.floor(previousExp));
+    const safeExpGained = Math.max(0, Math.floor(expGained));
+
+    const nextExp = safePreviousExp + safeExpGained;
+    const nextLevel = Math.max(
+      safePreviousLevel,
+      this.calculateLevelFromTotalExp(nextExp),
+    );
+
+    return {
+      previousLevel: safePreviousLevel,
+      nextLevel,
+
+      previousExp: safePreviousExp,
+      nextExp,
+
+      expGained: safeExpGained,
+
+      leveledUp: nextLevel > safePreviousLevel,
+      levelsGained: Math.max(0, nextLevel - safePreviousLevel),
+    };
   }
 
   private findEntityById(id: string): Character {

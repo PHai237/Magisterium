@@ -54,12 +54,77 @@ import type {
 
 import { getSkillDefinitionById } from '../../skill/skill.registry';
 
-import type { SkillDefinition, SkillEffect } from '../../skill/skill.types';
+import type {
+  SkillDefinition,
+  SkillEffect,
+  SkillScalingSource,
+} from '../../skill/skill.types';
 
-import type { StatKey } from '../../character/character.types';
+import type { DerivedStats, StatKey } from '../../character/character.types';
 
-function getActorStatValue(actor: BattleActorState, statKey: StatKey): number {
-  return actor.baseStats[statKey] ?? 0;
+const BASE_STAT_KEYS: readonly StatKey[] = [
+  'STR',
+  'DEX',
+  'CON',
+  'INT',
+  'WIS',
+  'LUK',
+];
+
+const DERIVED_STAT_KEYS: readonly (keyof DerivedStats)[] = [
+  'maxHp',
+  'maxMp',
+  'maxStamina',
+
+  'pAtk',
+  'mAtk',
+  'healingPotency',
+
+  'pDef',
+  'mDef',
+
+  'actionSpeed',
+  'accuracy',
+  'evasionRate',
+
+  'critRate',
+  'critDamageBonus',
+
+  'fleeRate',
+
+  'statusResist',
+  'spiritualPotency',
+
+  'mpRegen',
+  'staminaRegen',
+
+  'secondChanceRate',
+  'procRate',
+];
+
+function isBaseStatKey(source: SkillScalingSource): source is StatKey {
+  return BASE_STAT_KEYS.includes(source as StatKey);
+}
+
+function isDerivedStatKey(
+  source: SkillScalingSource,
+): source is keyof DerivedStats {
+  return DERIVED_STAT_KEYS.includes(source as keyof DerivedStats);
+}
+
+function getActorScalingSourceValue(
+  actor: BattleActorState,
+  source: SkillScalingSource,
+): number {
+  if (isBaseStatKey(source)) {
+    return actor.baseStats[source] ?? 0;
+  }
+
+  if (isDerivedStatKey(source)) {
+    return actor.derivedStats[source] ?? 0;
+  }
+
+  return 0;
 }
 
 function calculateSkillScalingValue(
@@ -80,19 +145,19 @@ function calculateSkillScalingValue(
       }
 
       return (
-        getActorStatValue(actor, effect.scaling.primaryStat) *
+        getActorScalingSourceValue(actor, effect.scaling.primaryStat) *
         (effect.scaling.primaryMultiplier ?? 0)
       );
     }
 
     case 'dual_stat': {
       const primaryValue = effect.scaling.primaryStat
-        ? getActorStatValue(actor, effect.scaling.primaryStat) *
+        ? getActorScalingSourceValue(actor, effect.scaling.primaryStat) *
           (effect.scaling.primaryMultiplier ?? 0)
         : 0;
 
       const secondaryValue = effect.scaling.secondaryStat
-        ? getActorStatValue(actor, effect.scaling.secondaryStat) *
+        ? getActorScalingSourceValue(actor, effect.scaling.secondaryStat) *
           (effect.scaling.secondaryMultiplier ?? 0)
         : 0;
 
@@ -108,6 +173,16 @@ function calculateSkillEffectValue(
   return Math.max(
     0,
     effect.baseValue + calculateSkillScalingValue(effect, actor),
+  );
+}
+
+function dedupeTargetStates(
+  targetStates: BattleActorState[],
+): BattleActorState[] {
+  return Array.from(
+    new Map(
+      targetStates.map((targetState) => [targetState.actorId, targetState]),
+    ).values(),
   );
 }
 
@@ -130,7 +205,11 @@ function createSkillActionCancelledResult(
 
   return {
     battleState: appendEvents(battleState, events),
-    actionResult: createCancelledActionResult(actor, events, targetStates),
+    actionResult: createCancelledActionResult(
+      actor,
+      events,
+      dedupeTargetStates(targetStates),
+    ),
   };
 }
 
@@ -232,12 +311,14 @@ export function resolveUseSkill(
   let initialTargetStates: BattleActorState[];
 
   try {
-    initialTargetStates = skill.effects.flatMap((effect) =>
-      resolveSkillTargets(
-        battleState,
-        actor,
-        effect.targetType,
-        command.targetIds,
+    initialTargetStates = dedupeTargetStates(
+      skill.effects.flatMap((effect) =>
+        resolveSkillTargets(
+          battleState,
+          actor,
+          effect.targetType,
+          command.targetIds,
+        ),
       ),
     );
   } catch (error) {
@@ -279,6 +360,11 @@ export function resolveUseSkill(
     };
   }
 
+  const actorAfterResourceSpend = spendResources(actor, resourceCosts);
+
+  const nextActors = cloneActorRecord(battleState.actors);
+  nextActors[actor.actorId] = actorAfterResourceSpend;
+
   const events: BattleEvent[] = [
     createBattleEvent({
       type: 'ACTION_STARTED',
@@ -290,10 +376,6 @@ export function resolveUseSkill(
   ];
 
   for (const cost of resourceCosts) {
-    if (cost.amount <= 0) {
-      continue;
-    }
-
     events.push(
       createBattleEvent({
         type: 'RESOURCE_SPENT',
@@ -309,11 +391,6 @@ export function resolveUseSkill(
       }),
     );
   }
-
-  const actorAfterResourceSpend = spendResources(actor, resourceCosts);
-
-  const nextActors = cloneActorRecord(battleState.actors);
-  nextActors[actor.actorId] = actorAfterResourceSpend;
 
   const affectedTargetIds = new Set<string>();
   let randomContext = battleState.randomContext;

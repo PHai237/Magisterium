@@ -10,6 +10,8 @@ import {
 
 import type { OriginId, StarterKitId } from '../game/character/character.types';
 
+import type { BattleRewardSummary } from '../game/reward/reward.types';
+
 function getOriginDefinition(originId: OriginId) {
   const origin = ORIGIN_DEFINITIONS.find((item) => item.id === originId);
 
@@ -30,6 +32,41 @@ function getStarterKitDefinition(starterKitId: StarterKitId) {
   }
 
   return starterKit;
+}
+
+function createBattleRewardSummary(
+  overrides: Partial<BattleRewardSummary> = {},
+): BattleRewardSummary {
+  return {
+    exp: 25,
+    moneyBronze: 7,
+
+    items: [
+      {
+        itemId: 'slime_gel',
+        quantity: 2,
+      },
+      {
+        itemId: 'goblin_ear',
+        quantity: 1,
+      },
+    ],
+
+    defeatedMonsters: [
+      {
+        actorId: 'slime_1',
+        monsterId: 'slime',
+      },
+      {
+        actorId: 'goblin_1',
+        monsterId: 'goblin',
+      },
+    ],
+
+    lootRolls: [],
+
+    ...overrides,
+  };
 }
 
 describe('CharacterService', () => {
@@ -278,6 +315,193 @@ describe('CharacterService', () => {
     expect(updated.name).toBe('New Name');
     expect(updated.currentState).toEqual(created.currentState);
     expect(updated.moneyBronze).toBe(created.moneyBronze);
+  });
+
+  describe('applyBattleReward', () => {
+    it('should apply exp, bronze, and reward items to a character', () => {
+      const created = service.create({
+        name: 'Rewarded',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const initialInventoryLength = created.inventoryItemIds.length;
+      const initialMoneyBronze = created.moneyBronze;
+
+      const result = service.applyBattleReward(
+        created.id,
+        'user_1',
+        createBattleRewardSummary(),
+      );
+
+      expect(result.character.id).toBe(created.id);
+      expect(result.character.userId).toBe('user_1');
+
+      expect(result.character.progression.exp).toBe(25);
+      expect(result.character.progression.level).toBe(1);
+
+      expect(result.character.moneyBronze).toBe(initialMoneyBronze + 7);
+
+      expect(result.character.inventoryItemIds).toHaveLength(
+        initialInventoryLength + 3,
+      );
+
+      expect(
+        result.character.inventoryItemIds.filter(
+          (itemId) => itemId === 'slime_gel',
+        ),
+      ).toHaveLength(2);
+
+      expect(
+        result.character.inventoryItemIds.filter(
+          (itemId) => itemId === 'goblin_ear',
+        ),
+      ).toHaveLength(1);
+
+      expect(result.reward.exp).toBe(25);
+      expect(result.reward.moneyBronze).toBe(7);
+
+      expect(result.progression).toEqual({
+        previousLevel: 1,
+        nextLevel: 1,
+
+        previousExp: 0,
+        nextExp: 25,
+
+        expGained: 25,
+
+        leveledUp: false,
+        levelsGained: 0,
+      });
+    });
+
+    it('should level up when total exp reaches the next level threshold', () => {
+      const created = service.create({
+        name: 'Leveler',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const result = service.applyBattleReward(
+        created.id,
+        'user_1',
+        createBattleRewardSummary({
+          exp: 100,
+          moneyBronze: 0,
+          items: [],
+        }),
+      );
+
+      expect(result.character.progression.exp).toBe(100);
+      expect(result.character.progression.level).toBe(2);
+
+      expect(result.progression).toEqual({
+        previousLevel: 1,
+        nextLevel: 2,
+
+        previousExp: 0,
+        nextExp: 100,
+
+        expGained: 100,
+
+        leveledUp: true,
+        levelsGained: 1,
+      });
+    });
+
+    it('should support multiple level gains from a large exp reward', () => {
+      const created = service.create({
+        name: 'PowerLeveler',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const result = service.applyBattleReward(
+        created.id,
+        'user_1',
+        createBattleRewardSummary({
+          exp: 1000,
+          moneyBronze: 0,
+          items: [],
+        }),
+      );
+
+      expect(result.character.progression.exp).toBe(1000);
+      expect(result.character.progression.level).toBeGreaterThan(2);
+
+      expect(result.progression.leveledUp).toBe(true);
+      expect(result.progression.levelsGained).toBe(
+        result.character.progression.level - 1,
+      );
+    });
+
+    it('should ignore non-positive reward item quantities', () => {
+      const created = service.create({
+        name: 'NoBadLoot',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const initialInventoryLength = created.inventoryItemIds.length;
+
+      const result = service.applyBattleReward(
+        created.id,
+        'user_1',
+        createBattleRewardSummary({
+          exp: 0,
+          moneyBronze: 0,
+          items: [
+            {
+              itemId: 'slime_gel',
+              quantity: 0,
+            },
+            {
+              itemId: 'goblin_ear',
+              quantity: -5,
+            },
+          ],
+        }),
+      );
+
+      expect(result.character.inventoryItemIds).toHaveLength(
+        initialInventoryLength,
+      );
+
+      expect(result.character.progression.exp).toBe(0);
+      expect(result.character.moneyBronze).toBe(created.moneyBronze);
+    });
+
+    it('should reject applying reward to a character from another user scope', () => {
+      const created = service.create({
+        name: 'Owner',
+        originId: 'mercenary',
+        userId: 'owner_user',
+      });
+
+      expect(() =>
+        service.applyBattleReward(
+          created.id,
+          'attacker_user',
+          createBattleRewardSummary(),
+        ),
+      ).toThrow(NotFoundException);
+    });
+
+    it('should reject applying reward without userId', () => {
+      const created = service.create({
+        name: 'Owner',
+        originId: 'mercenary',
+        userId: 'owner_user',
+      });
+
+      expect(() =>
+        service.applyBattleReward(
+          created.id,
+          undefined as never,
+          createBattleRewardSummary(),
+        ),
+      ).toThrow(BadRequestException);
+    });
   });
 
   it('should reject updating a character from another user scope', () => {

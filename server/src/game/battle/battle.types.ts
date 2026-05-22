@@ -21,7 +21,12 @@ import type {
 
 import type { StatusEffectType } from '../status/status.types';
 
-import type { MonsterAiTargetingMode } from '../monster/monster.types';
+import type {
+  MonsterAiTargetingMode,
+  MonsterId,
+} from '../monster/monster.types';
+
+import type { BattleRewardSummary } from '../reward/reward.types';
 
 export type BattleActorType = 'character' | 'monster';
 
@@ -119,7 +124,7 @@ export interface BattleActorState {
   actorId: string;
   actorType: BattleActorType;
 
-  monsterId?: string;
+  monsterId?: MonsterId;
   aiTargetingMode?: MonsterAiTargetingMode;
 
   skillIds: SkillId[];
@@ -149,12 +154,21 @@ export interface BattleTurnOrderEntry {
   hasActedThisRound: boolean;
 }
 
+export interface BattleRewardClaimState {
+  claimedAt: string;
+  claimedByCharacterId: string;
+
+  reward: BattleRewardSummary;
+}
+
 export interface BattleState {
   battleId: string;
   status: BattleStatus;
 
   encounterId?: EncounterId;
   zoneId?: EncounterZoneId;
+
+  rewardClaim?: BattleRewardClaimState;
 
   roundNumber: number;
   turnNumber: number;

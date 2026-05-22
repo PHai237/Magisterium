@@ -4,7 +4,11 @@ import { createCharacterSnapshot } from '../character/character.calculations';
 
 import { createCharacter } from '../character/character.factory';
 
-import type { CharacterBattleSnapshot } from './factory/battle.factory';
+import {
+  createBattleActorFromCharacterSnapshot,
+  createBattleState,
+  type CharacterBattleSnapshot,
+} from './factory/battle.factory';
 
 function createTestCharacterSnapshot(): CharacterBattleSnapshot {
   const character = createCharacter({
@@ -14,6 +18,36 @@ function createTestCharacterSnapshot(): CharacterBattleSnapshot {
   });
 
   return createCharacterSnapshot(character);
+}
+
+function createSavedVictoryBattleWithDefeatedSlime(
+  service: BattleService,
+  character: CharacterBattleSnapshot,
+  battleId = 'battle_service_claim_reward_test',
+) {
+  const characterActor = createBattleActorFromCharacterSnapshot(character);
+
+  const defeatedSlime = {
+    ...service.createMonsterActor({
+      monsterId: 'slime',
+      instanceId: 'slime_1',
+    }),
+    hp: 0,
+  };
+
+  const battle = createBattleState({
+    battleId,
+    seed: 'battle_service_claim_reward_seed',
+    actors: [characterActor, defeatedSlime],
+  });
+
+  const victoriousBattle = {
+    ...battle,
+    status: 'victory' as const,
+    activeActorId: undefined,
+  };
+
+  return service.saveBattle(victoriousBattle);
 }
 
 describe('BattleService', () => {
@@ -195,6 +229,180 @@ describe('BattleService', () => {
           actionType: 'skip_turn',
         }),
       ).toThrow('Battle not found: missing_battle');
+    });
+  });
+
+  describe('claimBattleReward', () => {
+    it('should calculate, persist, and return reward for a victorious battle', () => {
+      const character = createTestCharacterSnapshot();
+
+      const battle = createSavedVictoryBattleWithDefeatedSlime(
+        service,
+        character,
+      );
+
+      const result = service.claimBattleReward({
+        battleId: battle.battleId,
+        characterId: character.id,
+      });
+
+      expect(result.battle.battleId).toBe(battle.battleId);
+      expect(result.battle.rewardClaim).toBeDefined();
+
+      expect(result.battle.rewardClaim).toMatchObject({
+        claimedByCharacterId: character.id,
+        reward: result.reward,
+      });
+
+      expect(result.battle.rewardClaim?.claimedAt).toBeDefined();
+
+      expect(result.reward.exp).toBeGreaterThan(0);
+      expect(result.reward.moneyBronze).toBeGreaterThanOrEqual(0);
+
+      expect(result.reward.defeatedMonsters).toEqual([
+        {
+          actorId: 'slime_1',
+          monsterId: 'slime',
+        },
+      ]);
+
+      expect(result.reward.lootRolls.length).toBeGreaterThanOrEqual(0);
+
+      const storedBattle = service.getBattleOrThrow(battle.battleId);
+
+      expect(storedBattle).toBe(result.battle);
+      expect(storedBattle.rewardClaim).toEqual(result.battle.rewardClaim);
+    });
+
+    it('should reject reward claim when battle is not victorious', () => {
+      const character = createTestCharacterSnapshot();
+
+      const battle = service.createBattleFromCharacter({
+        battleId: 'battle_service_claim_not_victory_test',
+        seed: 'battle_service_claim_not_victory_seed',
+        character,
+        monsters: [
+          {
+            monsterId: 'slime',
+            instanceId: 'slime_1',
+          },
+        ],
+        autoStart: false,
+      });
+
+      expect(() =>
+        service.claimBattleReward({
+          battleId: battle.battleId,
+          characterId: character.id,
+        }),
+      ).toThrow(`Cannot claim reward while battle is ${battle.status}.`);
+    });
+
+    it('should reject duplicate reward claims', () => {
+      const character = createTestCharacterSnapshot();
+
+      const battle = createSavedVictoryBattleWithDefeatedSlime(
+        service,
+        character,
+        'battle_service_duplicate_claim_test',
+      );
+
+      service.claimBattleReward({
+        battleId: battle.battleId,
+        characterId: character.id,
+      });
+
+      expect(() =>
+        service.claimBattleReward({
+          battleId: battle.battleId,
+          characterId: character.id,
+        }),
+      ).toThrow(`Battle reward has already been claimed: ${battle.battleId}`);
+    });
+
+    it('should reject reward claim when character did not participate in the battle', () => {
+      const character = createTestCharacterSnapshot();
+
+      const battle = createSavedVictoryBattleWithDefeatedSlime(
+        service,
+        character,
+        'battle_service_non_participant_claim_test',
+      );
+
+      expect(() =>
+        service.claimBattleReward({
+          battleId: battle.battleId,
+          characterId: 'missing_character_actor',
+        }),
+      ).toThrow(
+        `Character actor missing_character_actor did not participate in battle ${battle.battleId}.`,
+      );
+    });
+
+    it('should reject reward claim when victory battle has no defeated monsters', () => {
+      const character = createTestCharacterSnapshot();
+      const characterActor = createBattleActorFromCharacterSnapshot(character);
+
+      const livingSlime = service.createMonsterActor({
+        monsterId: 'slime',
+        instanceId: 'slime_1',
+      });
+
+      const battle = createBattleState({
+        battleId: 'battle_service_no_defeated_monsters_claim_test',
+        seed: 'battle_service_no_defeated_monsters_seed',
+        actors: [characterActor, livingSlime],
+      });
+
+      const invalidVictoryBattle = service.saveBattle({
+        ...battle,
+        status: 'victory',
+        activeActorId: undefined,
+      });
+
+      expect(() =>
+        service.claimBattleReward({
+          battleId: invalidVictoryBattle.battleId,
+          characterId: character.id,
+        }),
+      ).toThrow(
+        `Battle ${invalidVictoryBattle.battleId} has no defeated monsters to reward.`,
+      );
+    });
+
+    it('should reject reward claim when defeated monster actor has no monsterId', () => {
+      const character = createTestCharacterSnapshot();
+      const characterActor = createBattleActorFromCharacterSnapshot(character);
+
+      const corruptMonsterActor = {
+        ...service.createMonsterActor({
+          monsterId: 'slime',
+          instanceId: 'corrupt_monster_1',
+        }),
+        monsterId: undefined,
+        hp: 0,
+      };
+
+      const battle = createBattleState({
+        battleId: 'battle_service_corrupt_monster_claim_test',
+        seed: 'battle_service_corrupt_monster_seed',
+        actors: [characterActor, corruptMonsterActor],
+      });
+
+      const corruptVictoryBattle = service.saveBattle({
+        ...battle,
+        status: 'victory',
+        activeActorId: undefined,
+      });
+
+      expect(() =>
+        service.claimBattleReward({
+          battleId: corruptVictoryBattle.battleId,
+          characterId: character.id,
+        }),
+      ).toThrow(
+        'Defeated monster actor corrupt_monster_1 does not have monsterId.',
+      );
     });
   });
 

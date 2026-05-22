@@ -11,6 +11,11 @@ import type {
   BattleState,
 } from './battle.types';
 
+import type {
+  AppliedBattleRewardResult,
+  BattleRewardSummary,
+} from '../reward/reward.types';
+
 import { CharacterService } from '../../character/character.service';
 
 import type {
@@ -211,6 +216,80 @@ function createMockBattleState(
   };
 }
 
+function createMockBattleRewardSummary(
+  overrides: Partial<BattleRewardSummary> = {},
+): BattleRewardSummary {
+  return {
+    exp: 5,
+    moneyBronze: 2,
+
+    items: [
+      {
+        itemId: 'slime_gel',
+        quantity: 1,
+      },
+    ],
+
+    defeatedMonsters: [
+      {
+        actorId: 'slime_1',
+        monsterId: 'slime',
+      },
+    ],
+
+    lootRolls: [],
+
+    ...overrides,
+  };
+}
+
+function createMockAppliedBattleRewardResult(
+  character: CharacterSnapshot,
+  reward: BattleRewardSummary,
+  overrides: Partial<AppliedBattleRewardResult> = {},
+): AppliedBattleRewardResult & {
+  character: CharacterSnapshot;
+} {
+  return {
+    character: {
+      ...character,
+      progression: {
+        ...character.progression,
+        exp: character.progression.exp + reward.exp,
+      },
+      moneyBronze: character.moneyBronze + reward.moneyBronze,
+      inventoryItemIds: [
+        ...character.inventoryItemIds,
+        ...reward.items.flatMap((item) =>
+          Array.from(
+            {
+              length: item.quantity,
+            },
+            () => item.itemId,
+          ),
+        ),
+      ],
+    },
+
+    reward,
+
+    progression: {
+      previousLevel: character.progression.level,
+      nextLevel: character.progression.level,
+
+      previousExp: character.progression.exp,
+      nextExp: character.progression.exp + reward.exp,
+
+      expGained: reward.exp,
+
+      leveledUp: false,
+      levelsGained: 0,
+    },
+
+    ...overrides,
+  };
+}
+
 function createMockActionResult(
   overrides: Partial<BattleActionResult> = {},
 ): BattleActionResult {
@@ -253,26 +332,33 @@ describe('BattleController', () => {
     Pick<
       BattleService,
       | 'createBattleFromCharacter'
+      | 'createBattleFromEncounter'
       | 'listBattles'
       | 'getBattleOrThrow'
       | 'resolveAction'
+      | 'claimBattleReward'
       | 'deleteBattle'
     >
   >;
 
-  let characterService: jest.Mocked<Pick<CharacterService, 'findById'>>;
+  let characterService: jest.Mocked<
+    Pick<CharacterService, 'findById' | 'applyBattleReward'>
+  >;
 
   beforeEach(() => {
     battleService = {
       createBattleFromCharacter: jest.fn(),
+      createBattleFromEncounter: jest.fn(),
       listBattles: jest.fn(),
       getBattleOrThrow: jest.fn(),
       resolveAction: jest.fn(),
+      claimBattleReward: jest.fn(),
       deleteBattle: jest.fn(),
     };
 
     characterService = {
       findById: jest.fn(),
+      applyBattleReward: jest.fn(),
     };
 
     controller = new BattleController(
@@ -322,6 +408,87 @@ describe('BattleController', () => {
     expect(result).toBe(battle);
   });
 
+  it('should reject battle creation when both encounterId and monsters are provided', () => {
+    const character = createMockCharacter();
+
+    characterService.findById.mockReturnValue(character);
+
+    expect(() =>
+      controller.createBattle({
+        battleId: 'battle_1',
+        seed: 'seed_1',
+        characterId: 'character_1',
+        userId: 'user_1',
+        encounterId: 'slime_training',
+        monsters: [
+          {
+            monsterId: 'slime',
+            instanceId: 'slime_1',
+          },
+        ],
+      }),
+    ).toThrow(BadRequestException);
+
+    expect(characterService.findById).toHaveBeenCalledWith('character_1');
+    expect(battleService.createBattleFromEncounter).not.toHaveBeenCalled();
+    expect(battleService.createBattleFromCharacter).not.toHaveBeenCalled();
+  });
+
+  it('should reject battle creation when neither encounterId nor monsters are provided', () => {
+    const character = createMockCharacter();
+
+    characterService.findById.mockReturnValue(character);
+
+    expect(() =>
+      controller.createBattle({
+        battleId: 'battle_1',
+        seed: 'seed_1',
+        characterId: 'character_1',
+        userId: 'user_1',
+      }),
+    ).toThrow(BadRequestException);
+
+    expect(characterService.findById).toHaveBeenCalledWith('character_1');
+    expect(battleService.createBattleFromEncounter).not.toHaveBeenCalled();
+    expect(battleService.createBattleFromCharacter).not.toHaveBeenCalled();
+  });
+
+  it('should create a battle from an encounter id', () => {
+    const character = createMockCharacter();
+    const battle = createMockBattleState({
+      encounterId: 'slime_training',
+      zoneId: 'training_ground',
+    });
+
+    characterService.findById.mockReturnValue(character);
+    battleService.createBattleFromEncounter.mockReturnValue(battle);
+
+    const result = controller.createBattle({
+      battleId: 'battle_1',
+      seed: 'seed_1',
+      characterId: 'character_1',
+      userId: 'user_1',
+      encounterId: 'slime_training',
+      autoStart: true,
+      autoResolveMonsterTurns: true,
+    });
+
+    expect(characterService.findById).toHaveBeenCalledWith('character_1');
+
+    expect(battleService.createBattleFromEncounter).toHaveBeenCalledWith({
+      battleId: 'battle_1',
+      seed: 'seed_1',
+      character,
+      encounterId: 'slime_training',
+      autoStart: true,
+      autoResolveMonsterTurns: true,
+    });
+
+    expect(battleService.createBattleFromCharacter).not.toHaveBeenCalled();
+
+    expect(result).toBe(battle);
+  });
+
   it('should reject battle creation when character belongs to another user scope', () => {
     const character = createMockCharacter({
       userId: 'owner_user',
@@ -346,6 +513,33 @@ describe('BattleController', () => {
 
     expect(characterService.findById).toHaveBeenCalledWith('character_1');
     expect(battleService.createBattleFromCharacter).not.toHaveBeenCalled();
+  });
+
+  it('should reject battle creation when character has no owner user scope', () => {
+    const character = createMockCharacter({
+      userId: undefined as never,
+    });
+
+    characterService.findById.mockReturnValue(character);
+
+    expect(() =>
+      controller.createBattle({
+        battleId: 'battle_1',
+        seed: 'seed_1',
+        characterId: 'character_1',
+        userId: 'user_1',
+        monsters: [
+          {
+            monsterId: 'slime',
+            instanceId: 'slime_1',
+          },
+        ],
+      }),
+    ).toThrow(BadRequestException);
+
+    expect(characterService.findById).toHaveBeenCalledWith('character_1');
+    expect(battleService.createBattleFromCharacter).not.toHaveBeenCalled();
+    expect(battleService.createBattleFromEncounter).not.toHaveBeenCalled();
   });
 
   it('should reject battle creation when dto userId is omitted for an owned character', () => {
@@ -438,6 +632,97 @@ describe('BattleController', () => {
     });
 
     expect(result).toBe(engineResult);
+  });
+
+  it('should claim battle reward and apply it to the character', () => {
+    const character = createMockCharacter();
+    const reward = createMockBattleRewardSummary();
+
+    const claimedBattle = createMockBattleState({
+      status: 'victory',
+      rewardClaim: {
+        claimedAt: '2026-01-01T00:00:00.000Z',
+        claimedByCharacterId: character.id,
+        reward,
+      },
+    });
+
+    const appliedReward = createMockAppliedBattleRewardResult(
+      character,
+      reward,
+    );
+
+    characterService.findById.mockReturnValue(character);
+
+    battleService.claimBattleReward.mockReturnValue({
+      battle: claimedBattle,
+      reward,
+    });
+
+    characterService.applyBattleReward.mockReturnValue(appliedReward);
+
+    const result = controller.claimReward('battle_1', {
+      characterId: character.id,
+      userId: character.userId,
+    });
+
+    expect(characterService.findById).toHaveBeenCalledWith(character.id);
+
+    expect(battleService.claimBattleReward).toHaveBeenCalledWith({
+      battleId: 'battle_1',
+      characterId: character.id,
+    });
+
+    expect(characterService.applyBattleReward).toHaveBeenCalledWith(
+      character.id,
+      character.userId,
+      reward,
+    );
+
+    expect(result).toEqual({
+      battle: claimedBattle,
+      character: appliedReward.character,
+      reward: appliedReward.reward,
+      progression: appliedReward.progression,
+    });
+  });
+
+  it('should reject reward claim when character belongs to another user scope', () => {
+    const character = createMockCharacter({
+      userId: 'owner_user',
+    });
+
+    characterService.findById.mockReturnValue(character);
+
+    expect(() =>
+      controller.claimReward('battle_1', {
+        characterId: character.id,
+        userId: 'different_user',
+      }),
+    ).toThrow(BadRequestException);
+
+    expect(characterService.findById).toHaveBeenCalledWith(character.id);
+    expect(battleService.claimBattleReward).not.toHaveBeenCalled();
+    expect(characterService.applyBattleReward).not.toHaveBeenCalled();
+  });
+
+  it('should reject reward claim when character has no owner user scope', () => {
+    const character = createMockCharacter({
+      userId: undefined as never,
+    });
+
+    characterService.findById.mockReturnValue(character);
+
+    expect(() =>
+      controller.claimReward('battle_1', {
+        characterId: character.id,
+        userId: 'user_1',
+      }),
+    ).toThrow(BadRequestException);
+
+    expect(characterService.findById).toHaveBeenCalledWith(character.id);
+    expect(battleService.claimBattleReward).not.toHaveBeenCalled();
+    expect(characterService.applyBattleReward).not.toHaveBeenCalled();
   });
 
   it('should delete battle by id', () => {

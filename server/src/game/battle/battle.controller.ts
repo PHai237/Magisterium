@@ -12,6 +12,7 @@ import { CharacterService } from '../../character/character.service';
 
 import { BattleService } from './battle.service';
 
+import { ClaimBattleRewardDto } from './dto/claim-battle-reward.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { ResolveBattleActionDto } from './dto/resolve-battle-action.dto';
 
@@ -89,6 +90,34 @@ export class BattleController {
     });
   }
 
+  @Post(':battleId/reward/claim')
+  claimReward(
+    @Param('battleId') battleId: string,
+    @Body() dto: ClaimBattleRewardDto,
+  ) {
+    const character = this.characterService.findById(dto.characterId);
+
+    this.assertCharacterCanBeUsedForBattle(character, dto.userId);
+
+    const claimResult = this.battleService.claimBattleReward({
+      battleId,
+      characterId: character.id,
+    });
+
+    const appliedReward = this.characterService.applyBattleReward(
+      character.id,
+      dto.userId,
+      claimResult.reward,
+    );
+
+    return {
+      battle: claimResult.battle,
+      character: appliedReward.character,
+      reward: appliedReward.reward,
+      progression: appliedReward.progression,
+    };
+  }
+
   @Delete(':battleId')
   deleteBattle(@Param('battleId') battleId: string) {
     return {
@@ -100,11 +129,11 @@ export class BattleController {
     character: CharacterSnapshot,
     requestUserId?: string,
   ): void {
-    const characterUserId = character.userId.trim();
+    const characterUserId = character.userId?.trim();
     const normalizedRequestUserId = requestUserId?.trim();
 
     if (!normalizedRequestUserId) {
-      throw new BadRequestException('userId is required to create a battle.');
+      throw new BadRequestException('userId is required.');
     }
 
     if (!characterUserId) {
