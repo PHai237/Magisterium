@@ -3,6 +3,7 @@ import type {
   DamageType,
   DerivedStats,
   ElementType,
+  ItemId,
   ResistanceProfile,
   ResourceType,
   SkillId,
@@ -54,6 +55,7 @@ export type BattleEventType =
   | 'ROUND_STARTED'
   | 'TURN_STARTED'
   | 'ACTION_STARTED'
+  | 'ITEM_USED'
   | 'ACTION_CANCELLED'
   | 'RESOURCE_CHECK_FAILED'
   | 'RESOURCE_SPENT'
@@ -93,6 +95,7 @@ export interface BattleEvent {
   targetId?: string;
 
   skillId?: SkillId;
+  itemId?: ItemId;
   effectId?: string;
   sourceId?: string;
 
@@ -128,6 +131,7 @@ export interface BattleActorState {
   aiTargetingMode?: MonsterAiTargetingMode;
 
   skillIds: SkillId[];
+  inventoryItemIds: ItemId[];
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;
@@ -202,7 +206,7 @@ export interface BattleActionCommand {
   actionType: BattleActionType;
 
   skillId?: SkillId;
-  itemId?: string;
+  itemId?: ItemId;
 }
 
 export interface BattleResourceCost {

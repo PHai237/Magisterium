@@ -81,6 +81,10 @@ export interface CharacterEquipmentMutationResult {
   };
 }
 
+export interface ApplyBattleRewardOptions {
+  battleInventoryItemIds?: ItemId[];
+}
+
 export interface CharacterConsumableUseResult {
   character: CharacterSnapshot;
 
@@ -199,6 +203,7 @@ export class CharacterService {
     characterId: string,
     userId: string,
     reward: BattleRewardSummary,
+    options: ApplyBattleRewardOptions = {},
   ): AppliedBattleRewardResult & {
     character: CharacterSnapshot;
   } {
@@ -213,6 +218,15 @@ export class CharacterService {
       reward.exp,
     );
 
+    const baseInventoryItemIds = options.battleInventoryItemIds
+      ? [...options.battleInventoryItemIds]
+      : [...existingCharacter.inventoryItemIds];
+
+    const nextInventoryItemIds = addItemStacksToInventory(
+      baseInventoryItemIds,
+      reward.items,
+    );
+
     const nextCharacter: Character = {
       ...existingCharacter,
 
@@ -224,9 +238,10 @@ export class CharacterService {
 
       moneyBronze: addBronze(existingCharacter.moneyBronze, reward.moneyBronze),
 
-      inventoryItemIds: addItemStacksToInventory(
-        existingCharacter.inventoryItemIds,
-        reward.items,
+      inventoryItemIds: nextInventoryItemIds,
+
+      equippedItemIds: existingCharacter.equippedItemIds.filter(
+        (equippedItemId) => nextInventoryItemIds.includes(equippedItemId),
       ),
 
       updatedAt: new Date().toISOString(),

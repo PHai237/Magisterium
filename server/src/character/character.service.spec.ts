@@ -1003,6 +1003,50 @@ describe('CharacterService', () => {
       });
     });
 
+    it('should use battle inventory as the reward base when provided', () => {
+      const created = service.create({
+        name: 'BattleInventory',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(created.inventoryItemIds).toEqual(
+        expect.arrayContaining(['minor_hp_potion']),
+      );
+
+      const battleInventoryItemIds = created.inventoryItemIds.filter(
+        (itemId) => itemId !== 'minor_hp_potion',
+      );
+
+      const result = service.applyBattleReward(
+        created.id,
+        'user_1',
+        createBattleRewardSummary({
+          exp: 0,
+          moneyBronze: 0,
+          items: [
+            {
+              itemId: 'slime_gel',
+              quantity: 1,
+            },
+          ],
+        }),
+        {
+          battleInventoryItemIds,
+        },
+      );
+
+      expect(result.character.inventoryItemIds).not.toContain(
+        'minor_hp_potion',
+      );
+
+      expect(
+        result.character.inventoryItemIds.filter(
+          (itemId) => itemId === 'slime_gel',
+        ),
+      ).toHaveLength(1);
+    });
+
     it('should level up when total exp reaches the next level threshold', () => {
       const created = service.create({
         name: 'Leveler',

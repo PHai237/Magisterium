@@ -1,6 +1,7 @@
 import { resolveBasicAttack } from './actions/basic-attack.action';
 import { resolveSkipTurn } from './actions/skip-turn.action';
 import { resolveUseSkill } from './actions/use-skill.action';
+import { resolveUseItem } from './actions/use-item.action';
 
 import type { BattleEngineResult } from './battle-engine.types';
 
@@ -86,6 +87,9 @@ export function resolveBattleAction(
 
     case 'use_skill':
       return resolveUseSkill(battleState, command);
+
+    case 'use_item':
+      return resolveUseItem(battleState, command);
 
     case 'skip_turn':
       return resolveSkipTurn(battleState, command);

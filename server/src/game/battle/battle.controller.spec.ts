@@ -162,6 +162,12 @@ function createMockBattleActorState(
     actorType: 'character',
 
     skillIds: ['heavy_strike'],
+    inventoryItemIds: [
+      'rusty_sword',
+      'minor_mp_potion',
+      'stamina_bread',
+      'one_night_inn_voucher',
+    ],
 
     baseStats: MOCK_BASE_STATS,
     derivedStats: MOCK_DERIVED_STATS,
@@ -638,8 +644,19 @@ describe('BattleController', () => {
     const character = createMockCharacter();
     const reward = createMockBattleRewardSummary();
 
+    const battleInventoryItemIds = character.inventoryItemIds.filter(
+      (itemId) => itemId !== 'minor_hp_potion',
+    );
+
     const claimedBattle = createMockBattleState({
       status: 'victory',
+      actors: {
+        [character.id]: createMockBattleActorState({
+          actorId: character.id,
+          actorType: 'character',
+          inventoryItemIds: battleInventoryItemIds,
+        }),
+      },
       rewardClaim: {
         claimedAt: '2026-01-01T00:00:00.000Z',
         claimedByCharacterId: character.id,
@@ -677,6 +694,9 @@ describe('BattleController', () => {
       character.id,
       character.userId,
       reward,
+      {
+        battleInventoryItemIds,
+      },
     );
 
     expect(result).toEqual({
@@ -685,6 +705,42 @@ describe('BattleController', () => {
       reward: appliedReward.reward,
       progression: appliedReward.progression,
     });
+  });
+
+  it('should reject reward claim when claimed battle has no matching character actor', () => {
+    const character = createMockCharacter();
+    const reward = createMockBattleRewardSummary();
+
+    const claimedBattle = createMockBattleState({
+      status: 'victory',
+      actors: {
+        different_character: createMockBattleActorState({
+          actorId: 'different_character',
+          actorType: 'character',
+        }),
+      },
+      rewardClaim: {
+        claimedAt: '2026-01-01T00:00:00.000Z',
+        claimedByCharacterId: character.id,
+        reward,
+      },
+    });
+
+    characterService.findById.mockReturnValue(character);
+
+    battleService.claimBattleReward.mockReturnValue({
+      battle: claimedBattle,
+      reward,
+    });
+
+    expect(() =>
+      controller.claimReward('battle_1', {
+        characterId: character.id,
+        userId: character.userId,
+      }),
+    ).toThrow(BadRequestException);
+
+    expect(characterService.applyBattleReward).not.toHaveBeenCalled();
   });
 
   it('should reject reward claim when character belongs to another user scope', () => {

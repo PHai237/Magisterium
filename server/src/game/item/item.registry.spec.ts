@@ -97,6 +97,7 @@ describe('item registry', () => {
   it('should classify item categories', () => {
     expect(isEquipmentItem('rusty_sword')).toBe(true);
     expect(isConsumableItem('minor_hp_potion')).toBe(true);
+    expect(isConsumableItem('one_night_inn_voucher')).toBe(true);
     expect(isStackableItem('slime_gel')).toBe(true);
     expect(isStackableItem('rusty_sword')).toBe(false);
   });

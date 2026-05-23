@@ -104,10 +104,24 @@ export class BattleController {
       characterId: character.id,
     });
 
+    const battleCharacterActor = claimResult.battle.actors[character.id];
+
+    if (
+      !battleCharacterActor ||
+      battleCharacterActor.actorType !== 'character'
+    ) {
+      throw new BadRequestException(
+        `Character actor ${character.id} did not participate in battle ${battleId}.`,
+      );
+    }
+
     const appliedReward = this.characterService.applyBattleReward(
       character.id,
       dto.userId,
       claimResult.reward,
+      {
+        battleInventoryItemIds: battleCharacterActor.inventoryItemIds,
+      },
     );
 
     return {

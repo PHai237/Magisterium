@@ -113,7 +113,12 @@ function createCharacterSnapshot(
 
     starterKitId: 'novice_adventurer_kit',
 
-    inventoryItemIds: ['old_wooden_staff'],
+    inventoryItemIds: [
+      'old_wooden_staff',
+      'minor_hp_potion',
+      'minor_mp_potion',
+      'stamina_bread',
+    ],
     equippedItemIds: ['old_wooden_staff'],
 
     fatigue: 0,
@@ -141,6 +146,7 @@ function createBattleActor(
     actorType: 'character',
 
     skillIds: [],
+    inventoryItemIds: [],
 
     baseStats: DEFAULT_BASE_STATS,
     derivedStats: DEFAULT_DERIVED_STATS,
@@ -189,6 +195,7 @@ describe('battle factory', () => {
       expect(actor.shield).toBe(0);
       expect(actor.procCountThisTurn).toBe(0);
       expect(actor.skillIds).toEqual([]);
+      expect(actor.inventoryItemIds).toEqual([]);
     });
 
     it('should default resources to max values when currentState is missing', () => {
@@ -222,6 +229,30 @@ describe('battle factory', () => {
       expect(actor.skillIds).not.toBe(skillIds);
     });
 
+    it('should clone inventory item ids instead of reusing the input array', () => {
+      const inventoryItemIds = ['minor_hp_potion', 'stamina_bread'];
+
+      const actor = createBattleActorState({
+        actorId: 'actor_1',
+        actorType: 'character',
+
+        inventoryItemIds,
+
+        baseStats: DEFAULT_BASE_STATS,
+        derivedStats: DEFAULT_DERIVED_STATS,
+      });
+
+      expect(actor.inventoryItemIds).toEqual(inventoryItemIds);
+      expect(actor.inventoryItemIds).not.toBe(inventoryItemIds);
+
+      inventoryItemIds.push('minor_mp_potion');
+
+      expect(actor.inventoryItemIds).toEqual([
+        'minor_hp_potion',
+        'stamina_bread',
+      ]);
+    });
+
     it('should mark actor as exhausted when stamina starts at zero', () => {
       const actor = createBattleActorState({
         actorId: 'actor_1',
@@ -252,6 +283,9 @@ describe('battle factory', () => {
       expect(actor.skillIds).toEqual(snapshot.equippedSkillIds);
       expect(actor.skillIds).not.toBe(snapshot.equippedSkillIds);
 
+      expect(actor.inventoryItemIds).toEqual(snapshot.inventoryItemIds);
+      expect(actor.inventoryItemIds).not.toBe(snapshot.inventoryItemIds);
+
       expect(actor.baseStats).toBe(snapshot.baseStats);
       expect(actor.derivedStats).toBe(snapshot.derivedStats);
 
@@ -263,6 +297,32 @@ describe('battle factory', () => {
       expect(actor.activeStatusEffects).toEqual([]);
       expect(actor.activeModifiers).toEqual([]);
       expect(actor.procCountThisTurn).toBe(0);
+    });
+
+    it('should copy character inventory item ids into battle actor state', () => {
+      const snapshot = createCharacterSnapshot({
+        inventoryItemIds: [
+          'old_wooden_staff',
+          'minor_hp_potion',
+          'minor_mp_potion',
+        ],
+      });
+
+      const actor = createBattleActorFromCharacterSnapshot(snapshot);
+
+      expect(actor.inventoryItemIds).toEqual([
+        'old_wooden_staff',
+        'minor_hp_potion',
+        'minor_mp_potion',
+      ]);
+
+      snapshot.inventoryItemIds.push('stamina_bread');
+
+      expect(actor.inventoryItemIds).toEqual([
+        'old_wooden_staff',
+        'minor_hp_potion',
+        'minor_mp_potion',
+      ]);
     });
 
     it('should preserve optional resistances from a character battle snapshot', () => {
@@ -318,6 +378,7 @@ describe('battle factory', () => {
       expect(actor.actorType).toBe('monster');
       expect(actor.monsterId).toBe('slime');
       expect(actor.skillIds).toEqual([]);
+      expect(actor.inventoryItemIds).toEqual([]);
 
       expect(actor.resistances).toEqual(resistances);
 
@@ -342,6 +403,7 @@ describe('battle factory', () => {
 
       expect(actor.skillIds).toEqual(skillIds);
       expect(actor.skillIds).not.toBe(skillIds);
+      expect(actor.inventoryItemIds).toEqual([]);
     });
   });
 

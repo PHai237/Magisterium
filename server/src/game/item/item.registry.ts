@@ -97,11 +97,11 @@ export function assertItemDefinitionExists(itemId: ItemId): void {
 }
 
 export function isEquipmentItem(itemId: ItemId): boolean {
-  return getItemDefinitionById(itemId).category === 'equipment';
+  return Boolean(getItemDefinitionById(itemId).equipment);
 }
 
 export function isConsumableItem(itemId: ItemId): boolean {
-  return getItemDefinitionById(itemId).category === 'consumable';
+  return Boolean(getItemDefinitionById(itemId).consumable);
 }
 
 export function isStackableItem(itemId: ItemId): boolean {
