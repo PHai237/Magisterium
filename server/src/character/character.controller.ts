@@ -12,12 +12,16 @@ import {
 import { CharacterService } from './character.service';
 
 import { CreateCharacterDto } from './dto/create-character.dto';
+import { InventoryItemActionDto } from './dto/inventory-item-action.dto';
+import { InventoryItemQuantityDto } from './dto/inventory-item-quantity.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
 
 import {
   normalizeRequiredUserId,
   USER_ID_HEADER,
 } from './character.validation';
+
+import type { ItemId } from '../game/character/character.types';
 
 @Controller('characters')
 export class CharacterController {
@@ -61,6 +65,100 @@ export class CharacterController {
     return this.characterService.setCurrentCharacter(
       id,
       this.readRequiredUserIdHeader(userIdHeader),
+    );
+  }
+
+  @Get(':id/inventory')
+  getInventoryStacks(
+    @Param('id') id: string,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.getInventoryStacks(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
+  }
+
+  @Get(':id/inventory/:itemId/count')
+  countInventoryItem(
+    @Param('id') id: string,
+    @Param('itemId') itemId: ItemId,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return {
+      itemId,
+      quantity: this.characterService.countInventoryItem(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+        itemId,
+      ),
+    };
+  }
+
+  @Post(':id/inventory/items')
+  addInventoryItem(
+    @Param('id') id: string,
+    @Body() dto: InventoryItemQuantityDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.addInventoryItem(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+      dto.itemId,
+      dto.quantity,
+    );
+  }
+
+  @Post(':id/inventory/items/remove')
+  removeInventoryItem(
+    @Param('id') id: string,
+    @Body() dto: InventoryItemQuantityDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.removeInventoryItem(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+      dto.itemId,
+      dto.quantity,
+    );
+  }
+
+  @Post(':id/equipment/equip')
+  equipInventoryItem(
+    @Param('id') id: string,
+    @Body() dto: InventoryItemActionDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.equipInventoryItem(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+      dto.itemId,
+    );
+  }
+
+  @Post(':id/equipment/unequip')
+  unequipInventoryItem(
+    @Param('id') id: string,
+    @Body() dto: InventoryItemActionDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.unequipInventoryItem(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+      dto.itemId,
+    );
+  }
+
+  @Post(':id/consumables/use')
+  useConsumableItemOutOfBattle(
+    @Param('id') id: string,
+    @Body() dto: InventoryItemActionDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.useConsumableItemOutOfBattle(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+      dto.itemId,
     );
   }
 

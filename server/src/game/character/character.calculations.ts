@@ -31,6 +31,109 @@ import type {
   StatProgress,
 } from './character.types';
 
+import { collectEquipmentStatModifiers } from '../inventory/equipment-modifier.calculations';
+
+import type { StatModifier } from '../passive/passive.types';
+
+const BASE_STAT_KEYS = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'LUK'] as const;
+
+const DERIVED_STAT_KEYS = [
+  'maxHp',
+  'maxMp',
+  'maxStamina',
+
+  'pAtk',
+  'mAtk',
+  'healingPotency',
+
+  'pDef',
+  'mDef',
+
+  'actionSpeed',
+  'accuracy',
+  'evasionRate',
+
+  'critRate',
+  'critDamageBonus',
+
+  'fleeRate',
+
+  'statusResist',
+  'spiritualPotency',
+
+  'mpRegen',
+  'staminaRegen',
+
+  'secondChanceRate',
+  'procRate',
+] as const;
+
+function isBaseStatModifierTarget(target: string): target is StatKey {
+  return BASE_STAT_KEYS.includes(target as StatKey);
+}
+
+function isDerivedStatModifierTarget(
+  target: string,
+): target is keyof DerivedStats {
+  return DERIVED_STAT_KEYS.includes(target as keyof DerivedStats);
+}
+
+function sortStatModifiers(modifiers: readonly StatModifier[]): StatModifier[] {
+  return [...modifiers].sort((left, right) => {
+    if (left.priority !== right.priority) {
+      return left.priority - right.priority;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
+}
+
+function resolveModifierValue(
+  modifier: StatModifier,
+  rawBaseStats: BaseStats,
+  rawDerivedStats: DerivedStats,
+): number {
+  if (!modifier.valueSource || modifier.valueSource.type === 'constant') {
+    return modifier.value;
+  }
+
+  if (modifier.valueSource.type === 'stat_ratio') {
+    return (
+      rawBaseStats[modifier.valueSource.sourceStat] * modifier.valueSource.ratio
+    );
+  }
+
+  if (modifier.valueSource.type === 'derived_stat_ratio') {
+    return (
+      rawDerivedStats[modifier.valueSource.sourceDerivedStat] *
+      modifier.valueSource.ratio
+    );
+  }
+
+  return modifier.value;
+}
+
+function applyModifierToNumber(
+  currentValue: number,
+  modifier: StatModifier,
+  resolvedModifierValue: number,
+): number {
+  switch (modifier.operation) {
+    case 'add':
+      return modifier.valueType === 'percent'
+        ? currentValue + currentValue * (resolvedModifierValue / 100)
+        : currentValue + resolvedModifierValue;
+
+    case 'multiply':
+      return modifier.valueType === 'percent'
+        ? currentValue * (1 + resolvedModifierValue / 100)
+        : currentValue * resolvedModifierValue;
+
+    case 'override':
+      return resolvedModifierValue;
+  }
+}
+
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -225,7 +328,7 @@ export function addBaseStats(left: BaseStats, right: BaseStats): BaseStats {
   };
 }
 
-export function calculateDerivedStats(baseStats: BaseStats): DerivedStats {
+function calculateRawDerivedStats(baseStats: BaseStats): DerivedStats {
   const { STR, DEX, CON, INT, WIS, LUK } = baseStats;
 
   const maxHp = Math.floor(20 + CON * 5);
@@ -295,6 +398,85 @@ export function calculateDerivedStats(baseStats: BaseStats): DerivedStats {
   };
 }
 
+export function applyModifiersToBaseStats(
+  baseStats: BaseStats,
+  modifiers: readonly StatModifier[] = [],
+): BaseStats {
+  const rawDerivedStats = calculateRawDerivedStats(baseStats);
+  const nextBaseStats: BaseStats = {
+    ...baseStats,
+  };
+
+  for (const modifier of sortStatModifiers(modifiers)) {
+    if (!isBaseStatModifierTarget(modifier.target)) {
+      continue;
+    }
+
+    const resolvedModifierValue = resolveModifierValue(
+      modifier,
+      baseStats,
+      rawDerivedStats,
+    );
+
+    nextBaseStats[modifier.target] = Math.max(
+      0,
+      roundToTwoDecimals(
+        applyModifierToNumber(
+          nextBaseStats[modifier.target],
+          modifier,
+          resolvedModifierValue,
+        ),
+      ),
+    );
+  }
+
+  return nextBaseStats;
+}
+
+export function applyModifiersToDerivedStats(
+  derivedStats: DerivedStats,
+  baseStats: BaseStats,
+  modifiers: readonly StatModifier[] = [],
+): DerivedStats {
+  const nextDerivedStats: DerivedStats = {
+    ...derivedStats,
+  };
+
+  for (const modifier of sortStatModifiers(modifiers)) {
+    if (!isDerivedStatModifierTarget(modifier.target)) {
+      continue;
+    }
+
+    const resolvedModifierValue = resolveModifierValue(
+      modifier,
+      baseStats,
+      derivedStats,
+    );
+
+    nextDerivedStats[modifier.target] = Math.max(
+      0,
+      roundToTwoDecimals(
+        applyModifierToNumber(
+          nextDerivedStats[modifier.target],
+          modifier,
+          resolvedModifierValue,
+        ),
+      ),
+    );
+  }
+
+  return nextDerivedStats;
+}
+
+export function calculateDerivedStats(
+  baseStats: BaseStats,
+  modifiers: readonly StatModifier[] = [],
+): DerivedStats {
+  const rawDerivedStats = calculateRawDerivedStats(baseStats);
+
+  return applyModifiersToDerivedStats(rawDerivedStats, baseStats, modifiers);
+}
+
 export function buildCurrentState(derivedStats: DerivedStats): CurrentState {
   return {
     hp: derivedStats.maxHp,
@@ -321,8 +503,14 @@ export function clampCurrentState(
 export function createCharacterSnapshot(
   character: Character,
 ): CharacterSnapshot {
-  const baseStats = calculateBaseStats(character.stats);
-  const derivedStats = calculateDerivedStats(baseStats);
+  const rawBaseStats = calculateBaseStats(character.stats);
+  const equipmentModifiers = collectEquipmentStatModifiers(
+    character.equippedItemIds,
+  );
+
+  const baseStats = applyModifiersToBaseStats(rawBaseStats, equipmentModifiers);
+
+  const derivedStats = calculateDerivedStats(baseStats, equipmentModifiers);
 
   return {
     ...character,

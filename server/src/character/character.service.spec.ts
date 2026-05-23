@@ -8,7 +8,11 @@ import {
   STARTER_KIT_DEFINITIONS,
 } from '../game/character/character.constants';
 
-import type { OriginId, StarterKitId } from '../game/character/character.types';
+import type {
+  Character,
+  OriginId,
+  StarterKitId,
+} from '../game/character/character.types';
 
 import type { BattleRewardSummary } from '../game/reward/reward.types';
 
@@ -67,6 +71,24 @@ function createBattleRewardSummary(
 
     ...overrides,
   };
+}
+
+function updateStoredCharacterForTest(
+  service: CharacterService,
+  characterId: string,
+  updater: (character: Character) => Character,
+): void {
+  const testService = service as unknown as {
+    characters: Map<string, Character>;
+  };
+
+  const existingCharacter = testService.characters.get(characterId);
+
+  if (!existingCharacter) {
+    throw new Error(`Test character not found: ${characterId}`);
+  }
+
+  testService.characters.set(characterId, updater(existingCharacter));
 }
 
 describe('CharacterService', () => {
@@ -315,6 +337,612 @@ describe('CharacterService', () => {
     expect(updated.name).toBe('New Name');
     expect(updated.currentState).toEqual(created.currentState);
     expect(updated.moneyBronze).toBe(created.moneyBronze);
+  });
+
+  describe('inventory operations', () => {
+    it('should return inventory stacks for a character', () => {
+      const created = service.create({
+        name: 'Inventory',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const stacks = service.getInventoryStacks(created.id, 'user_1');
+
+      expect(stacks.length).toBeGreaterThan(0);
+
+      expect(stacks).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            itemId: 'rusty_sword',
+            quantity: 1,
+          }),
+          expect.objectContaining({
+            itemId: 'stamina_bread',
+            quantity: 1,
+          }),
+          expect.objectContaining({
+            itemId: 'minor_hp_potion',
+            quantity: 1,
+          }),
+          expect.objectContaining({
+            itemId: 'minor_mp_potion',
+            quantity: 1,
+          }),
+        ]),
+      );
+    });
+
+    it('should count a known inventory item for a character', () => {
+      const created = service.create({
+        name: 'Counter',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(
+        service.countInventoryItem(created.id, 'user_1', 'minor_hp_potion'),
+      ).toBe(1);
+
+      expect(
+        service.countInventoryItem(created.id, 'user_1', 'slime_gel'),
+      ).toBe(0);
+    });
+
+    it('should add stackable item quantity to a character inventory', () => {
+      const created = service.create({
+        name: 'Collector',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const result = service.addInventoryItem(
+        created.id,
+        'user_1',
+        'slime_gel',
+        3,
+      );
+
+      expect(result.character.id).toBe(created.id);
+      expect(result.character.userId).toBe('user_1');
+
+      expect(result.inventoryChange).toEqual({
+        itemId: 'slime_gel',
+        previousQuantity: 0,
+        nextQuantity: 3,
+        quantityChanged: 3,
+        inventoryItemIds: result.character.inventoryItemIds,
+      });
+
+      expect(
+        result.character.inventoryItemIds.filter(
+          (itemId) => itemId === 'slime_gel',
+        ),
+      ).toHaveLength(3);
+    });
+
+    it('should remove stackable item quantity from a character inventory', () => {
+      const created = service.create({
+        name: 'Consumer',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      service.addInventoryItem(created.id, 'user_1', 'slime_gel', 3);
+
+      const result = service.removeInventoryItem(
+        created.id,
+        'user_1',
+        'slime_gel',
+        2,
+      );
+
+      expect(result.inventoryChange).toMatchObject({
+        itemId: 'slime_gel',
+        previousQuantity: 3,
+        nextQuantity: 1,
+        quantityChanged: -2,
+      });
+
+      expect(
+        result.character.inventoryItemIds.filter(
+          (itemId) => itemId === 'slime_gel',
+        ),
+      ).toHaveLength(1);
+    });
+
+    it('should consume one item from character inventory', () => {
+      const created = service.create({
+        name: 'PotionUser',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const result = service.consumeInventoryItem(
+        created.id,
+        'user_1',
+        'minor_hp_potion',
+      );
+
+      expect(result.inventoryChange).toMatchObject({
+        itemId: 'minor_hp_potion',
+        previousQuantity: 1,
+        nextQuantity: 0,
+        quantityChanged: -1,
+      });
+
+      expect(
+        result.character.inventoryItemIds.filter(
+          (itemId) => itemId === 'minor_hp_potion',
+        ),
+      ).toHaveLength(0);
+    });
+
+    it('should reject adding an unknown item to inventory', () => {
+      const created = service.create({
+        name: 'UnknownItem',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(() =>
+        service.addInventoryItem(created.id, 'user_1', 'missing_item', 1),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject non-positive inventory mutation quantity', () => {
+      const created = service.create({
+        name: 'BadQuantity',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(() =>
+        service.addInventoryItem(created.id, 'user_1', 'slime_gel', 0),
+      ).toThrow(BadRequestException);
+
+      expect(() =>
+        service.removeInventoryItem(created.id, 'user_1', 'slime_gel', -1),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject removing more items than available', () => {
+      const created = service.create({
+        name: 'NoStock',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(() =>
+        service.removeInventoryItem(created.id, 'user_1', 'slime_gel', 1),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject inventory mutation from another user scope', () => {
+      const created = service.create({
+        name: 'Owner',
+        originId: 'mercenary',
+        userId: 'owner_user',
+      });
+
+      expect(() =>
+        service.addInventoryItem(created.id, 'attacker_user', 'slime_gel', 1),
+      ).toThrow(NotFoundException);
+
+      expect(() =>
+        service.removeInventoryItem(
+          created.id,
+          'attacker_user',
+          'minor_hp_potion',
+          1,
+        ),
+      ).toThrow(NotFoundException);
+    });
+  });
+
+  describe('equipment operations', () => {
+    it('should equip an inventory equipment item', () => {
+      const created = service.create({
+        name: 'EquipMe',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(created.equippedItemIds).toEqual(['rusty_sword']);
+
+      const result = service.equipInventoryItem(
+        created.id,
+        'user_1',
+        'rusty_sword',
+      );
+
+      expect(result.character.id).toBe(created.id);
+      expect(result.character.equippedItemIds).toEqual(['rusty_sword']);
+
+      expect(result.equipmentChange).toEqual({
+        itemId: 'rusty_sword',
+        equippedItemIds: ['rusty_sword'],
+        removedItemIds: [],
+      });
+    });
+
+    it('should replace equipment in the same slot', () => {
+      const created = service.create({
+        name: 'SwapWeapon',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      service.addInventoryItem(created.id, 'user_1', 'small_dagger', 1);
+
+      const result = service.equipInventoryItem(
+        created.id,
+        'user_1',
+        'small_dagger',
+      );
+
+      expect(result.character.equippedItemIds).toEqual(['small_dagger']);
+
+      expect(result.equipmentChange).toEqual({
+        itemId: 'small_dagger',
+        equippedItemIds: ['small_dagger'],
+        removedItemIds: ['rusty_sword'],
+      });
+    });
+
+    it('should allow equipping items in different slots together', () => {
+      const created = service.create({
+        name: 'CharmUser',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      service.addInventoryItem(created.id, 'user_1', 'simple_wooden_charm', 1);
+
+      const result = service.equipInventoryItem(
+        created.id,
+        'user_1',
+        'simple_wooden_charm',
+      );
+
+      expect(result.character.equippedItemIds).toEqual([
+        'rusty_sword',
+        'simple_wooden_charm',
+      ]);
+
+      expect(result.equipmentChange).toEqual({
+        itemId: 'simple_wooden_charm',
+        equippedItemIds: ['rusty_sword', 'simple_wooden_charm'],
+        removedItemIds: [],
+      });
+    });
+
+    it('should unequip an equipped item', () => {
+      const created = service.create({
+        name: 'UnequipMe',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const result = service.unequipInventoryItem(
+        created.id,
+        'user_1',
+        'rusty_sword',
+      );
+
+      expect(result.character.equippedItemIds).toEqual([]);
+
+      expect(result.equipmentChange).toEqual({
+        itemId: 'rusty_sword',
+        equippedItemIds: [],
+        removedItemIds: ['rusty_sword'],
+      });
+    });
+
+    it('should do nothing when unequipping an equipment item that is not equipped', () => {
+      const created = service.create({
+        name: 'NoopUnequip',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      service.addInventoryItem(created.id, 'user_1', 'small_dagger', 1);
+
+      const result = service.unequipInventoryItem(
+        created.id,
+        'user_1',
+        'small_dagger',
+      );
+
+      expect(result.character.equippedItemIds).toEqual(['rusty_sword']);
+
+      expect(result.equipmentChange).toEqual({
+        itemId: 'small_dagger',
+        equippedItemIds: ['rusty_sword'],
+        removedItemIds: [],
+      });
+    });
+
+    it('should reject equipping an item that is not in inventory', () => {
+      const created = service.create({
+        name: 'MissingGear',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(() =>
+        service.equipInventoryItem(created.id, 'user_1', 'small_dagger'),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject equipping a non-equipment item', () => {
+      const created = service.create({
+        name: 'PotionEquip',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(() =>
+        service.equipInventoryItem(created.id, 'user_1', 'minor_hp_potion'),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject equipment mutation from another user scope', () => {
+      const created = service.create({
+        name: 'OwnerGear',
+        originId: 'mercenary',
+        userId: 'owner_user',
+      });
+
+      expect(() =>
+        service.equipInventoryItem(created.id, 'attacker_user', 'rusty_sword'),
+      ).toThrow(NotFoundException);
+
+      expect(() =>
+        service.unequipInventoryItem(
+          created.id,
+          'attacker_user',
+          'rusty_sword',
+        ),
+      ).toThrow(NotFoundException);
+    });
+
+    it('should refresh derived stats after equipping an item with modifiers', () => {
+      const created = service.create({
+        name: 'StatRefresh',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      const beforeEquip = service.findByIdForUserScope(created.id, 'user_1');
+
+      service.addInventoryItem(created.id, 'user_1', 'simple_wooden_charm', 1);
+
+      const afterEquip = service.equipInventoryItem(
+        created.id,
+        'user_1',
+        'simple_wooden_charm',
+      ).character;
+
+      expect(afterEquip.derivedStats.healingPotency).toBe(
+        beforeEquip.derivedStats.healingPotency + 2,
+      );
+    });
+  });
+
+  describe('out-of-battle consumable usage', () => {
+    it('should use HP potion, restore HP, and consume one item', () => {
+      const created = service.create({
+        name: 'PotionUser',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      updateStoredCharacterForTest(service, created.id, (character) => ({
+        ...character,
+        currentState: {
+          ...character.currentState,
+          hp: created.derivedStats.maxHp - 10,
+        },
+      }));
+
+      const result = service.useConsumableItemOutOfBattle(
+        created.id,
+        'user_1',
+        'minor_hp_potion',
+      );
+
+      expect(result.character.currentState.hp).toBe(
+        result.character.derivedStats.maxHp,
+      );
+
+      expect(result.inventoryChange).toMatchObject({
+        itemId: 'minor_hp_potion',
+        previousQuantity: 1,
+        nextQuantity: 0,
+        quantityChanged: -1,
+      });
+
+      expect(result.itemUse).toMatchObject({
+        itemId: 'minor_hp_potion',
+        context: 'out_of_battle',
+        consumesOnUse: true,
+      });
+
+      expect(result.itemUse.effects).toEqual([
+        {
+          effectType: 'restore_resource',
+          target: 'HP',
+          previousValue: created.derivedStats.maxHp - 10,
+          nextValue: created.derivedStats.maxHp,
+          amountApplied: 10,
+        },
+      ]);
+    });
+
+    it('should use MP potion and restore MP', () => {
+      const created = service.create({
+        name: 'ManaUser',
+        originId: 'scholar',
+        userId: 'user_1',
+      });
+
+      updateStoredCharacterForTest(service, created.id, (character) => ({
+        ...character,
+        currentState: {
+          ...character.currentState,
+          mp: 0,
+        },
+      }));
+
+      const result = service.useConsumableItemOutOfBattle(
+        created.id,
+        'user_1',
+        'minor_mp_potion',
+      );
+
+      expect(result.character.currentState.mp).toBeGreaterThan(0);
+      expect(result.character.currentState.mp).toBeLessThanOrEqual(
+        result.character.derivedStats.maxMp,
+      );
+
+      expect(result.inventoryChange.nextQuantity).toBe(0);
+      expect(result.itemUse.effects[0]).toMatchObject({
+        effectType: 'restore_resource',
+        target: 'MP',
+        previousValue: 0,
+      });
+    });
+
+    it('should use stamina bread and restore stamina', () => {
+      const created = service.create({
+        name: 'BreadUser',
+        originId: 'wanderer',
+        userId: 'user_1',
+      });
+
+      updateStoredCharacterForTest(service, created.id, (character) => ({
+        ...character,
+        currentState: {
+          ...character.currentState,
+          stamina: 0,
+        },
+      }));
+
+      const result = service.useConsumableItemOutOfBattle(
+        created.id,
+        'user_1',
+        'stamina_bread',
+      );
+
+      expect(result.character.currentState.stamina).toBeGreaterThan(0);
+      expect(result.character.currentState.stamina).toBeLessThanOrEqual(
+        result.character.derivedStats.maxStamina,
+      );
+
+      expect(result.inventoryChange.nextQuantity).toBe(0);
+      expect(result.itemUse.effects[0]).toMatchObject({
+        effectType: 'restore_resource',
+        target: 'Stamina',
+        previousValue: 0,
+      });
+    });
+
+    it('should use inn voucher, fully rest, recover fatigue, and consume voucher', () => {
+      const created = service.create({
+        name: 'RestUser',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      updateStoredCharacterForTest(service, created.id, (character) => ({
+        ...character,
+        fatigue: 0.75,
+        currentState: {
+          hp: 1,
+          mp: 0,
+          stamina: 0,
+        },
+      }));
+
+      const result = service.useConsumableItemOutOfBattle(
+        created.id,
+        'user_1',
+        'one_night_inn_voucher',
+      );
+
+      expect(result.character.currentState).toEqual({
+        hp: result.character.derivedStats.maxHp,
+        mp: result.character.derivedStats.maxMp,
+        stamina: result.character.derivedStats.maxStamina,
+      });
+
+      expect(result.character.fatigue).toBe(0);
+
+      expect(result.inventoryChange).toMatchObject({
+        itemId: 'one_night_inn_voucher',
+        previousQuantity: 1,
+        nextQuantity: 0,
+        quantityChanged: -1,
+      });
+
+      expect(result.itemUse.effects.map((effect) => effect.target)).toEqual([
+        'HP',
+        'MP',
+        'Stamina',
+        'Fatigue',
+      ]);
+    });
+
+    it('should reject using non-consumable item outside battle', () => {
+      const created = service.create({
+        name: 'SwordSnack',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(() =>
+        service.useConsumableItemOutOfBattle(
+          created.id,
+          'user_1',
+          'rusty_sword',
+        ),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject using consumable item that is not in inventory', () => {
+      const created = service.create({
+        name: 'NoPotion',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      service.consumeInventoryItem(created.id, 'user_1', 'minor_hp_potion');
+
+      expect(() =>
+        service.useConsumableItemOutOfBattle(
+          created.id,
+          'user_1',
+          'minor_hp_potion',
+        ),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject consumable usage from another user scope', () => {
+      const created = service.create({
+        name: 'OwnerPotion',
+        originId: 'mercenary',
+        userId: 'owner_user',
+      });
+
+      expect(() =>
+        service.useConsumableItemOutOfBattle(
+          created.id,
+          'attacker_user',
+          'minor_hp_potion',
+        ),
+      ).toThrow(NotFoundException);
+    });
   });
 
   describe('applyBattleReward', () => {

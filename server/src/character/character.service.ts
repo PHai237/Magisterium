@@ -20,6 +20,36 @@ import {
   createCharacterSnapshot,
 } from '../game/character/character.calculations';
 
+import {
+  addItemQuantityToInventory,
+  addItemStacksToInventory,
+  buildInventoryStacks,
+  countInventoryItem,
+  removeItemQuantityFromInventory,
+} from '../game/inventory/inventory.calculations';
+
+import type {
+  InventoryItemStack,
+  InventoryOperationResult,
+} from '../game/inventory/inventory.types';
+
+import { hasItemDefinition } from '../game/item/item.registry';
+
+import {
+  equipItem,
+  unequipItem,
+} from '../game/inventory/equipment.calculations';
+
+import {
+  applyConsumableItemEffectsToCharacter,
+  getConsumableItemDefinitionForUse,
+} from '../game/inventory/consumable.calculations';
+
+import type {
+  ConsumableEffectApplication,
+  ItemUseContext,
+} from '../game/inventory/consumable.calculations';
+
 import type {
   Character,
   CharacterSnapshot,
@@ -30,12 +60,39 @@ import type {
   AppliedBattleRewardResult,
   BattleRewardSummary,
   CharacterProgressionRewardResult,
-  RewardItemStack,
 } from '../game/reward/reward.types';
 
 type CreateCharacterCommand = CreateCharacterDto & {
   userId: string;
 };
+
+export interface CharacterInventoryMutationResult {
+  character: CharacterSnapshot;
+  inventoryChange: InventoryOperationResult;
+}
+
+export interface CharacterEquipmentMutationResult {
+  character: CharacterSnapshot;
+
+  equipmentChange: {
+    itemId: ItemId;
+    equippedItemIds: ItemId[];
+    removedItemIds: ItemId[];
+  };
+}
+
+export interface CharacterConsumableUseResult {
+  character: CharacterSnapshot;
+
+  itemUse: {
+    itemId: ItemId;
+    context: ItemUseContext;
+    consumesOnUse: boolean;
+    effects: ConsumableEffectApplication[];
+  };
+
+  inventoryChange: InventoryOperationResult;
+}
 
 const BASE_EXP_REQUIRED_FOR_LEVEL_UP = 100;
 const EXP_LEVEL_GROWTH_FACTOR = 1.5;
@@ -167,10 +224,10 @@ export class CharacterService {
 
       moneyBronze: addBronze(existingCharacter.moneyBronze, reward.moneyBronze),
 
-      inventoryItemIds: [
-        ...existingCharacter.inventoryItemIds,
-        ...this.expandRewardItemStacks(reward.items),
-      ],
+      inventoryItemIds: addItemStacksToInventory(
+        existingCharacter.inventoryItemIds,
+        reward.items,
+      ),
 
       updatedAt: new Date().toISOString(),
     };
@@ -182,6 +239,256 @@ export class CharacterService {
       character: createCharacterSnapshot(nextCharacter),
       reward,
       progression: progressionResult,
+    };
+  }
+
+  getInventoryStacks(
+    characterId: string,
+    userId: string,
+  ): InventoryItemStack[] {
+    const userScope = normalizeRequiredUserId(userId);
+    const character = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(character, userScope);
+
+    return buildInventoryStacks(character.inventoryItemIds);
+  }
+
+  countInventoryItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+  ): number {
+    const userScope = normalizeRequiredUserId(userId);
+    const character = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(character, userScope);
+    this.assertKnownInventoryItem(itemId);
+
+    return countInventoryItem(character.inventoryItemIds, itemId);
+  }
+
+  addInventoryItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+    quantity: number,
+  ): CharacterInventoryMutationResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const normalizedQuantity =
+      this.normalizePositiveInventoryMutationQuantity(quantity);
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertKnownInventoryItem(itemId);
+
+    const inventoryChange = addItemQuantityToInventory(
+      existingCharacter.inventoryItemIds,
+      itemId,
+      normalizedQuantity,
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      inventoryItemIds: inventoryChange.inventoryItemIds,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+      inventoryChange,
+    };
+  }
+
+  removeInventoryItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+    quantity: number,
+  ): CharacterInventoryMutationResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const normalizedQuantity =
+      this.normalizePositiveInventoryMutationQuantity(quantity);
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertKnownInventoryItem(itemId);
+    this.assertInventoryHasQuantity(
+      existingCharacter,
+      itemId,
+      normalizedQuantity,
+    );
+
+    const inventoryChange = removeItemQuantityFromInventory(
+      existingCharacter.inventoryItemIds,
+      itemId,
+      normalizedQuantity,
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      inventoryItemIds: inventoryChange.inventoryItemIds,
+      equippedItemIds: existingCharacter.equippedItemIds.filter(
+        (equippedItemId) => equippedItemId !== itemId,
+      ),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+      inventoryChange,
+    };
+  }
+
+  consumeInventoryItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+  ): CharacterInventoryMutationResult {
+    return this.removeInventoryItem(characterId, userId, itemId, 1);
+  }
+
+  equipInventoryItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+  ): CharacterEquipmentMutationResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertKnownInventoryItem(itemId);
+    this.assertInventoryHasQuantity(existingCharacter, itemId, 1);
+    this.assertInventoryItemIsEquipment(itemId);
+
+    const equipmentResult = equipItem(
+      existingCharacter.equippedItemIds,
+      itemId,
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      equippedItemIds: equipmentResult.equippedItemIds,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+      equipmentChange: {
+        itemId,
+        equippedItemIds: equipmentResult.equippedItemIds,
+        removedItemIds: equipmentResult.removedItemIds,
+      },
+    };
+  }
+
+  unequipInventoryItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+  ): CharacterEquipmentMutationResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertKnownInventoryItem(itemId);
+    this.assertInventoryItemIsEquipment(itemId);
+
+    const equipmentResult = unequipItem(
+      existingCharacter.equippedItemIds,
+      itemId,
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      equippedItemIds: equipmentResult.equippedItemIds,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+      equipmentChange: {
+        itemId,
+        equippedItemIds: equipmentResult.equippedItemIds,
+        removedItemIds: equipmentResult.removedItemIds,
+      },
+    };
+  }
+
+  useConsumableItemOutOfBattle(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+  ): CharacterConsumableUseResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertKnownInventoryItem(itemId);
+    this.assertInventoryHasQuantity(existingCharacter, itemId, 1);
+    this.assertInventoryItemIsConsumableForContext(itemId, 'out_of_battle');
+
+    const snapshotBeforeUse = createCharacterSnapshot(existingCharacter);
+
+    const itemUseResult = applyConsumableItemEffectsToCharacter(
+      existingCharacter,
+      snapshotBeforeUse.derivedStats,
+      itemId,
+      'out_of_battle',
+    );
+
+    const inventoryChange = itemUseResult.consumesOnUse
+      ? removeItemQuantityFromInventory(
+          itemUseResult.character.inventoryItemIds,
+          itemId,
+          1,
+        )
+      : {
+          itemId,
+          previousQuantity: countInventoryItem(
+            itemUseResult.character.inventoryItemIds,
+            itemId,
+          ),
+          nextQuantity: countInventoryItem(
+            itemUseResult.character.inventoryItemIds,
+            itemId,
+          ),
+          quantityChanged: 0,
+          inventoryItemIds: [...itemUseResult.character.inventoryItemIds],
+        };
+
+    const nextCharacter: Character = {
+      ...itemUseResult.character,
+      inventoryItemIds: inventoryChange.inventoryItemIds,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+
+      itemUse: {
+        itemId,
+        context: 'out_of_battle',
+        consumesOnUse: itemUseResult.consumesOnUse,
+        effects: itemUseResult.effects,
+      },
+
+      inventoryChange,
     };
   }
 
@@ -214,20 +521,6 @@ export class CharacterService {
   clearCharacters(): void {
     this.characters.clear();
     this.currentCharacterIdsByUserScope.clear();
-  }
-
-  private expandRewardItemStacks(items: RewardItemStack[]): ItemId[] {
-    const expandedItemIds: ItemId[] = [];
-
-    for (const item of items) {
-      const quantity = Math.max(0, Math.floor(item.quantity));
-
-      for (let index = 0; index < quantity; index += 1) {
-        expandedItemIds.push(item.itemId);
-      }
-    }
-
-    return expandedItemIds;
   }
 
   private calculateTotalExpRequiredForLevel(level: number): number {
@@ -295,6 +588,76 @@ export class CharacterService {
       leveledUp: nextLevel > safePreviousLevel,
       levelsGained: Math.max(0, nextLevel - safePreviousLevel),
     };
+  }
+
+  private assertInventoryItemIsConsumableForContext(
+    itemId: ItemId,
+    context: ItemUseContext,
+  ): void {
+    try {
+      getConsumableItemDefinitionForUse(itemId, context);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Item ${itemId} is not consumable.`;
+
+      throw new BadRequestException(message);
+    }
+  }
+
+  private assertInventoryItemIsEquipment(itemId: ItemId): void {
+    try {
+      equipItem([], itemId);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Item ${itemId} is not equipment.`;
+
+      throw new BadRequestException(message);
+    }
+  }
+
+  private assertKnownInventoryItem(itemId: ItemId): void {
+    if (!hasItemDefinition(itemId)) {
+      throw new BadRequestException(`Item definition not found: ${itemId}`);
+    }
+  }
+
+  private normalizePositiveInventoryMutationQuantity(quantity: number): number {
+    if (!Number.isFinite(quantity)) {
+      throw new BadRequestException(
+        'Item quantity must be a positive integer.',
+      );
+    }
+
+    const normalizedQuantity = Math.floor(quantity);
+
+    if (normalizedQuantity <= 0) {
+      throw new BadRequestException(
+        'Item quantity must be a positive integer.',
+      );
+    }
+
+    return normalizedQuantity;
+  }
+
+  private assertInventoryHasQuantity(
+    character: Character,
+    itemId: ItemId,
+    quantity: number,
+  ): void {
+    const currentQuantity = countInventoryItem(
+      character.inventoryItemIds,
+      itemId,
+    );
+
+    if (currentQuantity < quantity) {
+      throw new BadRequestException(
+        `Not enough item ${itemId} in inventory. Required ${quantity}, available ${currentQuantity}.`,
+      );
+    }
   }
 
   private findEntityById(id: string): Character {

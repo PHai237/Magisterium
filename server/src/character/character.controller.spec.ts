@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { CharacterController } from './character.controller';
@@ -9,7 +9,11 @@ import {
   STARTER_KIT_DEFINITIONS,
 } from '../game/character/character.constants';
 
-import type { OriginId, StarterKitId } from '../game/character/character.types';
+import type {
+  Character,
+  OriginId,
+  StarterKitId,
+} from '../game/character/character.types';
 
 function getOriginDefinition(originId: OriginId) {
   const origin = ORIGIN_DEFINITIONS.find((item) => item.id === originId);
@@ -31,6 +35,24 @@ function getStarterKitDefinition(starterKitId: StarterKitId) {
   }
 
   return starterKit;
+}
+
+function updateStoredCharacterForControllerTest(
+  service: CharacterService,
+  characterId: string,
+  updater: (character: Character) => Character,
+): void {
+  const testService = service as unknown as {
+    characters: Map<string, Character>;
+  };
+
+  const existingCharacter = testService.characters.get(characterId);
+
+  if (!existingCharacter) {
+    throw new Error(`Test character not found: ${characterId}`);
+  }
+
+  testService.characters.set(characterId, updater(existingCharacter));
 }
 
 describe('CharacterController', () => {
@@ -223,6 +245,367 @@ describe('CharacterController', () => {
     expect(() => controller.setCurrentCharacter(created.id)).toThrow(
       BadRequestException,
     );
+  });
+
+  describe('inventory endpoints', () => {
+    it('should return inventory stacks for a character', () => {
+      const created = controller.create(
+        {
+          name: 'Inventory',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      const result = controller.getInventoryStacks(created.id, 'user_1');
+
+      expect(result).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            itemId: 'rusty_sword',
+            quantity: 1,
+          }),
+          expect.objectContaining({
+            itemId: 'minor_hp_potion',
+            quantity: 1,
+          }),
+        ]),
+      );
+    });
+
+    it('should count inventory item quantity for a character', () => {
+      const created = controller.create(
+        {
+          name: 'Counter',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      const result = controller.countInventoryItem(
+        created.id,
+        'minor_hp_potion',
+        'user_1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'minor_hp_potion',
+        quantity: 1,
+      });
+    });
+
+    it('should add inventory item quantity for a character', () => {
+      const created = controller.create(
+        {
+          name: 'Collector',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      const result = controller.addInventoryItem(
+        created.id,
+        {
+          itemId: 'slime_gel',
+          quantity: 3,
+        },
+        'user_1',
+      );
+
+      expect(result.character.id).toBe(created.id);
+
+      expect(result.inventoryChange).toMatchObject({
+        itemId: 'slime_gel',
+        previousQuantity: 0,
+        nextQuantity: 3,
+        quantityChanged: 3,
+      });
+
+      expect(
+        result.character.inventoryItemIds.filter(
+          (itemId) => itemId === 'slime_gel',
+        ),
+      ).toHaveLength(3);
+    });
+
+    it('should remove inventory item quantity for a character', () => {
+      const created = controller.create(
+        {
+          name: 'Remover',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      controller.addInventoryItem(
+        created.id,
+        {
+          itemId: 'slime_gel',
+          quantity: 3,
+        },
+        'user_1',
+      );
+
+      const result = controller.removeInventoryItem(
+        created.id,
+        {
+          itemId: 'slime_gel',
+          quantity: 2,
+        },
+        'user_1',
+      );
+
+      expect(result.inventoryChange).toMatchObject({
+        itemId: 'slime_gel',
+        previousQuantity: 3,
+        nextQuantity: 1,
+        quantityChanged: -2,
+      });
+
+      expect(
+        result.character.inventoryItemIds.filter(
+          (itemId) => itemId === 'slime_gel',
+        ),
+      ).toHaveLength(1);
+    });
+
+    it('should reject inventory endpoints without x-user-id header', () => {
+      const created = controller.create(
+        {
+          name: 'NoHeader',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      expect(() => controller.getInventoryStacks(created.id)).toThrow(
+        BadRequestException,
+      );
+
+      expect(() =>
+        controller.addInventoryItem(created.id, {
+          itemId: 'slime_gel',
+          quantity: 1,
+        }),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject inventory mutation from another user scope', () => {
+      const created = controller.create(
+        {
+          name: 'Owner',
+          originId: 'mercenary',
+        },
+        'owner_user',
+      );
+
+      expect(() =>
+        controller.addInventoryItem(
+          created.id,
+          {
+            itemId: 'slime_gel',
+            quantity: 1,
+          },
+          'attacker_user',
+        ),
+      ).toThrow(NotFoundException);
+    });
+  });
+
+  describe('equipment endpoints', () => {
+    it('should equip an inventory equipment item', () => {
+      const created = controller.create(
+        {
+          name: 'Equip',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      const result = controller.equipInventoryItem(
+        created.id,
+        {
+          itemId: 'rusty_sword',
+        },
+        'user_1',
+      );
+
+      expect(result.character.equippedItemIds).toEqual(['rusty_sword']);
+
+      expect(result.equipmentChange).toEqual({
+        itemId: 'rusty_sword',
+        equippedItemIds: ['rusty_sword'],
+        removedItemIds: [],
+      });
+    });
+
+    it('should replace equipped item in the same slot', () => {
+      const created = controller.create(
+        {
+          name: 'Swap',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      controller.addInventoryItem(
+        created.id,
+        {
+          itemId: 'small_dagger',
+          quantity: 1,
+        },
+        'user_1',
+      );
+
+      const result = controller.equipInventoryItem(
+        created.id,
+        {
+          itemId: 'small_dagger',
+        },
+        'user_1',
+      );
+
+      expect(result.character.equippedItemIds).toEqual(['small_dagger']);
+
+      expect(result.equipmentChange).toEqual({
+        itemId: 'small_dagger',
+        equippedItemIds: ['small_dagger'],
+        removedItemIds: ['rusty_sword'],
+      });
+    });
+
+    it('should unequip an equipped item', () => {
+      const created = controller.create(
+        {
+          name: 'Unequip',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      const result = controller.unequipInventoryItem(
+        created.id,
+        {
+          itemId: 'rusty_sword',
+        },
+        'user_1',
+      );
+
+      expect(result.character.equippedItemIds).toEqual([]);
+
+      expect(result.equipmentChange).toEqual({
+        itemId: 'rusty_sword',
+        equippedItemIds: [],
+        removedItemIds: ['rusty_sword'],
+      });
+    });
+
+    it('should reject equipment endpoints without x-user-id header', () => {
+      const created = controller.create(
+        {
+          name: 'NoGearHeader',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      expect(() =>
+        controller.equipInventoryItem(created.id, {
+          itemId: 'rusty_sword',
+        }),
+      ).toThrow(BadRequestException);
+
+      expect(() =>
+        controller.unequipInventoryItem(created.id, {
+          itemId: 'rusty_sword',
+        }),
+      ).toThrow(BadRequestException);
+    });
+  });
+
+  describe('out-of-battle consumable endpoints', () => {
+    it('should use a consumable item outside battle', () => {
+      const created = controller.create(
+        {
+          name: 'Potion',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      updateStoredCharacterForControllerTest(
+        service,
+        created.id,
+        (character) => ({
+          ...character,
+          currentState: {
+            ...character.currentState,
+            hp: created.derivedStats.maxHp - 10,
+          },
+        }),
+      );
+
+      const result = controller.useConsumableItemOutOfBattle(
+        created.id,
+        {
+          itemId: 'minor_hp_potion',
+        },
+        'user_1',
+      );
+
+      expect(result.character.currentState.hp).toBe(
+        result.character.derivedStats.maxHp,
+      );
+
+      expect(result.inventoryChange).toMatchObject({
+        itemId: 'minor_hp_potion',
+        previousQuantity: 1,
+        nextQuantity: 0,
+        quantityChanged: -1,
+      });
+
+      expect(result.itemUse).toMatchObject({
+        itemId: 'minor_hp_potion',
+        context: 'out_of_battle',
+        consumesOnUse: true,
+      });
+    });
+
+    it('should reject consumable endpoint without x-user-id header', () => {
+      const created = controller.create(
+        {
+          name: 'NoPotionHeader',
+          originId: 'mercenary',
+        },
+        'user_1',
+      );
+
+      expect(() =>
+        controller.useConsumableItemOutOfBattle(created.id, {
+          itemId: 'minor_hp_potion',
+        }),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should reject consumable usage from another user scope', () => {
+      const created = controller.create(
+        {
+          name: 'OwnerPotion',
+          originId: 'mercenary',
+        },
+        'owner_user',
+      );
+
+      expect(() =>
+        controller.useConsumableItemOutOfBattle(
+          created.id,
+          {
+            itemId: 'minor_hp_potion',
+          },
+          'attacker_user',
+        ),
+      ).toThrow(NotFoundException);
+    });
   });
 
   it('should find a character by id within a user scope', () => {
