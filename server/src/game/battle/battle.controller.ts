@@ -4,19 +4,23 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Post,
 } from '@nestjs/common';
 
 import { CharacterService } from '../../character/character.service';
 
+import {
+  normalizeRequiredUserId,
+  USER_ID_HEADER,
+} from '../../character/character.validation';
+
 import { BattleService } from './battle.service';
 
 import { ClaimBattleRewardDto } from './dto/claim-battle-reward.dto';
 import { CreateBattleDto } from './dto/create-battle.dto';
 import { ResolveBattleActionDto } from './dto/resolve-battle-action.dto';
-
-import type { CharacterSnapshot } from '../character/character.types';
 
 @Controller('battles')
 export class BattleController {
@@ -26,10 +30,15 @@ export class BattleController {
   ) {}
 
   @Post()
-  createBattle(@Body() dto: CreateBattleDto) {
-    const character = this.characterService.findById(dto.characterId);
-
-    this.assertCharacterCanBeUsedForBattle(character, dto.userId);
+  createBattle(
+    @Body() dto: CreateBattleDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    const userId = this.readRequiredUserIdHeader(userIdHeader);
+    const character = this.characterService.findByIdForUserScope(
+      dto.characterId,
+      userId,
+    );
 
     if (dto.encounterId && dto.monsters && dto.monsters.length > 0) {
       throw new BadRequestException(
@@ -65,67 +74,88 @@ export class BattleController {
   }
 
   @Get()
-  listBattles() {
-    return this.battleService.listBattles();
+  listBattles(@Headers(USER_ID_HEADER) userIdHeader?: string | string[]) {
+    return this.battleService.listBattlesForUserScope(
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
   }
 
   @Get(':battleId')
-  getBattle(@Param('battleId') battleId: string) {
-    return this.battleService.getBattleOrThrow(battleId);
+  getBattle(
+    @Param('battleId') battleId: string,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.battleService.getBattleOrThrowForUserScope(
+      battleId,
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
   }
 
   @Post(':battleId/actions')
   resolveAction(
     @Param('battleId') battleId: string,
     @Body() dto: ResolveBattleActionDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.battleService.resolveAction({
-      battleId,
-      actorId: dto.actorId,
-      targetIds: dto.targetIds ?? [],
-      actionType: dto.actionType,
-      skillId: dto.skillId,
-      itemId: dto.itemId,
-      autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
-    });
+    return this.battleService.resolveActionForUserScope(
+      {
+        battleId,
+        actorId: dto.actorId,
+        targetIds: dto.targetIds ?? [],
+        actionType: dto.actionType,
+        skillId: dto.skillId,
+        itemId: dto.itemId,
+        autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
+      },
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
   }
 
   @Post(':battleId/reward/claim')
   claimReward(
     @Param('battleId') battleId: string,
     @Body() dto: ClaimBattleRewardDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    const character = this.characterService.findById(dto.characterId);
+    const userId = this.readRequiredUserIdHeader(userIdHeader);
+    const character = this.characterService.findByIdForUserScope(
+      dto.characterId,
+      userId,
+    );
 
-    this.assertCharacterCanBeUsedForBattle(character, dto.userId);
-
-    const claimResult = this.battleService.claimBattleReward({
+    const preparedClaim = this.battleService.prepareBattleRewardClaim({
       battleId,
       characterId: character.id,
+      userId,
     });
 
-    const battleCharacterActor = claimResult.battle.actors[character.id];
-
-    if (
-      !battleCharacterActor ||
-      battleCharacterActor.actorType !== 'character'
-    ) {
-      throw new BadRequestException(
-        `Character actor ${character.id} did not participate in battle ${battleId}.`,
-      );
-    }
+    const battleCharacterActor = preparedClaim.characterActor;
 
     const appliedReward = this.characterService.applyBattleReward(
       character.id,
-      dto.userId,
-      claimResult.reward,
+      userId,
+      preparedClaim.reward,
       {
+        battleStartingInventoryItemIds:
+          battleCharacterActor.battleStartInventoryItemIds,
         battleInventoryItemIds: battleCharacterActor.inventoryItemIds,
+        battleCurrentState: {
+          hp: battleCharacterActor.hp,
+          mp: battleCharacterActor.mp,
+          stamina: battleCharacterActor.stamina,
+        },
       },
     );
 
+    const committedClaim = this.battleService.commitBattleRewardClaim({
+      battleId,
+      characterId: character.id,
+      userId,
+      reward: preparedClaim.reward,
+    });
+
     return {
-      battle: claimResult.battle,
+      battle: committedClaim.battle,
       character: appliedReward.character,
       reward: appliedReward.reward,
       progression: appliedReward.progression,
@@ -133,33 +163,23 @@ export class BattleController {
   }
 
   @Delete(':battleId')
-  deleteBattle(@Param('battleId') battleId: string) {
+  deleteBattle(
+    @Param('battleId') battleId: string,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
     return {
-      deleted: this.battleService.deleteBattle(battleId),
+      deleted: this.battleService.deleteBattleForUserScope(
+        battleId,
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     };
   }
 
-  private assertCharacterCanBeUsedForBattle(
-    character: CharacterSnapshot,
-    requestUserId?: string,
-  ): void {
-    const characterUserId = character.userId?.trim();
-    const normalizedRequestUserId = requestUserId?.trim();
+  private readRequiredUserIdHeader(userIdHeader?: string | string[]): string {
+    const rawUserId = Array.isArray(userIdHeader)
+      ? userIdHeader[0]
+      : userIdHeader;
 
-    if (!normalizedRequestUserId) {
-      throw new BadRequestException('userId is required.');
-    }
-
-    if (!characterUserId) {
-      throw new BadRequestException(
-        `Character ${character.id} does not have an owner user scope.`,
-      );
-    }
-
-    if (characterUserId !== normalizedRequestUserId) {
-      throw new BadRequestException(
-        `Character ${character.id} does not belong to user scope ${normalizedRequestUserId}.`,
-      );
-    }
+    return normalizeRequiredUserId(rawUserId);
   }
 }

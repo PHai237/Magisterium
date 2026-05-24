@@ -4,11 +4,23 @@ import {
 } from '../battle.constants';
 
 import type {
+  ActiveStatusEffect,
   BattleActorState,
   BattleEvent,
   BattleState,
   BattleStatus,
 } from '../battle.types';
+
+function cloneActiveStatusEffects(
+  effects: ActiveStatusEffect[],
+): ActiveStatusEffect[] {
+  return effects.map((effect) => ({
+    ...effect,
+    modifiers: effect.modifiers.map((modifier) => ({
+      ...modifier,
+    })),
+  }));
+}
 
 export function cloneActorRecord(
   actors: Record<string, BattleActorState>,
@@ -18,9 +30,23 @@ export function cloneActorRecord(
       actorId,
       {
         ...actor,
-        activeStatusEffects: [...actor.activeStatusEffects],
-        activeModifiers: [...actor.activeModifiers],
+        activeStatusEffects: cloneActiveStatusEffects(
+          actor.activeStatusEffects,
+        ),
+        activeModifiers: actor.activeModifiers.map((modifier) => ({
+          ...modifier,
+        })),
         skillIds: [...actor.skillIds],
+        inventoryItemIds: [...actor.inventoryItemIds],
+        resistances: {
+          ...actor.resistances,
+        },
+        baseStats: {
+          ...actor.baseStats,
+        },
+        derivedStats: {
+          ...actor.derivedStats,
+        },
       },
     ]),
   );

@@ -2,6 +2,8 @@ import { BadRequestException } from '@nestjs/common';
 
 export const USER_ID_HEADER = 'x-user-id';
 
+export const USER_ID_MAX_LENGTH = 128;
+
 export const CHARACTER_NAME_MIN_LENGTH = 3;
 export const CHARACTER_NAME_MAX_LENGTH = 20;
 
@@ -68,6 +70,12 @@ export function normalizeRequiredUserId(userId?: string | null): string {
     throw new BadRequestException('userId is required.');
   }
 
+  if (normalizedUserId.length > USER_ID_MAX_LENGTH) {
+    throw new BadRequestException(
+      `userId must not exceed ${USER_ID_MAX_LENGTH} characters.`,
+    );
+  }
+
   return normalizedUserId;
 }
 
@@ -76,5 +84,15 @@ export function normalizeOptionalUserId(
 ): string | undefined {
   const normalizedUserId = userId?.trim();
 
-  return normalizedUserId || undefined;
+  if (!normalizedUserId) {
+    return undefined;
+  }
+
+  if (normalizedUserId.length > USER_ID_MAX_LENGTH) {
+    throw new BadRequestException(
+      `userId must not exceed ${USER_ID_MAX_LENGTH} characters.`,
+    );
+  }
+
+  return normalizedUserId;
 }

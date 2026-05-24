@@ -5,6 +5,7 @@ import {
   EXHAUSTED_DEFENSE_MULTIPLIER,
   EXHAUSTED_EVASION_RATE,
   EXHAUSTION_STAMINA_THRESHOLD,
+  MAX_ABSORBED_HEAL_RATIO_OF_MAX_HP,
   MAX_ABSORPTION_RATIO,
   MAX_DAMAGE_REDUCTION_RESISTANCE_VALUE,
   MAX_HIT_CHANCE_PERCENT,
@@ -56,6 +57,14 @@ export function roundToTwoDecimals(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+function normalizeNonNegativeIntegerValue(value: number): number {
+  return Math.max(0, Math.floor(toSafeNumber(value)));
+}
+
+function normalizeResourceCostAmount(amount: number): number {
+  return normalizeNonNegativeIntegerValue(amount);
+}
+
 export function normalizeChancePercent(chance: number): number {
   return clamp(toSafeNumber(chance), 0, 100);
 }
@@ -78,32 +87,37 @@ function buildRollSeed(request: RandomRollRequest): string {
     request.actorId,
     request.targetId ?? '',
     request.sourceId ?? '',
+    request.sourceType ?? '',
     request.eventType ?? '',
   ].join(':');
 }
 
-export function hashStringToUnitInterval(input: string): number {
+export function hashStringToUnitInterval(value: string): number {
   let hash = 2166136261;
 
-  for (let index = 0; index < input.length; index += 1) {
-    hash ^= input.charCodeAt(index);
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
     hash = Math.imul(hash, 16777619);
   }
 
-  return (hash >>> 0) / 0x100000000;
+  return (hash >>> 0) / 0xffffffff;
 }
 
 export function calculateRandomFinalChance(request: RandomRollRequest): number {
   const baseChance = normalizeChancePercent(request.baseChance);
 
   if (!request.luckScaling?.enabled) {
-    return baseChance;
+    return roundToTwoDecimals(baseChance);
   }
 
   const luckValue = Math.max(0, toSafeNumber(request.luckValue ?? 0));
-  const luckBonus = luckValue * request.luckScaling.multiplierPerPoint;
+  const multiplierPerPoint = toSafeNumber(
+    request.luckScaling.multiplierPerPoint,
+  );
 
-  return normalizeChancePercent(baseChance + luckBonus);
+  return roundToTwoDecimals(
+    normalizeChancePercent(baseChance + luckValue * multiplierPerPoint),
+  );
 }
 
 export function resolveRandomRoll(
@@ -111,7 +125,7 @@ export function resolveRandomRoll(
 ): RandomRollResult {
   const finalChance = calculateRandomFinalChance(request);
   const rollUnit = hashStringToUnitInterval(buildRollSeed(request));
-  const rollPercent = roundToTwoDecimals(rollUnit * 100);
+  const roll = roundToTwoDecimals(rollUnit * 100);
 
   return {
     type: request.type,
@@ -119,10 +133,10 @@ export function resolveRandomRoll(
     actorId: request.actorId,
     targetId: request.targetId,
 
-    baseChance: normalizeChancePercent(request.baseChance),
+    baseChance: request.baseChance,
     finalChance,
 
-    roll: rollPercent,
+    roll,
     success: rollUnit < finalChance / 100,
 
     randomContext: request.randomContext,
@@ -194,7 +208,7 @@ export function getDefenseForDamageType(
     : 1;
 
   const effectiveDefense =
-    baseDefense * exhaustionMultiplier * damageTypeMultiplier;
+    toSafeNumber(baseDefense) * exhaustionMultiplier * damageTypeMultiplier;
 
   return Math.max(0, roundToTwoDecimals(effectiveDefense));
 }
@@ -206,7 +220,7 @@ export function applyDefenseMitigation(
 ): number {
   const defense = getDefenseForDamageType(defender, damageType);
 
-  return Math.max(0, roundToTwoDecimals(rawDamage - defense));
+  return Math.max(0, roundToTwoDecimals(toSafeNumber(rawDamage) - defense));
 }
 
 export function getDamageResistanceKey(
@@ -244,8 +258,9 @@ function applySingleResistanceLayer(
   resistanceValue: number,
 ): ResistanceMitigationResult {
   const safeResistance = toSafeNumber(resistanceValue);
+  const safeCurrentDamage = Math.max(0, toSafeNumber(currentDamage));
 
-  if (currentDamage <= 0) {
+  if (safeCurrentDamage <= 0) {
     return {
       damageAfterResistance: 0,
       absorbedAmount: 0,
@@ -257,12 +272,12 @@ function applySingleResistanceLayer(
 
     return {
       damageAfterResistance: 0,
-      absorbedAmount: roundToTwoDecimals(currentDamage * absorptionRatio),
+      absorbedAmount: roundToTwoDecimals(safeCurrentDamage * absorptionRatio),
     };
   }
 
   const damageAfterResistance =
-    currentDamage * calculateResistanceMultiplier(safeResistance);
+    safeCurrentDamage * calculateResistanceMultiplier(safeResistance);
 
   return {
     damageAfterResistance: Math.max(
@@ -273,13 +288,31 @@ function applySingleResistanceLayer(
   };
 }
 
+function calculateAbsorbedAmountCap(defender: BattleActorState): number {
+  return roundToTwoDecimals(
+    getMaxResource(defender, 'HP') * MAX_ABSORBED_HEAL_RATIO_OF_MAX_HP,
+  );
+}
+
+function capAbsorbedAmount(
+  absorbedAmount: number,
+  defender: BattleActorState,
+): number {
+  return roundToTwoDecimals(
+    Math.min(
+      Math.max(0, toSafeNumber(absorbedAmount)),
+      calculateAbsorbedAmountCap(defender),
+    ),
+  );
+}
+
 export function calculateResistanceMitigation(
   damageAfterDefense: number,
   defender: BattleActorState,
   damageType: DamageType,
   elementType?: ResistanceKey,
 ): ResistanceMitigationResult {
-  let currentDamage = Math.max(0, damageAfterDefense);
+  let currentDamage = Math.max(0, toSafeNumber(damageAfterDefense));
   let absorbedAmount = 0;
 
   if (DAMAGE_TYPE_RESISTANCE_MULTIPLIER[damageType] === 0) {
@@ -313,7 +346,7 @@ export function calculateResistanceMitigation(
 
   return {
     damageAfterResistance: Math.max(0, roundToTwoDecimals(currentDamage)),
-    absorbedAmount: Math.max(0, roundToTwoDecimals(absorbedAmount)),
+    absorbedAmount: capAbsorbedAmount(absorbedAmount, defender),
   };
 }
 
@@ -343,9 +376,14 @@ export function calculateCriticalMultiplier(
 }
 
 export function calculateRawDamage(input: DamageCalculationInput): number {
-  let rawDamage = Math.max(0, input.basePower + input.scalingValue);
+  let rawDamage = Math.max(
+    0,
+    toSafeNumber(input.basePower) + toSafeNumber(input.scalingValue),
+  );
 
-  if (input.isCritical) {
+  const canApplyCritical = input.damageType !== 'true';
+
+  if (input.isCritical && canApplyCritical) {
     rawDamage *= calculateCriticalMultiplier(input.attacker);
   }
 
@@ -358,6 +396,16 @@ export function finalizeDamage(damageAfterResistance: number): number {
   }
 
   return Math.max(MIN_FINAL_DAMAGE, Math.floor(damageAfterResistance));
+}
+
+export function calculateDamageVarianceMultiplier(rollUnit: number): number {
+  const normalizedRoll = clamp(toSafeNumber(rollUnit), 0, 1);
+  const minMultiplier = 1 - DAMAGE_VARIANCE_RATIO;
+  const maxMultiplier = 1 + DAMAGE_VARIANCE_RATIO;
+
+  return roundToTwoDecimals(
+    minMultiplier + normalizedRoll * (maxMultiplier - minMultiplier),
+  );
 }
 
 export function calculateDamage(
@@ -398,20 +446,38 @@ export function calculateDamage(
     damageType: input.damageType,
     elementType: input.elementType,
 
-    isCritical: input.isCritical,
+    isCritical: input.damageType !== 'true' && input.isCritical,
     isTrueDamage: input.damageType === 'true',
 
     wasFullyBlocked: rawDamage > 0 && finalDamage === 0,
   };
 }
 
-export function calculateDamageVarianceMultiplier(rollUnit: number): number {
-  const normalizedRoll = clamp(toSafeNumber(rollUnit), 0, 1);
-  const minMultiplier = 1 - DAMAGE_VARIANCE_RATIO;
-  const maxMultiplier = 1 + DAMAGE_VARIANCE_RATIO;
+export function getMaxResource(
+  actor: BattleActorState,
+  resourceType: ResourceType,
+): number {
+  switch (resourceType) {
+    case 'HP':
+      return normalizeNonNegativeIntegerValue(actor.derivedStats.maxHp);
 
-  return roundToTwoDecimals(
-    minMultiplier + normalizedRoll * (maxMultiplier - minMultiplier),
+    case 'MP':
+      return normalizeNonNegativeIntegerValue(actor.derivedStats.maxMp);
+
+    case 'Stamina':
+      return normalizeNonNegativeIntegerValue(actor.derivedStats.maxStamina);
+  }
+}
+
+function clampResourceValue(
+  actor: BattleActorState,
+  resourceType: ResourceType,
+  value: number,
+): number {
+  return clamp(
+    normalizeNonNegativeIntegerValue(value),
+    0,
+    getMaxResource(actor, resourceType),
   );
 }
 
@@ -421,12 +487,61 @@ export function getCurrentResource(
 ): number {
   switch (resourceType) {
     case 'HP':
-      return actor.hp;
+      return clampResourceValue(actor, 'HP', actor.hp);
+
     case 'MP':
-      return actor.mp;
+      return clampResourceValue(actor, 'MP', actor.mp);
+
     case 'Stamina':
-      return actor.stamina;
+      return clampResourceValue(actor, 'Stamina', actor.stamina);
   }
+}
+
+function getExhaustionRecoveryThreshold(actor: BattleActorState): number {
+  const maxStamina = getMaxResource(actor, 'Stamina');
+
+  if (maxStamina <= 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return maxStamina * RECOVERY_STAMINA_PERCENT;
+}
+
+export function updateExhaustionState(
+  actor: BattleActorState,
+): BattleActorState {
+  const maxStamina = getMaxResource(actor, 'Stamina');
+  const stamina = clampResourceValue(actor, 'Stamina', actor.stamina);
+
+  if (maxStamina <= 0) {
+    return {
+      ...actor,
+      stamina: 0,
+      isExhausted: true,
+    };
+  }
+
+  if (stamina <= EXHAUSTION_STAMINA_THRESHOLD) {
+    return {
+      ...actor,
+      stamina,
+      isExhausted: true,
+    };
+  }
+
+  if (!actor.isExhausted) {
+    return {
+      ...actor,
+      stamina,
+      isExhausted: false,
+    };
+  }
+
+  return {
+    ...actor,
+    stamina,
+    isExhausted: stamina <= getExhaustionRecoveryThreshold(actor),
+  };
 }
 
 export function calculateResourceCheck(
@@ -436,7 +551,7 @@ export function calculateResourceCheck(
   const missingResources: BattleResourceCost[] = [];
 
   for (const cost of costs) {
-    const amount = Math.max(0, cost.amount);
+    const amount = normalizeResourceCostAmount(cost.amount);
 
     if (amount === 0) {
       continue;
@@ -462,20 +577,26 @@ export function spendResources(
   actor: BattleActorState,
   costs: BattleResourceCost[],
 ): BattleActorState {
-  let hp = actor.hp;
-  let mp = actor.mp;
-  let stamina = actor.stamina;
+  let hp = getCurrentResource(actor, 'HP');
+  let mp = getCurrentResource(actor, 'MP');
+  let stamina = getCurrentResource(actor, 'Stamina');
 
   for (const cost of costs) {
-    const amount = Math.max(0, cost.amount);
+    const amount = normalizeResourceCostAmount(cost.amount);
+
+    if (amount <= 0) {
+      continue;
+    }
 
     switch (cost.resourceType) {
       case 'HP':
         hp = Math.max(0, hp - amount);
         break;
+
       case 'MP':
         mp = Math.max(0, mp - amount);
         break;
+
       case 'Stamina':
         stamina = Math.max(0, stamina - amount);
         break;
@@ -484,41 +605,10 @@ export function spendResources(
 
   return updateExhaustionState({
     ...actor,
-    hp,
-    mp,
-    stamina,
+    hp: clampResourceValue(actor, 'HP', hp),
+    mp: clampResourceValue(actor, 'MP', mp),
+    stamina: clampResourceValue(actor, 'Stamina', stamina),
   });
-}
-
-export function isStaminaExhausted(stamina: number): boolean {
-  return toSafeNumber(stamina) <= EXHAUSTION_STAMINA_THRESHOLD;
-}
-
-export function shouldRecoverFromExhaustion(actor: BattleActorState): boolean {
-  const recoveryThreshold =
-    actor.derivedStats.maxStamina * RECOVERY_STAMINA_PERCENT;
-
-  return actor.stamina > recoveryThreshold;
-}
-
-export function updateExhaustionState(
-  actor: BattleActorState,
-): BattleActorState {
-  if (isStaminaExhausted(actor.stamina)) {
-    return {
-      ...actor,
-      isExhausted: true,
-    };
-  }
-
-  if (actor.isExhausted && shouldRecoverFromExhaustion(actor)) {
-    return {
-      ...actor,
-      isExhausted: false,
-    };
-  }
-
-  return actor;
 }
 
 function normalizeTurnOrderEntry(
@@ -528,9 +618,9 @@ function normalizeTurnOrderEntry(
     ...entry,
     actionSpeed: Math.max(
       MIN_ACTION_SPEED,
-      toSafeNumber(entry.actionSpeed, MIN_ACTION_SPEED),
+      normalizeNonNegativeIntegerValue(entry.actionSpeed),
     ),
-    turnGauge: Math.max(0, toSafeNumber(entry.turnGauge, 0)),
+    turnGauge: normalizeNonNegativeIntegerValue(entry.turnGauge),
   };
 }
 
@@ -542,7 +632,7 @@ export function createTurnOrderEntry(
     actorId: actor.actorId,
     actionSpeed: Math.max(
       MIN_ACTION_SPEED,
-      toSafeNumber(actor.derivedStats.actionSpeed, MIN_ACTION_SPEED),
+      normalizeNonNegativeIntegerValue(actor.derivedStats.actionSpeed),
     ),
     initiative,
     turnGauge: 0,
@@ -594,6 +684,35 @@ export function advanceTurnGaugeOnce(
   });
 }
 
+function forceHighestGaugeEntryReady(
+  turnOrder: BattleTurnOrderEntry[],
+): BattleTurnOrderEntry[] {
+  if (turnOrder.length === 0) {
+    return [];
+  }
+
+  const bestEntry = [...turnOrder].sort((left, right) => {
+    if (right.turnGauge !== left.turnGauge) {
+      return right.turnGauge - left.turnGauge;
+    }
+
+    if (right.actionSpeed !== left.actionSpeed) {
+      return right.actionSpeed - left.actionSpeed;
+    }
+
+    return left.initiative - right.initiative;
+  })[0];
+
+  return turnOrder.map((entry) =>
+    entry.actorId === bestEntry.actorId
+      ? {
+          ...entry,
+          turnGauge: TURN_GAUGE_READY_VALUE,
+        }
+      : entry,
+  );
+}
+
 export function advanceTurnGaugeUntilReady(
   turnOrder: BattleTurnOrderEntry[],
 ): BattleTurnOrderEntry[] {
@@ -612,5 +731,9 @@ export function advanceTurnGaugeUntilReady(
     safetyCounter += 1;
   }
 
-  return nextTurnOrder;
+  if (getReadyTurnEntries(nextTurnOrder).length > 0) {
+    return nextTurnOrder;
+  }
+
+  return forceHighestGaugeEntryReady(nextTurnOrder);
 }

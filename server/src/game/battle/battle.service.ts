@@ -94,6 +94,8 @@ export interface CreateBattleFromActorsInput {
   encounterId?: EncounterId;
   zoneId?: EncounterZoneId;
 
+  ownerUserId?: string;
+
   actors: BattleActorState[];
 
   autoStart?: boolean;
@@ -107,6 +109,20 @@ export interface ResolveBattleActionInput extends BattleActionCommand {
 export interface ClaimBattleRewardInput {
   battleId: string;
   characterId: string;
+  userId?: string;
+}
+
+export interface PreparedBattleRewardClaimResult {
+  battle: BattleState;
+  characterActor: BattleActorState;
+  reward: BattleRewardSummary;
+}
+
+export interface CommitBattleRewardClaimInput {
+  battleId: string;
+  characterId: string;
+  reward: BattleRewardSummary;
+  userId?: string;
 }
 
 export interface ClaimBattleRewardResult {
@@ -143,6 +159,7 @@ export class BattleService {
       seed: input.seed,
       encounterId: input.encounterId,
       zoneId: input.zoneId,
+      ownerUserId: input.character.userId,
       actors: [characterActor, ...monsterActors],
       autoStart: input.autoStart,
       autoResolveMonsterTurns: input.autoResolveMonsterTurns,
@@ -173,8 +190,13 @@ export class BattleService {
       seed: input.seed,
       encounterId: input.encounterId,
       zoneId: input.zoneId,
+      ownerUserId: input.ownerUserId,
       actors: input.actors,
     });
+
+    if (this.battles.has(battle.battleId)) {
+      throw new ConflictException(`Battle already exists: ${battle.battleId}`);
+    }
 
     const shouldAutoStart = input.autoStart ?? true;
     const shouldAutoResolveMonsterTurns = input.autoResolveMonsterTurns ?? true;
@@ -209,8 +231,25 @@ export class BattleService {
     return battle;
   }
 
+  getBattleOrThrowForUserScope(battleId: string, userId: string): BattleState {
+    const userScope = this.normalizeRequiredBattleUserId(userId);
+    const battle = this.getBattleOrThrow(battleId);
+
+    this.assertBattleBelongsToUserScope(battle, userScope);
+
+    return battle;
+  }
+
   listBattles(): BattleState[] {
     return Array.from(this.battles.values());
+  }
+
+  listBattlesForUserScope(userId: string): BattleState[] {
+    const userScope = this.normalizeRequiredBattleUserId(userId);
+
+    return Array.from(this.battles.values()).filter(
+      (battle) => battle.ownerUserId === userScope,
+    );
   }
 
   resolveAction(command: ResolveBattleActionInput): BattleEngineResult {
@@ -237,8 +276,24 @@ export class BattleService {
     return finalResult;
   }
 
-  claimBattleReward(input: ClaimBattleRewardInput): ClaimBattleRewardResult {
-    const battle = this.getBattleOrThrow(input.battleId);
+  resolveActionForUserScope(
+    command: ResolveBattleActionInput,
+    userId: string,
+  ): BattleEngineResult {
+    const userScope = this.normalizeRequiredBattleUserId(userId);
+    const battle = this.getBattleOrThrow(command.battleId);
+
+    this.assertBattleBelongsToUserScope(battle, userScope);
+
+    return this.resolveAction(command);
+  }
+
+  prepareBattleRewardClaim(
+    input: ClaimBattleRewardInput,
+  ): PreparedBattleRewardClaimResult {
+    const battle = input.userId
+      ? this.getBattleOrThrowForUserScope(input.battleId, input.userId)
+      : this.getBattleOrThrow(input.battleId);
 
     if (battle.status !== 'victory') {
       throw new BadRequestException(
@@ -274,12 +329,46 @@ export class BattleService {
       defeatedMonsters,
     });
 
+    return {
+      battle,
+      characterActor,
+      reward,
+    };
+  }
+
+  commitBattleRewardClaim(
+    input: CommitBattleRewardClaimInput,
+  ): ClaimBattleRewardResult {
+    const battle = input.userId
+      ? this.getBattleOrThrowForUserScope(input.battleId, input.userId)
+      : this.getBattleOrThrow(input.battleId);
+
+    if (battle.status !== 'victory') {
+      throw new BadRequestException(
+        `Cannot claim reward while battle is ${battle.status}.`,
+      );
+    }
+
+    if (battle.rewardClaim) {
+      throw new ConflictException(
+        `Battle reward has already been claimed: ${battle.battleId}`,
+      );
+    }
+
+    const characterActor = battle.actors[input.characterId];
+
+    if (!characterActor || characterActor.actorType !== 'character') {
+      throw new BadRequestException(
+        `Character actor ${input.characterId} did not participate in battle ${battle.battleId}.`,
+      );
+    }
+
     const nextBattle: BattleState = {
       ...battle,
       rewardClaim: {
         claimedAt: new Date().toISOString(),
         claimedByCharacterId: input.characterId,
-        reward,
+        reward: input.reward,
       },
       updatedAt: new Date().toISOString(),
     };
@@ -288,8 +377,19 @@ export class BattleService {
 
     return {
       battle: nextBattle,
-      reward,
+      reward: input.reward,
     };
+  }
+
+  claimBattleReward(input: ClaimBattleRewardInput): ClaimBattleRewardResult {
+    const preparedClaim = this.prepareBattleRewardClaim(input);
+
+    return this.commitBattleRewardClaim({
+      battleId: input.battleId,
+      characterId: input.characterId,
+      reward: preparedClaim.reward,
+      userId: input.userId,
+    });
   }
 
   saveBattle(battle: BattleState): BattleState {
@@ -302,8 +402,41 @@ export class BattleService {
     return this.battles.delete(battleId);
   }
 
+  deleteBattleForUserScope(battleId: string, userId: string): boolean {
+    this.getBattleOrThrowForUserScope(battleId, userId);
+
+    return this.deleteBattle(battleId);
+  }
+
   clearBattles(): void {
     this.battles.clear();
+  }
+
+  private normalizeRequiredBattleUserId(userId: string): string {
+    const normalizedUserId = userId?.trim();
+
+    if (!normalizedUserId) {
+      throw new BadRequestException('userId is required.');
+    }
+
+    return normalizedUserId;
+  }
+
+  private assertBattleBelongsToUserScope(
+    battle: BattleState,
+    userScope: string,
+  ): void {
+    if (!battle.ownerUserId) {
+      throw new BadRequestException(
+        `Battle ${battle.battleId} does not have an owner user scope.`,
+      );
+    }
+
+    if (battle.ownerUserId !== userScope) {
+      throw new NotFoundException(
+        `Battle not found in user scope: ${battle.battleId}`,
+      );
+    }
   }
 
   private buildDefeatedMonsterRewardInputs(

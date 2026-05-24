@@ -12,17 +12,17 @@ import {
   setBattleStatus,
 } from './battle-state.utils';
 
-import { createBattleEvent } from '../events/battle-event.factory';
-
-import { MAX_BATTLE_EVENTS_RETAINED } from '../battle.constants';
-
 import type {
   BattleActorState,
   BattleEvent,
   BattleState,
 } from '../battle.types';
 
-import type { BaseStats, DerivedStats } from '../../character/character.types';
+import type {
+  BaseStats,
+  DerivedStats,
+  ResistanceProfile,
+} from '../../character/character.types';
 
 const DEFAULT_BASE_STATS: BaseStats = {
   STR: 10,
@@ -45,11 +45,11 @@ const DEFAULT_DERIVED_STATS: DerivedStats = {
   pDef: 5,
   mDef: 4,
 
-  actionSpeed: 10,
-  accuracy: 90,
+  actionSpeed: 100,
+  accuracy: 95,
   evasionRate: 5,
 
-  critRate: 10,
+  critRate: 5,
   critDamageBonus: 50,
 
   fleeRate: 10,
@@ -68,10 +68,11 @@ function createActor(
   overrides: Partial<BattleActorState> = {},
 ): BattleActorState {
   return {
-    actorId: 'actor_1',
+    actorId: 'actor',
     actorType: 'character',
 
     skillIds: [],
+    inventoryItemIds: [],
 
     baseStats: DEFAULT_BASE_STATS,
     derivedStats: DEFAULT_DERIVED_STATS,
@@ -93,234 +94,277 @@ function createActor(
   };
 }
 
-function createBattleState(
-  actors: BattleActorState[],
-  overrides: Partial<BattleState> = {},
-): BattleState {
-  const now = new Date().toISOString();
+function createBattleState(overrides: Partial<BattleState> = {}): BattleState {
+  const hero = createActor({
+    actorId: 'hero',
+    actorType: 'character',
+  });
+
+  const slime = createActor({
+    actorId: 'slime',
+    actorType: 'monster',
+  });
 
   return {
-    battleId: 'state_utils_test_battle',
+    battleId: 'battle_1',
     status: 'in_progress',
 
     roundNumber: 1,
     turnNumber: 1,
-    activeActorId: actors[0]?.actorId,
+    activeActorId: 'hero',
 
-    actors: Object.fromEntries(actors.map((actor) => [actor.actorId, actor])),
+    actors: {
+      hero,
+      slime,
+    },
 
-    turnOrder: [],
+    turnOrder: [
+      {
+        actorId: 'hero',
+        actionSpeed: 100,
+        initiative: 0,
+        turnGauge: 100,
+        hasActedThisRound: false,
+      },
+      {
+        actorId: 'slime',
+        actionSpeed: 50,
+        initiative: 1,
+        turnGauge: 50,
+        hasActedThisRound: false,
+      },
+    ],
 
     randomContext: {
-      battleId: 'state_utils_test_battle',
-      seed: 'state_utils_seed',
+      battleId: 'battle_1',
+      seed: 'seed_1',
       rollIndex: 0,
     },
 
     events: [],
 
-    createdAt: now,
-    updatedAt: now,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
 
     ...overrides,
   };
 }
 
-function createTestEvent(index: number): BattleEvent {
-  return createBattleEvent({
-    type: 'TURN_STARTED',
-    phase: 'initiation',
-    actorId: `actor_${index}`,
-    message: `Event ${index}`,
-  });
+function createEvent(id: string, type: BattleEvent['type']): BattleEvent {
+  return {
+    id,
+    type,
+    phase: type === 'ACTION_CANCELLED' ? 'cancelled' : 'completed',
+    actorId: 'battle_engine',
+    message: id,
+  };
 }
 
 describe('battle state utils', () => {
   describe('cloneActorRecord', () => {
     it('should clone actor records and mutable child arrays', () => {
-      const actor = createActor({
-        actorId: 'hero',
-        skillIds: ['spark'],
-        activeStatusEffects: [
-          {
-            id: 'burn_1',
-            type: 'burn',
-            remainingTurns: 2,
-            stacks: 1,
-            modifiers: [],
-          },
-        ],
-        activeModifiers: [
-          {
-            id: 'mod_1',
-            target: 'STR',
-            operation: 'add',
-            valueType: 'flat',
-            value: 2,
-            priority: 10,
-            sourceType: 'skill',
-            sourceId: 'skill_1',
-          },
-        ],
-      });
+      const resistances: ResistanceProfile = {
+        physical: 0.2,
+      };
 
-      const cloned = cloneActorRecord({
-        hero: actor,
-      });
+      const actors: Record<string, BattleActorState> = {
+        hero: createActor({
+          actorId: 'hero',
+          skillIds: ['heavy_strike'],
+          inventoryItemIds: ['minor_hp_potion'],
+          resistances,
+          activeStatusEffects: [
+            {
+              id: 'burn_1',
+              type: 'burn',
+              remainingTurns: 2,
+              stacks: 1,
+              sourceActorId: 'slime',
+              modifiers: [
+                {
+                  id: 'burn_modifier',
+                  target: 'pDef',
+                  operation: 'add',
+                  valueType: 'flat',
+                  value: -1,
+                  priority: 10,
+                  sourceId: 'burn',
+                  sourceType: 'status',
+                },
+              ],
+            },
+          ],
+          activeModifiers: [
+            {
+              id: 'gear_modifier',
+              target: 'pAtk',
+              operation: 'add',
+              valueType: 'flat',
+              value: 2,
+              priority: 10,
+              sourceId: 'rusty_sword',
+              sourceType: 'equipment',
+            },
+          ],
+        }),
+      };
 
-      expect(cloned.hero).toEqual(actor);
-      expect(cloned.hero).not.toBe(actor);
+      const clonedActors = cloneActorRecord(actors);
 
-      expect(cloned.hero.skillIds).toEqual(actor.skillIds);
-      expect(cloned.hero.skillIds).not.toBe(actor.skillIds);
+      expect(clonedActors).toEqual(actors);
+      expect(clonedActors).not.toBe(actors);
 
-      expect(cloned.hero.activeStatusEffects).toEqual(
-        actor.activeStatusEffects,
+      expect(clonedActors.hero).not.toBe(actors.hero);
+      expect(clonedActors.hero.skillIds).toEqual(['heavy_strike']);
+      expect(clonedActors.hero.skillIds).not.toBe(actors.hero.skillIds);
+
+      expect(clonedActors.hero.inventoryItemIds).toEqual(['minor_hp_potion']);
+      expect(clonedActors.hero.inventoryItemIds).not.toBe(
+        actors.hero.inventoryItemIds,
       );
-      expect(cloned.hero.activeStatusEffects).not.toBe(
-        actor.activeStatusEffects,
+
+      expect(clonedActors.hero.resistances).toEqual(resistances);
+      expect(clonedActors.hero.resistances).not.toBe(actors.hero.resistances);
+
+      expect(clonedActors.hero.baseStats).toEqual(DEFAULT_BASE_STATS);
+      expect(clonedActors.hero.baseStats).not.toBe(actors.hero.baseStats);
+
+      expect(clonedActors.hero.derivedStats).toEqual(DEFAULT_DERIVED_STATS);
+      expect(clonedActors.hero.derivedStats).not.toBe(actors.hero.derivedStats);
+
+      expect(clonedActors.hero.activeStatusEffects).not.toBe(
+        actors.hero.activeStatusEffects,
       );
 
-      expect(cloned.hero.activeModifiers).toEqual(actor.activeModifiers);
-      expect(cloned.hero.activeModifiers).not.toBe(actor.activeModifiers);
+      expect(clonedActors.hero.activeStatusEffects[0]).not.toBe(
+        actors.hero.activeStatusEffects[0],
+      );
+
+      expect(clonedActors.hero.activeStatusEffects[0].modifiers[0]).not.toBe(
+        actors.hero.activeStatusEffects[0].modifiers[0],
+      );
+
+      expect(clonedActors.hero.activeModifiers[0]).not.toBe(
+        actors.hero.activeModifiers[0],
+      );
     });
   });
 
-  describe('getActorOrThrow', () => {
+  describe('actor lookup and life state', () => {
     it('should return an actor by id', () => {
-      const hero = createActor({
-        actorId: 'hero',
-      });
+      const battleState = createBattleState();
 
-      const battle = createBattleState([hero]);
-
-      expect(getActorOrThrow(battle, 'hero')).toBe(hero);
+      expect(getActorOrThrow(battleState, 'hero').actorId).toBe('hero');
     });
 
     it('should throw when actor is missing', () => {
-      const battle = createBattleState([]);
+      const battleState = createBattleState();
 
-      expect(() => getActorOrThrow(battle, 'missing')).toThrow(
+      expect(() => getActorOrThrow(battleState, 'missing')).toThrow(
         'Battle actor not found: missing',
       );
     });
-  });
 
-  describe('actor life helpers', () => {
-    it('should detect defeated actors', () => {
-      expect(
-        isActorDefeated(
-          createActor({
-            hp: 0,
-          }),
-        ),
-      ).toBe(true);
+    it('should identify defeated and alive actors', () => {
+      const aliveActor = createActor({
+        hp: 1,
+      });
 
-      expect(
-        isActorDefeated(
-          createActor({
-            hp: 1,
-          }),
-        ),
-      ).toBe(false);
-    });
+      const defeatedActor = createActor({
+        hp: 0,
+      });
 
-    it('should detect living actors', () => {
-      expect(
-        isActorAlive(
-          createActor({
-            hp: 1,
-          }),
-        ),
-      ).toBe(true);
+      expect(isActorAlive(aliveActor)).toBe(true);
+      expect(isActorDefeated(aliveActor)).toBe(false);
 
-      expect(
-        isActorAlive(
-          createActor({
-            hp: 0,
-          }),
-        ),
-      ).toBe(false);
+      expect(isActorAlive(defeatedActor)).toBe(false);
+      expect(isActorDefeated(defeatedActor)).toBe(true);
     });
   });
 
   describe('team helpers', () => {
-    it('should detect opposing actors by actor type', () => {
+    it('should identify opposing actors by actor type', () => {
       const hero = createActor({
         actorId: 'hero',
+        actorType: 'character',
+      });
+
+      const ally = createActor({
+        actorId: 'ally',
         actorType: 'character',
       });
 
       const slime = createActor({
         actorId: 'slime',
         actorType: 'monster',
-      });
-
-      const ally = createActor({
-        actorId: 'ally',
-        actorType: 'character',
       });
 
       expect(areOpposingActors(hero, slime)).toBe(true);
       expect(areOpposingActors(hero, ally)).toBe(false);
     });
 
-    it('should return all living actors', () => {
+    it('should get living actors', () => {
       const hero = createActor({
         actorId: 'hero',
-        hp: 50,
+        actorType: 'character',
+        hp: 10,
       });
 
       const defeatedAlly = createActor({
-        actorId: 'defeated_ally',
+        actorId: 'ally',
+        actorType: 'character',
         hp: 0,
       });
 
       const slime = createActor({
         actorId: 'slime',
         actorType: 'monster',
-        hp: 20,
+        hp: 10,
       });
 
-      expect(
-        getLivingActors({
-          hero,
-          defeated_ally: defeatedAlly,
-          slime,
-        }).map((actor) => actor.actorId),
-      ).toEqual(['hero', 'slime']);
+      const livingActors = getLivingActors({
+        hero,
+        ally: defeatedAlly,
+        slime,
+      });
+
+      expect(livingActors.map((actor) => actor.actorId)).toEqual([
+        'hero',
+        'slime',
+      ]);
     });
 
-    it('should return living enemies of an actor', () => {
+    it('should get living enemies of an actor', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
       });
 
-      const ally = createActor({
-        actorId: 'ally',
-        actorType: 'character',
-      });
-
       const slime = createActor({
         actorId: 'slime',
         actorType: 'monster',
       });
 
-      const defeatedGoblin = createActor({
-        actorId: 'defeated_goblin',
+      const defeatedSlime = createActor({
+        actorId: 'defeated_slime',
         actorType: 'monster',
         hp: 0,
       });
 
-      const battle = createBattleState([hero, ally, slime, defeatedGoblin]);
+      const battleState = createBattleState({
+        actors: {
+          hero,
+          slime,
+          defeated_slime: defeatedSlime,
+        },
+      });
 
       expect(
-        getLivingEnemiesOf(battle, hero).map((actor) => actor.actorId),
+        getLivingEnemiesOf(battleState, hero).map((actor) => actor.actorId),
       ).toEqual(['slime']);
     });
 
-    it('should return living allies of an actor including self', () => {
+    it('should get living allies of an actor including self', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -342,10 +386,17 @@ describe('battle state utils', () => {
         actorType: 'monster',
       });
 
-      const battle = createBattleState([hero, ally, defeatedAlly, slime]);
+      const battleState = createBattleState({
+        actors: {
+          hero,
+          ally,
+          defeated_ally: defeatedAlly,
+          slime,
+        },
+      });
 
       expect(
-        getLivingAlliesOf(battle, hero).map((actor) => actor.actorId),
+        getLivingAlliesOf(battleState, hero).map((actor) => actor.actorId),
       ).toEqual(['hero', 'ally']);
     });
   });
@@ -370,7 +421,7 @@ describe('battle state utils', () => {
       ).toBe('in_progress');
     });
 
-    it('should return victory when all monsters are defeated', () => {
+    it('should return victory when no living monsters remain', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -390,7 +441,7 @@ describe('battle state utils', () => {
       ).toBe('victory');
     });
 
-    it('should return defeat when all characters are defeated', () => {
+    it('should return defeat when no living characters remain', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -410,92 +461,79 @@ describe('battle state utils', () => {
       ).toBe('defeat');
     });
 
-    it('should return defeat when there are no living characters', () => {
-      const slime = createActor({
-        actorId: 'slime',
-        actorType: 'monster',
-      });
-
-      expect(
-        determineBattleStatus({
-          slime,
-        }),
-      ).toBe('defeat');
+    it('should return defeat when no actors are present', () => {
+      expect(determineBattleStatus({})).toBe('defeat');
     });
   });
 
   describe('appendEvents', () => {
-    it('should append events and update updatedAt', () => {
-      const hero = createActor({
-        actorId: 'hero',
-      });
-
-      const battle = createBattleState([hero], {
+    it('should append events and update timestamp', () => {
+      const battleState = createBattleState({
         updatedAt: '2026-01-01T00:00:00.000Z',
       });
 
-      const event = createTestEvent(1);
-      const nextBattle = appendEvents(battle, [event]);
+      const nextState = appendEvents(battleState, [
+        createEvent('event_1', 'TURN_STARTED'),
+      ]);
 
-      expect(nextBattle.events).toEqual([event]);
-      expect(nextBattle.updatedAt).not.toBe(battle.updatedAt);
+      expect(nextState.events).toHaveLength(1);
+      expect(nextState.events[0]).toMatchObject({
+        id: 'event_1',
+        type: 'TURN_STARTED',
+      });
+
+      expect(nextState.updatedAt).not.toBe(battleState.updatedAt);
     });
 
-    it('should retain pinned battle started and battle ended events when trimming event log', () => {
-      const hero = createActor({
-        actorId: 'hero',
+    it('should retain pinned battle lifecycle events when trimming event log', () => {
+      const manyEvents: BattleEvent[] = [
+        createEvent('battle_started', 'BATTLE_STARTED'),
+        ...Array.from({ length: 250 }, (_, index) =>
+          createEvent(`event_${index}`, 'TURN_STARTED'),
+        ),
+        createEvent('battle_ended', 'BATTLE_ENDED'),
+      ];
+
+      const battleState = createBattleState({
+        events: manyEvents,
       });
 
-      const battleStarted = createBattleEvent({
-        type: 'BATTLE_STARTED',
-        phase: 'initiation',
-        actorId: 'battle_engine',
-        message: 'Battle started.',
-      });
+      const nextState = appendEvents(battleState, [
+        createEvent('latest_event', 'TURN_ENDED'),
+      ]);
 
-      const battleEnded = createBattleEvent({
-        type: 'BATTLE_ENDED',
-        phase: 'completed',
-        actorId: 'battle_engine',
-        message: 'Battle ended.',
-      });
+      expect(nextState.events.length).toBeLessThanOrEqual(200);
 
-      const oldEvents = Array.from(
-        {
-          length: MAX_BATTLE_EVENTS_RETAINED + 20,
-        },
-        (_, index) => createTestEvent(index),
-      );
-
-      const battle = createBattleState([hero], {
-        events: [battleStarted, ...oldEvents],
-      });
-
-      const nextBattle = appendEvents(battle, [battleEnded]);
-
-      expect(nextBattle.events).toContain(battleStarted);
-      expect(nextBattle.events).toContain(battleEnded);
-      expect(nextBattle.events.length).toBeLessThanOrEqual(
-        MAX_BATTLE_EVENTS_RETAINED,
+      expect(nextState.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'battle_started',
+            type: 'BATTLE_STARTED',
+          }),
+          expect.objectContaining({
+            id: 'battle_ended',
+            type: 'BATTLE_ENDED',
+          }),
+          expect.objectContaining({
+            id: 'latest_event',
+            type: 'TURN_ENDED',
+          }),
+        ]),
       );
     });
   });
 
   describe('setBattleStatus', () => {
-    it('should set battle status and update updatedAt', () => {
-      const hero = createActor({
-        actorId: 'hero',
-      });
-
-      const battle = createBattleState([hero], {
+    it('should set battle status and update timestamp', () => {
+      const battleState = createBattleState({
         status: 'created',
         updatedAt: '2026-01-01T00:00:00.000Z',
       });
 
-      const nextBattle = setBattleStatus(battle, 'in_progress');
+      const nextState = setBattleStatus(battleState, 'in_progress');
 
-      expect(nextBattle.status).toBe('in_progress');
-      expect(nextBattle.updatedAt).not.toBe(battle.updatedAt);
+      expect(nextState.status).toBe('in_progress');
+      expect(nextState.updatedAt).not.toBe(battleState.updatedAt);
     });
   });
 });

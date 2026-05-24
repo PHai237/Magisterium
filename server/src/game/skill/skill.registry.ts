@@ -4,6 +4,32 @@ import type { SkillDefinition, SkillEffect } from './skill.types';
 
 import type { SkillId } from '../character/character.types';
 
+function assertUniqueSkillDefinitions(
+  skillDefinitions: readonly Readonly<SkillDefinition>[],
+): void {
+  const seenSkillIds = new Set<SkillId>();
+
+  for (const skillDefinition of skillDefinitions) {
+    if (seenSkillIds.has(skillDefinition.id)) {
+      throw new Error(`Duplicate skill definition id: ${skillDefinition.id}`);
+    }
+
+    seenSkillIds.add(skillDefinition.id);
+  }
+}
+
+assertUniqueSkillDefinitions(SKILL_DEFINITIONS);
+
+const SKILL_DEFINITION_BY_ID: ReadonlyMap<
+  SkillId,
+  Readonly<SkillDefinition>
+> = new Map(
+  SKILL_DEFINITIONS.map((skillDefinition) => [
+    skillDefinition.id,
+    skillDefinition,
+  ]),
+);
+
 function cloneSkillEffect(effect: Readonly<SkillEffect>): SkillEffect {
   return {
     ...effect,
@@ -48,9 +74,7 @@ export function cloneSkillDefinition(
 }
 
 export function getSkillDefinitionById(skillId: SkillId): SkillDefinition {
-  const skill = SKILL_DEFINITIONS.find(
-    (definition) => definition.id === skillId,
-  );
+  const skill = SKILL_DEFINITION_BY_ID.get(skillId);
 
   if (!skill) {
     throw new Error(`Skill definition not found: ${skillId}`);
@@ -66,7 +90,7 @@ export function getSkillDefinitionsByIds(
 }
 
 export function hasSkillDefinition(skillId: SkillId): boolean {
-  return SKILL_DEFINITIONS.some((definition) => definition.id === skillId);
+  return SKILL_DEFINITION_BY_ID.has(skillId);
 }
 
 export function assertSkillDefinitionExists(skillId: SkillId): void {

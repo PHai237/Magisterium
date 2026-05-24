@@ -35,6 +35,9 @@ export const DAMAGE_TYPE_RESISTANCE_MULTIPLIER: Record<DamageType, number> = {
 export const MIN_RESISTANCE_VALUE = -1;
 export const MAX_DAMAGE_REDUCTION_RESISTANCE_VALUE = 0.95;
 export const MAX_ABSORPTION_RATIO = 1;
+export const MAX_ABSORBED_HEAL_RATIO_OF_MAX_HP = 0.25;
+
+export const MAX_SHIELD_RATIO_OF_MAX_HP = 0.5;
 
 export const EXHAUSTION_STAMINA_THRESHOLD = 0;
 export const RECOVERY_STAMINA_PERCENT = 0.2;

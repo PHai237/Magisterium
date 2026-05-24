@@ -3,9 +3,19 @@ import {
   resolveSkillTargets,
 } from './battle-targeting';
 
-import type { BattleActorState, BattleState } from '../battle.types';
+import {
+  createBattleActorState,
+  createBattleState,
+} from '../factory/battle.factory';
 
-import type { BaseStats, DerivedStats } from '../../character/character.types';
+import type { BattleActorState, BattleActorType } from '../battle.types';
+
+import type {
+  BaseStats,
+  DerivedStats,
+  ResistanceProfile,
+  SkillId,
+} from '../../character/character.types';
 
 const DEFAULT_BASE_STATS: BaseStats = {
   STR: 10,
@@ -28,11 +38,11 @@ const DEFAULT_DERIVED_STATS: DerivedStats = {
   pDef: 5,
   mDef: 4,
 
-  actionSpeed: 10,
-  accuracy: 90,
+  actionSpeed: 100,
+  accuracy: 95,
   evasionRate: 5,
 
-  critRate: 10,
+  critRate: 5,
   critDamageBonus: 50,
 
   fleeRate: 10,
@@ -47,66 +57,50 @@ const DEFAULT_DERIVED_STATS: DerivedStats = {
   procRate: 5,
 };
 
-function createActor(
-  overrides: Partial<BattleActorState> = {},
-): BattleActorState {
-  return {
-    actorId: 'actor_1',
-    actorType: 'character',
+interface CreateActorInput {
+  actorId: string;
+  actorType?: BattleActorType;
 
-    skillIds: [],
+  skillIds?: SkillId[];
 
-    baseStats: DEFAULT_BASE_STATS,
-    derivedStats: DEFAULT_DERIVED_STATS,
-    resistances: {},
+  baseStats?: Partial<BaseStats>;
+  derivedStats?: Partial<DerivedStats>;
+  resistances?: ResistanceProfile;
 
-    hp: DEFAULT_DERIVED_STATS.maxHp,
-    mp: DEFAULT_DERIVED_STATS.maxMp,
-    stamina: DEFAULT_DERIVED_STATS.maxStamina,
-
-    shield: 0,
-    isExhausted: false,
-
-    activeStatusEffects: [],
-    activeModifiers: [],
-
-    procCountThisTurn: 0,
-
-    ...overrides,
-  };
+  hp?: number;
+  mp?: number;
+  stamina?: number;
+  shield?: number;
 }
 
-function createBattleState(
-  actors: BattleActorState[],
-  overrides: Partial<BattleState> = {},
-): BattleState {
-  const now = new Date().toISOString();
+function createActor(input: CreateActorInput): BattleActorState {
+  const derivedStats: DerivedStats = {
+    ...DEFAULT_DERIVED_STATS,
+    ...input.derivedStats,
+  };
 
-  return {
-    battleId: 'targeting_test_battle',
-    status: 'in_progress',
+  return createBattleActorState({
+    actorId: input.actorId,
+    actorType: input.actorType ?? 'character',
 
-    roundNumber: 1,
-    turnNumber: 1,
-    activeActorId: actors[0]?.actorId,
+    skillIds: input.skillIds ?? [],
+    inventoryItemIds: [],
 
-    actors: Object.fromEntries(actors.map((actor) => [actor.actorId, actor])),
+    baseStats: {
+      ...DEFAULT_BASE_STATS,
+      ...input.baseStats,
+    },
+    derivedStats,
+    resistances: input.resistances ?? {},
 
-    turnOrder: [],
-
-    randomContext: {
-      battleId: 'targeting_test_battle',
-      seed: 'targeting_seed',
-      rollIndex: 0,
+    currentState: {
+      hp: input.hp ?? derivedStats.maxHp,
+      mp: input.mp ?? derivedStats.maxMp,
+      stamina: input.stamina ?? derivedStats.maxStamina,
     },
 
-    events: [],
-
-    createdAt: now,
-    updatedAt: now,
-
-    ...overrides,
-  };
+    shield: input.shield ?? 0,
+  });
 }
 
 describe('battle targeting', () => {
@@ -122,38 +116,62 @@ describe('battle targeting', () => {
         actorType: 'monster',
       });
 
-      const battle = createBattleState([hero, slime]);
+      const battleState = createBattleState({
+        battleId: 'targeting_basic_attack_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime],
+      });
 
-      expect(resolveBasicAttackTarget(battle, hero, ['slime'])).toBe(slime);
+      const target = resolveBasicAttackTarget(battleState, hero, ['slime']);
+
+      expect(target.actorId).toBe('slime');
     });
 
-    it('should throw when no target is provided', () => {
+    it('should reject missing target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
       });
 
-      const battle = createBattleState([hero]);
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
 
-      expect(() => resolveBasicAttackTarget(battle, hero, [])).toThrow(
+      const battleState = createBattleState({
+        battleId: 'targeting_missing_basic_attack_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime],
+      });
+
+      expect(() => resolveBasicAttackTarget(battleState, hero, [])).toThrow(
         'Basic attack requires a target.',
       );
     });
 
-    it('should throw when targeting self', () => {
+    it('should reject self target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
       });
 
-      const battle = createBattleState([hero]);
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
 
-      expect(() => resolveBasicAttackTarget(battle, hero, ['hero'])).toThrow(
-        'Basic attack cannot target self.',
-      );
+      const battleState = createBattleState({
+        battleId: 'targeting_self_basic_attack_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime],
+      });
+
+      expect(() =>
+        resolveBasicAttackTarget(battleState, hero, ['hero']),
+      ).toThrow('Basic attack cannot target self.');
     });
 
-    it('should throw when targeting an ally', () => {
+    it('should reject ally target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -164,14 +182,23 @@ describe('battle targeting', () => {
         actorType: 'character',
       });
 
-      const battle = createBattleState([hero, ally]);
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
 
-      expect(() => resolveBasicAttackTarget(battle, hero, ['ally'])).toThrow(
-        'Basic attack cannot target an ally.',
-      );
+      const battleState = createBattleState({
+        battleId: 'targeting_ally_basic_attack_test',
+        seed: 'targeting_seed',
+        actors: [hero, ally, slime],
+      });
+
+      expect(() =>
+        resolveBasicAttackTarget(battleState, hero, ['ally']),
+      ).toThrow('Basic attack cannot target an ally.');
     });
 
-    it('should throw when targeting a defeated actor', () => {
+    it('should reject defeated target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -183,11 +210,20 @@ describe('battle targeting', () => {
         hp: 0,
       });
 
-      const battle = createBattleState([hero, defeatedSlime]);
+      const goblin = createActor({
+        actorId: 'goblin',
+        actorType: 'monster',
+      });
 
-      expect(() => resolveBasicAttackTarget(battle, hero, ['slime'])).toThrow(
-        'Basic attack cannot target a defeated actor.',
-      );
+      const battleState = createBattleState({
+        battleId: 'targeting_defeated_basic_attack_test',
+        seed: 'targeting_seed',
+        actors: [hero, defeatedSlime, goblin],
+      });
+
+      expect(() =>
+        resolveBasicAttackTarget(battleState, hero, ['slime']),
+      ).toThrow('Basic attack cannot target a defeated actor.');
     });
   });
 
@@ -203,14 +239,18 @@ describe('battle targeting', () => {
         actorType: 'monster',
       });
 
-      const battle = createBattleState([hero, slime]);
+      const battleState = createBattleState({
+        battleId: 'targeting_self_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime],
+      });
 
-      expect(resolveSkillTargets(battle, hero, 'self', ['slime'])).toEqual([
-        hero,
-      ]);
+      const targets = resolveSkillTargets(battleState, hero, 'self', []);
+
+      expect(targets.map((target) => target.actorId)).toEqual(['hero']);
     });
 
-    it('should resolve enemy_single target', () => {
+    it('should resolve a single living enemy target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -221,40 +261,64 @@ describe('battle targeting', () => {
         actorType: 'monster',
       });
 
-      const battle = createBattleState([hero, slime]);
+      const battleState = createBattleState({
+        battleId: 'targeting_enemy_single_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime],
+      });
 
-      expect(
-        resolveSkillTargets(battle, hero, 'enemy_single', ['slime']),
-      ).toEqual([slime]);
+      const targets = resolveSkillTargets(battleState, hero, 'enemy_single', [
+        'slime',
+      ]);
+
+      expect(targets.map((target) => target.actorId)).toEqual(['slime']);
     });
 
-    it('should throw when enemy_single target is missing', () => {
+    it('should reject missing enemy_single target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
       });
 
-      const battle = createBattleState([hero]);
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createBattleState({
+        battleId: 'targeting_missing_enemy_single_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime],
+      });
 
       expect(() =>
-        resolveSkillTargets(battle, hero, 'enemy_single', []),
+        resolveSkillTargets(battleState, hero, 'enemy_single', []),
       ).toThrow('Skill requires an enemy target.');
     });
 
-    it('should throw when enemy_single targets self', () => {
+    it('should reject enemy_single self target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
       });
 
-      const battle = createBattleState([hero]);
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createBattleState({
+        battleId: 'targeting_enemy_single_self_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime],
+      });
 
       expect(() =>
-        resolveSkillTargets(battle, hero, 'enemy_single', ['hero']),
+        resolveSkillTargets(battleState, hero, 'enemy_single', ['hero']),
       ).toThrow('Skill cannot target self as an enemy.');
     });
 
-    it('should throw when enemy_single targets an ally', () => {
+    it('should reject enemy_single ally target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -265,14 +329,23 @@ describe('battle targeting', () => {
         actorType: 'character',
       });
 
-      const battle = createBattleState([hero, ally]);
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createBattleState({
+        battleId: 'targeting_enemy_single_ally_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, ally, slime],
+      });
 
       expect(() =>
-        resolveSkillTargets(battle, hero, 'enemy_single', ['ally']),
+        resolveSkillTargets(battleState, hero, 'enemy_single', ['ally']),
       ).toThrow('Skill enemy target must be an opposing actor.');
     });
 
-    it('should throw when enemy_single targets a defeated enemy', () => {
+    it('should reject enemy_single defeated target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -284,14 +357,23 @@ describe('battle targeting', () => {
         hp: 0,
       });
 
-      const battle = createBattleState([hero, defeatedSlime]);
+      const goblin = createActor({
+        actorId: 'goblin',
+        actorType: 'monster',
+      });
+
+      const battleState = createBattleState({
+        battleId: 'targeting_enemy_single_defeated_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, defeatedSlime, goblin],
+      });
 
       expect(() =>
-        resolveSkillTargets(battle, hero, 'enemy_single', ['slime']),
+        resolveSkillTargets(battleState, hero, 'enemy_single', ['slime']),
       ).toThrow('Skill cannot target a defeated enemy.');
     });
 
-    it('should resolve ally_single target when provided', () => {
+    it('should resolve ally_single target from explicit target id', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -307,34 +389,27 @@ describe('battle targeting', () => {
         actorType: 'monster',
       });
 
-      const battle = createBattleState([hero, ally, slime]);
-
-      expect(
-        resolveSkillTargets(battle, hero, 'ally_single', ['ally']),
-      ).toEqual([ally]);
-    });
-
-    it('should default ally_single to self when no target is provided', () => {
-      const hero = createActor({
-        actorId: 'hero',
-        actorType: 'character',
+      const battleState = createBattleState({
+        battleId: 'targeting_ally_single_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, ally, slime],
       });
 
-      const ally = createActor({
-        actorId: 'ally',
-        actorType: 'character',
-      });
-
-      const battle = createBattleState([hero, ally]);
-
-      expect(resolveSkillTargets(battle, hero, 'ally_single', [])).toEqual([
-        hero,
+      const targets = resolveSkillTargets(battleState, hero, 'ally_single', [
+        'ally',
       ]);
+
+      expect(targets.map((target) => target.actorId)).toEqual(['ally']);
     });
 
-    it('should throw when ally_single targets an enemy', () => {
+    it('should fallback ally_single to self when target ids are empty', () => {
       const hero = createActor({
         actorId: 'hero',
+        actorType: 'character',
+      });
+
+      const ally = createActor({
+        actorId: 'ally',
         actorType: 'character',
       });
 
@@ -343,14 +418,67 @@ describe('battle targeting', () => {
         actorType: 'monster',
       });
 
-      const battle = createBattleState([hero, slime]);
+      const battleState = createBattleState({
+        battleId: 'targeting_ally_single_self_fallback_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, ally, slime],
+      });
+
+      const targets = resolveSkillTargets(battleState, hero, 'ally_single', []);
+
+      expect(targets.map((target) => target.actorId)).toEqual(['hero']);
+    });
+
+    it('should reject ally_single unknown explicit target id instead of silently falling back to self', () => {
+      const hero = createActor({
+        actorId: 'hero',
+        actorType: 'character',
+      });
+
+      const ally = createActor({
+        actorId: 'ally',
+        actorType: 'character',
+      });
+
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createBattleState({
+        battleId: 'targeting_ally_single_unknown_target_test',
+        seed: 'targeting_seed',
+        actors: [hero, ally, slime],
+      });
 
       expect(() =>
-        resolveSkillTargets(battle, hero, 'ally_single', ['slime']),
+        resolveSkillTargets(battleState, hero, 'ally_single', ['missing_ally']),
+      ).toThrow('Battle actor not found: missing_ally');
+    });
+
+    it('should reject ally_single enemy target', () => {
+      const hero = createActor({
+        actorId: 'hero',
+        actorType: 'character',
+      });
+
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createBattleState({
+        battleId: 'targeting_ally_single_enemy_target_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime],
+      });
+
+      expect(() =>
+        resolveSkillTargets(battleState, hero, 'ally_single', ['slime']),
       ).toThrow('Skill ally target must be on the same side.');
     });
 
-    it('should throw when ally_single targets a defeated ally', () => {
+    it('should reject ally_single defeated ally target', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -362,10 +490,19 @@ describe('battle targeting', () => {
         hp: 0,
       });
 
-      const battle = createBattleState([hero, defeatedAlly]);
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createBattleState({
+        battleId: 'targeting_ally_single_defeated_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, defeatedAlly, slime],
+      });
 
       expect(() =>
-        resolveSkillTargets(battle, hero, 'ally_single', ['ally']),
+        resolveSkillTargets(battleState, hero, 'ally_single', ['ally']),
       ).toThrow('Skill cannot target a defeated ally.');
     });
 
@@ -391,26 +528,21 @@ describe('battle targeting', () => {
         hp: 0,
       });
 
-      const ally = createActor({
-        actorId: 'ally',
-        actorType: 'character',
+      const battleState = createBattleState({
+        battleId: 'targeting_enemy_all_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, slime, goblin, defeatedGoblin],
       });
 
-      const battle = createBattleState([
-        hero,
-        slime,
-        goblin,
-        defeatedGoblin,
-        ally,
-      ]);
+      const targets = resolveSkillTargets(battleState, hero, 'enemy_all', []);
 
-      expect(resolveSkillTargets(battle, hero, 'enemy_all', [])).toEqual([
-        slime,
-        goblin,
+      expect(targets.map((target) => target.actorId)).toEqual([
+        'slime',
+        'goblin',
       ]);
     });
 
-    it('should throw when enemy_all has no living enemies', () => {
+    it('should reject enemy_all when no living enemies remain', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -422,11 +554,15 @@ describe('battle targeting', () => {
         hp: 0,
       });
 
-      const battle = createBattleState([hero, defeatedSlime]);
+      const battleState = createBattleState({
+        battleId: 'targeting_enemy_all_no_targets_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, defeatedSlime],
+      });
 
-      expect(() => resolveSkillTargets(battle, hero, 'enemy_all', [])).toThrow(
-        'Skill requires at least one living enemy target.',
-      );
+      expect(() =>
+        resolveSkillTargets(battleState, hero, 'enemy_all', []),
+      ).toThrow('Skill requires at least one living enemy target.');
     });
 
     it('should resolve all living allies for ally_all including self', () => {
@@ -451,31 +587,15 @@ describe('battle targeting', () => {
         actorType: 'monster',
       });
 
-      const battle = createBattleState([hero, ally, defeatedAlly, slime]);
-
-      expect(resolveSkillTargets(battle, hero, 'ally_all', [])).toEqual([
-        hero,
-        ally,
-      ]);
-    });
-
-    it('should throw when ally_all has no living allies', () => {
-      const defeatedHero = createActor({
-        actorId: 'hero',
-        actorType: 'character',
-        hp: 0,
+      const battleState = createBattleState({
+        battleId: 'targeting_ally_all_skill_test',
+        seed: 'targeting_seed',
+        actors: [hero, ally, defeatedAlly, slime],
       });
 
-      const slime = createActor({
-        actorId: 'slime',
-        actorType: 'monster',
-      });
+      const targets = resolveSkillTargets(battleState, hero, 'ally_all', []);
 
-      const battle = createBattleState([defeatedHero, slime]);
-
-      expect(() =>
-        resolveSkillTargets(battle, defeatedHero, 'ally_all', []),
-      ).toThrow('Skill requires at least one living ally target.');
+      expect(targets.map((target) => target.actorId)).toEqual(['hero', 'ally']);
     });
   });
 });

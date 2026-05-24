@@ -23,6 +23,34 @@ const MAX_INSTANCE_ID_PREFIX_LENGTH = 48;
 const UNSAFE_INSTANCE_ID_PREFIX_PATTERN = /[^A-Za-z0-9_-]+/gu;
 const INSTANCE_ID_SEPARATOR_PATTERN = /_+/gu;
 
+function assertUniqueEncounterDefinitions(
+  encounterDefinitions: readonly Readonly<EncounterDefinition>[],
+): void {
+  const seenEncounterIds = new Set<EncounterId>();
+
+  for (const encounterDefinition of encounterDefinitions) {
+    if (seenEncounterIds.has(encounterDefinition.id)) {
+      throw new Error(
+        `Duplicate encounter definition id: ${encounterDefinition.id}`,
+      );
+    }
+
+    seenEncounterIds.add(encounterDefinition.id);
+  }
+}
+
+assertUniqueEncounterDefinitions(ENCOUNTER_DEFINITIONS);
+
+const ENCOUNTER_DEFINITION_BY_ID: ReadonlyMap<
+  EncounterId,
+  Readonly<EncounterDefinition>
+> = new Map(
+  ENCOUNTER_DEFINITIONS.map((encounterDefinition) => [
+    encounterDefinition.id,
+    encounterDefinition,
+  ]),
+);
+
 function normalizeMonsterCount(count: number): number {
   if (!Number.isFinite(count)) {
     return MIN_MONSTERS_PER_GROUP;
@@ -139,9 +167,7 @@ function assertEncounterMonsterCountLimit(
 export function getEncounterDefinitionById(
   encounterId: EncounterId,
 ): EncounterDefinition {
-  const encounter = ENCOUNTER_DEFINITIONS.find(
-    (definition) => definition.id === encounterId,
-  );
+  const encounter = ENCOUNTER_DEFINITION_BY_ID.get(encounterId);
 
   if (!encounter) {
     throw new Error(`Encounter definition not found: ${encounterId}`);

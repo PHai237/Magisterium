@@ -63,42 +63,69 @@ const DEFAULT_DERIVED_STATS: DerivedStats = {
 };
 
 interface CreateActorTestInput {
-  actorId: string;
+  actorId?: string;
   actorType?: BattleActorType;
+
+  monsterId?: BattleActorState['monsterId'];
+  aiTargetingMode?: BattleActorState['aiTargetingMode'];
+
+  skillIds?: BattleActorState['skillIds'];
+  inventoryItemIds?: BattleActorState['inventoryItemIds'];
+
   baseStats?: Partial<BaseStats>;
   derivedStats?: Partial<DerivedStats>;
   resistances?: ResistanceProfile;
+
   hp?: number;
   mp?: number;
   stamina?: number;
   shield?: number;
+  isExhausted?: boolean;
+
+  activeStatusEffects?: BattleActorState['activeStatusEffects'];
+  activeModifiers?: BattleActorState['activeModifiers'];
+
+  procCountThisTurn?: number;
 }
 
-function createActor(input: CreateActorTestInput): BattleActorState {
+function createActor(overrides: CreateActorTestInput = {}): BattleActorState {
   const derivedStats: DerivedStats = {
     ...DEFAULT_DERIVED_STATS,
-    ...input.derivedStats,
+    ...overrides.derivedStats,
   };
 
   return createBattleActorState({
-    actorId: input.actorId,
-    actorType: input.actorType ?? 'character',
+    actorId: overrides.actorId ?? 'actor',
+    actorType: overrides.actorType ?? 'character',
+
+    monsterId: overrides.monsterId,
+    aiTargetingMode: overrides.aiTargetingMode,
+
+    skillIds: overrides.skillIds ?? [],
+    inventoryItemIds: overrides.inventoryItemIds ?? [],
 
     baseStats: {
       ...DEFAULT_BASE_STATS,
-      ...input.baseStats,
+      ...overrides.baseStats,
     },
+
     derivedStats,
 
-    resistances: input.resistances ?? {},
+    resistances: overrides.resistances ?? {},
 
     currentState: {
-      hp: input.hp ?? derivedStats.maxHp,
-      mp: input.mp ?? derivedStats.maxMp,
-      stamina: input.stamina ?? derivedStats.maxStamina,
+      hp: overrides.hp ?? derivedStats.maxHp,
+      mp: overrides.mp ?? derivedStats.maxMp,
+      stamina: overrides.stamina ?? derivedStats.maxStamina,
     },
 
-    shield: input.shield ?? 0,
+    shield: overrides.shield ?? 0,
+    isExhausted: overrides.isExhausted,
+
+    activeStatusEffects: overrides.activeStatusEffects ?? [],
+    activeModifiers: overrides.activeModifiers ?? [],
+
+    procCountThisTurn: overrides.procCountThisTurn ?? 0,
   });
 }
 
@@ -113,7 +140,7 @@ function findSeedForHitOutcome(
     const seed = `engine_test_seed_${index}`;
 
     const rollUnit = hashStringToUnitInterval(
-      [battleId, seed, 0, 'hit', actorId, targetId, '', ''].join(':'),
+      [battleId, seed, 0, 'hit', actorId, targetId, '', '', ''].join(':'),
     );
 
     const isHit = rollUnit < finalChance / 100;

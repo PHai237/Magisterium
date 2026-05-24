@@ -1,5 +1,7 @@
 import {
   calculateResourceCheck,
+  getCurrentResource,
+  getMaxResource,
   spendResources,
   updateExhaustionState,
 } from '../calculations/battle.calculations';
@@ -47,6 +49,14 @@ export function buildSkillResourceCosts(
   return costs;
 }
 
+function normalizeResourceRegen(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.floor(value));
+}
+
 export function restoreTurnStartResources(actor: BattleActorState): {
   actor: BattleActorState;
   events: BattleEvent[];
@@ -60,18 +70,24 @@ export function restoreTurnStartResources(actor: BattleActorState): {
 
   const wasExhausted = actor.isExhausted;
 
+  const currentMp = getCurrentResource(actor, 'MP');
+  const currentStamina = getCurrentResource(actor, 'Stamina');
+
+  const maxMp = getMaxResource(actor, 'MP');
+  const maxStamina = getMaxResource(actor, 'Stamina');
+
   const nextMp = Math.min(
-    actor.derivedStats.maxMp,
-    actor.mp + actor.derivedStats.mpRegen,
+    maxMp,
+    currentMp + normalizeResourceRegen(actor.derivedStats.mpRegen),
   );
 
   const nextStamina = Math.min(
-    actor.derivedStats.maxStamina,
-    actor.stamina + actor.derivedStats.staminaRegen,
+    maxStamina,
+    currentStamina + normalizeResourceRegen(actor.derivedStats.staminaRegen),
   );
 
-  const restoredMp = nextMp - actor.mp;
-  const restoredStamina = nextStamina - actor.stamina;
+  const restoredMp = nextMp - currentMp;
+  const restoredStamina = nextStamina - currentStamina;
 
   const restoredActor = updateExhaustionState({
     ...actor,
@@ -92,7 +108,7 @@ export function restoreTurnStartResources(actor: BattleActorState): {
         metadata: {
           resourceType: 'MP',
           currentValue: nextMp,
-          maxValue: actor.derivedStats.maxMp,
+          maxValue: maxMp,
         },
       }),
     );
@@ -109,7 +125,7 @@ export function restoreTurnStartResources(actor: BattleActorState): {
         metadata: {
           resourceType: 'Stamina',
           currentValue: nextStamina,
-          maxValue: actor.derivedStats.maxStamina,
+          maxValue: maxStamina,
         },
       }),
     );
@@ -124,7 +140,7 @@ export function restoreTurnStartResources(actor: BattleActorState): {
         message: 'Actor recovered from exhaustion.',
         metadata: {
           stamina: restoredActor.stamina,
-          maxStamina: restoredActor.derivedStats.maxStamina,
+          maxStamina,
         },
       }),
     );

@@ -269,6 +269,50 @@ describe('battle factory', () => {
       expect(actor.stamina).toBe(0);
       expect(actor.isExhausted).toBe(true);
     });
+
+    it('should preserve forced exhaustion until stamina passes recovery threshold', () => {
+      const actor = createBattleActorState({
+        actorId: 'actor_1',
+        actorType: 'character',
+
+        baseStats: DEFAULT_BASE_STATS,
+        derivedStats: {
+          ...DEFAULT_DERIVED_STATS,
+          maxStamina: 100,
+        },
+
+        currentState: {
+          stamina: 10,
+        },
+
+        isExhausted: true,
+      });
+
+      expect(actor.stamina).toBe(10);
+      expect(actor.isExhausted).toBe(true);
+    });
+
+    it('should recover forced exhaustion when stamina already passes recovery threshold', () => {
+      const actor = createBattleActorState({
+        actorId: 'actor_1',
+        actorType: 'character',
+
+        baseStats: DEFAULT_BASE_STATS,
+        derivedStats: {
+          ...DEFAULT_DERIVED_STATS,
+          maxStamina: 100,
+        },
+
+        currentState: {
+          stamina: 25,
+        },
+
+        isExhausted: true,
+      });
+
+      expect(actor.stamina).toBe(25);
+      expect(actor.isExhausted).toBe(false);
+    });
   });
 
   describe('createBattleActorFromCharacterSnapshot', () => {
@@ -350,7 +394,7 @@ describe('battle factory', () => {
   });
 
   describe('createBattleActorFromMonsterInput', () => {
-    it('should create a monster battle actor', () => {
+    it('should create a monster battle actor with explicit actor id', () => {
       const resistances: ResistanceProfile = {
         physical: 0.2,
         fire: -0.5,
@@ -481,6 +525,30 @@ describe('battle factory', () => {
           actors: [firstActor, secondActor],
         }),
       ).toThrow('Duplicate battle actor id: duplicate_actor');
+    });
+
+    it('should allow multiple monsters of the same monsterId when actor ids are unique', () => {
+      const firstSlime = createBattleActor({
+        actorId: 'slime_1',
+        actorType: 'monster',
+        monsterId: 'slime',
+      });
+
+      const secondSlime = createBattleActor({
+        actorId: 'slime_2',
+        actorType: 'monster',
+        monsterId: 'slime',
+      });
+
+      const battle = createBattleState({
+        battleId: 'duplicate_monster_type_unique_actor_id_test',
+        seed: 'duplicate_monster_type_seed',
+        actors: [firstSlime, secondSlime],
+      });
+
+      expect(Object.keys(battle.actors)).toEqual(['slime_1', 'slime_2']);
+      expect(battle.actors.slime_1.monsterId).toBe('slime');
+      expect(battle.actors.slime_2.monsterId).toBe('slime');
     });
 
     it('should use generated battle id and seed when not provided', () => {

@@ -37,6 +37,12 @@ function normalizeEffectAmount(amount: number): number {
   return Math.max(0, Math.floor(amount));
 }
 
+function shouldRecordBattleItemEffect(
+  effect: BattleItemEffectApplication,
+): boolean {
+  return effect.amountApplied > 0;
+}
+
 function getCurrentBattleActorResourceValue(
   actor: BattleActorState,
   resourceType: ResourceType,
@@ -175,7 +181,11 @@ export function applyBattleConsumableItemEffectsToActor(
       );
 
       nextActor = result.actorState;
-      effects.push(result.effect);
+      if (shouldRecordBattleItemEffect(result.effect)) {
+        if (shouldRecordBattleItemEffect(result.effect)) {
+          effects.push(result.effect);
+        }
+      }
       continue;
     }
 

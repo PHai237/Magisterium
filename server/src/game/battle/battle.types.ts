@@ -132,6 +132,7 @@ export interface BattleActorState {
 
   skillIds: SkillId[];
   inventoryItemIds: ItemId[];
+  battleStartInventoryItemIds?: ItemId[];
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;
@@ -172,6 +173,8 @@ export interface BattleState {
   encounterId?: EncounterId;
   zoneId?: EncounterZoneId;
 
+  ownerUserId?: string;
+
   rewardClaim?: BattleRewardClaimState;
 
   roundNumber: number;
@@ -189,13 +192,14 @@ export interface BattleState {
   updatedAt: string;
 }
 
-export type BattleActionType =
-  | 'basic_attack'
-  | 'use_skill'
-  | 'guard'
-  | 'use_item'
-  | 'flee'
-  | 'skip_turn';
+export const BATTLE_ACTION_TYPES = [
+  'basic_attack',
+  'use_skill',
+  'use_item',
+  'skip_turn',
+] as const;
+
+export type BattleActionType = (typeof BATTLE_ACTION_TYPES)[number];
 
 export interface BattleActionCommand {
   battleId: string;

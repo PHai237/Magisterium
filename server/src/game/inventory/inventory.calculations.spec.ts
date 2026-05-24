@@ -150,4 +150,28 @@ describe('inventory calculations', () => {
       removeItemQuantityFromInventory([], 'missing_item', 1),
     ).toThrow('Item definition not found: missing_item');
   });
+  it('should reject extremely large inventory quantities before array expansion', () => {
+    expect(() =>
+      addItemQuantityToInventory([], 'slime_gel', 1_000_000_000),
+    ).toThrow('Item stack limit exceeded for slime_gel');
+  });
+
+  it('should enforce maxStackSize for stackable items', () => {
+    expect(() => addItemQuantityToInventory([], 'minor_hp_potion', 21)).toThrow(
+      'Item stack limit exceeded for minor_hp_potion',
+    );
+  });
+
+  it('should enforce maxStackSize across existing inventory quantities', () => {
+    const inventory = Array.from(
+      {
+        length: 20,
+      },
+      () => 'minor_hp_potion' as const,
+    );
+
+    expect(() =>
+      addItemQuantityToInventory(inventory, 'minor_hp_potion', 1),
+    ).toThrow('Item stack limit exceeded for minor_hp_potion');
+  });
 });

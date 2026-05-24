@@ -183,6 +183,61 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
     tags: ['starter', 'weapon', 'dagger', 'dexterity'],
   },
   {
+    id: 'training_greatsword',
+    name: 'Training Greatsword',
+    description:
+      'A heavy two-handed practice blade. It hits harder than a simple sword, but requires both hands.',
+    category: 'equipment',
+    rarity: 'common',
+    stackable: false,
+    maxStackSize: 1,
+    sellPriceBronze: 6,
+    equipment: {
+      slot: 'weapon',
+      twoHanded: true,
+      modifiers: [
+        {
+          id: 'training_greatsword_p_atk',
+          target: 'pAtk',
+          operation: 'add',
+          valueType: 'flat',
+          value: 4,
+          priority: 10,
+          sourceId: 'training_greatsword',
+          sourceType: 'equipment',
+        },
+      ],
+    },
+    tags: ['weapon', 'greatsword', 'two_handed', 'strength'],
+  },
+  {
+    id: 'worn_wooden_shield',
+    name: 'Worn Wooden Shield',
+    description:
+      'A battered wooden shield. It offers modest protection, but occupies the off hand.',
+    category: 'equipment',
+    rarity: 'common',
+    stackable: false,
+    maxStackSize: 1,
+    sellPriceBronze: 3,
+    equipment: {
+      slot: 'off_hand',
+      modifiers: [
+        {
+          id: 'worn_wooden_shield_p_def',
+          target: 'pDef',
+          operation: 'add',
+          valueType: 'flat',
+          value: 2,
+          priority: 10,
+          sourceId: 'worn_wooden_shield',
+          sourceType: 'equipment',
+        },
+      ],
+    },
+    tags: ['shield', 'off_hand', 'defense'],
+  },
+  {
     id: 'simple_wooden_charm',
     name: 'Simple Wooden Charm',
     description:

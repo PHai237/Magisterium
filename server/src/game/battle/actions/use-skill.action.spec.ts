@@ -127,6 +127,7 @@ function findSeedForSkillHitOutcome(input: {
         input.targetId,
         input.skillId,
         '',
+        '',
       ].join(':'),
     );
 

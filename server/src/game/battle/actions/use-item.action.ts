@@ -39,7 +39,7 @@ function createUseItemCancelledResult(
   battleState: BattleState,
   actor: BattleActorState,
   message: string,
-  itemId?: string,
+  itemId?: BattleActionCommand['itemId'],
 ): BattleEngineResult {
   const events: BattleEvent[] = [
     createBattleEvent({
@@ -115,12 +115,21 @@ export function resolveUseItem(
     );
   }
 
+  if (itemUseResult.effects.length === 0) {
+    return createUseItemCancelledResult(
+      battleState,
+      actor,
+      `Item ${command.itemId} had no effect.`,
+      command.itemId,
+    );
+  }
+
   const inventoryItemIds = itemUseResult.consumesOnUse
     ? removeItemQuantityFromInventory(actor.inventoryItemIds, command.itemId, 1)
         .inventoryItemIds
     : [...actor.inventoryItemIds];
 
-  let updatedActor: BattleActorState = {
+  const updatedActor: BattleActorState = {
     ...itemUseResult.actorState,
     inventoryItemIds,
   };
@@ -237,13 +246,14 @@ export function resolveUseItem(
     advanceRoundIfNeeded(stateAfterAction),
   );
 
-  updatedActor = nextState.actors[actor.actorId] ?? updatedActor;
+  const finalActorState =
+    nextState.actors[actor.actorId] ?? nextActors[actor.actorId];
 
   const actionResult: BattleActionResult = {
     phase: 'completed',
 
-    actorState: updatedActor,
-    targetStates: [updatedActor],
+    actorState: finalActorState,
+    targetStates: [finalActorState],
 
     events,
     randomRolls: [],

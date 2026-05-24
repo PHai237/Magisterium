@@ -53,6 +53,7 @@ import type {
 import type {
   Character,
   CharacterSnapshot,
+  CurrentState,
   ItemId,
 } from '../game/character/character.types';
 
@@ -82,7 +83,9 @@ export interface CharacterEquipmentMutationResult {
 }
 
 export interface ApplyBattleRewardOptions {
+  battleStartingInventoryItemIds?: ItemId[];
   battleInventoryItemIds?: ItemId[];
+  battleCurrentState?: CurrentState;
 }
 
 export interface CharacterConsumableUseResult {
@@ -101,6 +104,9 @@ export interface CharacterConsumableUseResult {
 const BASE_EXP_REQUIRED_FOR_LEVEL_UP = 100;
 const EXP_LEVEL_GROWTH_FACTOR = 1.5;
 const MAX_CHARACTER_LEVEL = 100;
+
+const MAX_SAFE_TOTAL_EXP = 100_000_000;
+const MAX_SAFE_REWARD_EXP = 1_000_000;
 
 @Injectable()
 export class CharacterService {
@@ -218,13 +224,13 @@ export class CharacterService {
       reward.exp,
     );
 
-    const baseInventoryItemIds = options.battleInventoryItemIds
-      ? [...options.battleInventoryItemIds]
-      : [...existingCharacter.inventoryItemIds];
+    const inventoryAfterBattle = this.reconcileInventoryAfterBattle(
+      existingCharacter.inventoryItemIds,
+      options,
+    );
 
-    const nextInventoryItemIds = addItemStacksToInventory(
-      baseInventoryItemIds,
-      reward.items,
+    const nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(
+      () => addItemStacksToInventory(inventoryAfterBattle, reward.items),
     );
 
     const nextCharacter: Character = {
@@ -243,6 +249,12 @@ export class CharacterService {
       equippedItemIds: existingCharacter.equippedItemIds.filter(
         (equippedItemId) => nextInventoryItemIds.includes(equippedItemId),
       ),
+
+      currentState: options.battleCurrentState
+        ? {
+            ...options.battleCurrentState,
+          }
+        : existingCharacter.currentState,
 
       updatedAt: new Date().toISOString(),
     };
@@ -297,10 +309,12 @@ export class CharacterService {
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
     this.assertKnownInventoryItem(itemId);
 
-    const inventoryChange = addItemQuantityToInventory(
-      existingCharacter.inventoryItemIds,
-      itemId,
-      normalizedQuantity,
+    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+      addItemQuantityToInventory(
+        existingCharacter.inventoryItemIds,
+        itemId,
+        normalizedQuantity,
+      ),
     );
 
     const nextCharacter: Character = {
@@ -337,10 +351,12 @@ export class CharacterService {
       normalizedQuantity,
     );
 
-    const inventoryChange = removeItemQuantityFromInventory(
-      existingCharacter.inventoryItemIds,
-      itemId,
-      normalizedQuantity,
+    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+      removeItemQuantityFromInventory(
+        existingCharacter.inventoryItemIds,
+        itemId,
+        normalizedQuantity,
+      ),
     );
 
     const nextCharacter: Character = {
@@ -457,18 +473,26 @@ export class CharacterService {
 
     const snapshotBeforeUse = createCharacterSnapshot(existingCharacter);
 
+    const sanitizedCharacterBeforeUse: Character = {
+      ...existingCharacter,
+      equippedItemIds: snapshotBeforeUse.equippedItemIds,
+      currentState: snapshotBeforeUse.currentState,
+    };
+
     const itemUseResult = applyConsumableItemEffectsToCharacter(
-      existingCharacter,
+      sanitizedCharacterBeforeUse,
       snapshotBeforeUse.derivedStats,
       itemId,
       'out_of_battle',
     );
 
     const inventoryChange = itemUseResult.consumesOnUse
-      ? removeItemQuantityFromInventory(
-          itemUseResult.character.inventoryItemIds,
-          itemId,
-          1,
+      ? this.runInventoryOperationOrThrowBadRequest(() =>
+          removeItemQuantityFromInventory(
+            itemUseResult.character.inventoryItemIds,
+            itemId,
+            1,
+          ),
         )
       : {
           itemId,
@@ -581,11 +605,22 @@ export class CharacterService {
     previousExp: number,
     expGained: number,
   ): CharacterProgressionRewardResult {
-    const safePreviousLevel = Math.max(1, Math.floor(previousLevel));
-    const safePreviousExp = Math.max(0, Math.floor(previousExp));
-    const safeExpGained = Math.max(0, Math.floor(expGained));
+    const safePreviousLevel = Math.min(
+      MAX_CHARACTER_LEVEL,
+      Math.max(1, this.assertSafeExperienceInteger(previousLevel, 'Level')),
+    );
+
+    const safePreviousExp = this.assertSafeExperienceTotal(
+      previousExp,
+      'Previous EXP',
+    );
+
+    const safeExpGained = this.assertSafeExperienceGain(expGained);
 
     const nextExp = safePreviousExp + safeExpGained;
+
+    this.assertSafeExperienceTotal(nextExp, 'Next EXP');
+
     const nextLevel = Math.max(
       safePreviousLevel,
       this.calculateLevelFromTotalExp(nextExp),
@@ -603,6 +638,141 @@ export class CharacterService {
       leveledUp: nextLevel > safePreviousLevel,
       levelsGained: Math.max(0, nextLevel - safePreviousLevel),
     };
+  }
+
+  private runInventoryOperationOrThrowBadRequest<T>(operation: () => T): T {
+    try {
+      return operation();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Inventory operation failed.';
+
+      throw new BadRequestException(message);
+    }
+  }
+
+  private countItemIds(itemIds: readonly ItemId[]): Map<ItemId, number> {
+    const counts = new Map<ItemId, number>();
+
+    for (const itemId of itemIds) {
+      counts.set(itemId, (counts.get(itemId) ?? 0) + 1);
+    }
+
+    return counts;
+  }
+
+  private removeItemCopies(
+    inventoryItemIds: readonly ItemId[],
+    itemId: ItemId,
+    quantity: number,
+  ): ItemId[] {
+    let remainingToRemove = quantity;
+    const nextInventoryItemIds: ItemId[] = [];
+
+    for (const currentItemId of inventoryItemIds) {
+      if (currentItemId === itemId && remainingToRemove > 0) {
+        remainingToRemove -= 1;
+        continue;
+      }
+
+      nextInventoryItemIds.push(currentItemId);
+    }
+
+    return nextInventoryItemIds;
+  }
+
+  private reconcileInventoryAfterBattle(
+    currentInventoryItemIds: readonly ItemId[],
+    options: ApplyBattleRewardOptions,
+  ): ItemId[] {
+    if (!options.battleInventoryItemIds) {
+      return [...currentInventoryItemIds];
+    }
+
+    if (!options.battleStartingInventoryItemIds) {
+      return [...options.battleInventoryItemIds];
+    }
+
+    const startingCounts = this.countItemIds(
+      options.battleStartingInventoryItemIds,
+    );
+    const endingCounts = this.countItemIds(options.battleInventoryItemIds);
+    let nextInventoryItemIds = [...currentInventoryItemIds];
+
+    for (const [itemId, startingQuantity] of startingCounts.entries()) {
+      const endingQuantity = endingCounts.get(itemId) ?? 0;
+      const consumedQuantity = Math.max(0, startingQuantity - endingQuantity);
+
+      if (consumedQuantity > 0) {
+        nextInventoryItemIds = this.removeItemCopies(
+          nextInventoryItemIds,
+          itemId,
+          consumedQuantity,
+        );
+      }
+    }
+
+    for (const [itemId, endingQuantity] of endingCounts.entries()) {
+      const startingQuantity = startingCounts.get(itemId) ?? 0;
+      const gainedQuantity = Math.max(0, endingQuantity - startingQuantity);
+
+      if (gainedQuantity > 0) {
+        nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(() =>
+          addItemQuantityToInventory(
+            nextInventoryItemIds,
+            itemId,
+            gainedQuantity,
+          ),
+        ).inventoryItemIds;
+      }
+    }
+
+    return nextInventoryItemIds;
+  }
+
+  private assertSafeExperienceInteger(value: number, label: string): number {
+    if (!Number.isFinite(value)) {
+      throw new BadRequestException(`${label} must be a finite number.`);
+    }
+
+    const normalizedValue = Math.floor(value);
+
+    if (!Number.isSafeInteger(normalizedValue)) {
+      throw new BadRequestException(`${label} must be a safe integer.`);
+    }
+
+    if (normalizedValue < 0) {
+      throw new BadRequestException(`${label} must not be negative.`);
+    }
+
+    return normalizedValue;
+  }
+
+  private assertSafeExperienceTotal(value: number, label: string): number {
+    const normalizedValue = this.assertSafeExperienceInteger(value, label);
+
+    if (normalizedValue > MAX_SAFE_TOTAL_EXP) {
+      throw new BadRequestException(
+        `${label} exceeds the safe EXP total limit.`,
+      );
+    }
+
+    return normalizedValue;
+  }
+
+  private assertSafeExperienceGain(expGained: number): number {
+    const normalizedValue = this.assertSafeExperienceInteger(
+      expGained,
+      'Reward EXP',
+    );
+
+    if (normalizedValue > MAX_SAFE_REWARD_EXP) {
+      throw new BadRequestException(
+        'Reward EXP exceeds the safe reward EXP limit.',
+      );
+    }
+
+    return normalizedValue;
   }
 
   private assertInventoryItemIsConsumableForContext(
@@ -653,6 +823,10 @@ export class CharacterService {
       throw new BadRequestException(
         'Item quantity must be a positive integer.',
       );
+    }
+
+    if (!Number.isSafeInteger(normalizedQuantity)) {
+      throw new BadRequestException('Item quantity must be a safe integer.');
     }
 
     return normalizedQuantity;

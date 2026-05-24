@@ -42,6 +42,21 @@ function normalizeEffectAmount(amount: number): number {
   return Math.max(0, Math.floor(amount));
 }
 
+function shouldRecordConsumableEffect(
+  effect: ConsumableEffectApplication,
+): boolean {
+  return effect.amountApplied > 0;
+}
+
+function pushConsumableEffectIfMeaningful(
+  effects: ConsumableEffectApplication[],
+  effect: ConsumableEffectApplication,
+): void {
+  if (shouldRecordConsumableEffect(effect)) {
+    effects.push(effect);
+  }
+}
+
 function getCurrentResourceValue(
   character: Character,
   resourceType: ResourceType,
@@ -238,7 +253,15 @@ export function applyConsumableItemEffectsToCharacter(
       );
 
       nextCharacter = result.character;
-      effects.push(result.effect);
+      pushConsumableEffectIfMeaningful(effects, result.effect);
+      continue;
+    }
+
+    if (effect.type === 'damage') {
+      const result = damageHp(nextCharacter, effect.amount);
+
+      nextCharacter = result.character;
+      pushConsumableEffectIfMeaningful(effects, result.effect);
       continue;
     }
 
@@ -251,7 +274,7 @@ export function applyConsumableItemEffectsToCharacter(
       );
 
       nextCharacter = hpResult.character;
-      effects.push({
+      pushConsumableEffectIfMeaningful(effects, {
         ...hpResult.effect,
         effectType: 'rest',
       });
@@ -264,7 +287,7 @@ export function applyConsumableItemEffectsToCharacter(
       );
 
       nextCharacter = mpResult.character;
-      effects.push({
+      pushConsumableEffectIfMeaningful(effects, {
         ...mpResult.effect,
         effectType: 'rest',
       });
@@ -277,29 +300,18 @@ export function applyConsumableItemEffectsToCharacter(
       );
 
       nextCharacter = staminaResult.character;
-      effects.push({
+      pushConsumableEffectIfMeaningful(effects, {
         ...staminaResult.effect,
         effectType: 'rest',
       });
 
-      if (effect.fatigueRecovery && effect.fatigueRecovery > 0) {
-        const fatigueResult = recoverFatigue(
-          nextCharacter,
-          effect.fatigueRecovery,
-        );
+      const fatigueResult = recoverFatigue(
+        nextCharacter,
+        effect.fatigueRecovery ?? 0,
+      );
 
-        nextCharacter = fatigueResult.character;
-        effects.push(fatigueResult.effect);
-      }
-
-      continue;
-    }
-
-    if (effect.type === 'damage') {
-      const result = damageHp(nextCharacter, effect.amount);
-
-      nextCharacter = result.character;
-      effects.push(result.effect);
+      nextCharacter = fatigueResult.character;
+      pushConsumableEffectIfMeaningful(effects, fatigueResult.effect);
     }
   }
 

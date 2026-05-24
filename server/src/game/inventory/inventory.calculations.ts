@@ -10,12 +10,60 @@ import type {
   InventoryOperationResult,
 } from './inventory.types';
 
+export const MAX_INVENTORY_ITEM_INSTANCES = 500;
+
 export function normalizeInventoryQuantity(quantity: number): number {
   if (!Number.isFinite(quantity)) {
     return 0;
   }
 
   return Math.max(0, Math.floor(quantity));
+}
+
+function normalizePositiveInventoryMutationQuantity(quantity: number): number {
+  if (!Number.isFinite(quantity)) {
+    throw new Error('Item quantity must be a finite positive integer.');
+  }
+
+  const normalizedQuantity = Math.floor(quantity);
+
+  if (normalizedQuantity <= 0) {
+    throw new Error('Item quantity must be a positive integer.');
+  }
+
+  if (!Number.isSafeInteger(normalizedQuantity)) {
+    throw new Error('Item quantity must be a safe integer.');
+  }
+
+  return normalizedQuantity;
+}
+
+function assertInventoryCapacity(
+  currentInventoryLength: number,
+  quantityToAdd: number,
+): void {
+  const nextInventoryLength = currentInventoryLength + quantityToAdd;
+
+  if (nextInventoryLength > MAX_INVENTORY_ITEM_INSTANCES) {
+    throw new Error(
+      `Inventory capacity exceeded. Maximum item instances: ${MAX_INVENTORY_ITEM_INSTANCES}.`,
+    );
+  }
+}
+
+function assertItemStackLimit(input: {
+  itemId: ItemId;
+  currentQuantity: number;
+  quantityToAdd: number;
+  maxStackSize: number;
+}): void {
+  const nextQuantity = input.currentQuantity + input.quantityToAdd;
+
+  if (nextQuantity > input.maxStackSize) {
+    throw new Error(
+      `Item stack limit exceeded for ${input.itemId}. Maximum stack size: ${input.maxStackSize}.`,
+    );
+  }
 }
 
 export function countInventoryItem(
@@ -65,16 +113,20 @@ export function buildInventoryStacks(
 export function expandInventoryStacks(
   stacks: readonly InventoryItemStack[],
 ): ItemId[] {
-  const inventoryItemIds: ItemId[] = [];
+  let inventoryItemIds: ItemId[] = [];
 
   for (const stack of stacks) {
-    assertItemDefinitionExists(stack.itemId);
-
-    const quantity = normalizeInventoryQuantity(stack.quantity);
-
-    for (let index = 0; index < quantity; index += 1) {
-      inventoryItemIds.push(stack.itemId);
+    if (normalizeInventoryQuantity(stack.quantity) <= 0) {
+      continue;
     }
+
+    const result = addItemQuantityToInventory(
+      inventoryItemIds,
+      stack.itemId,
+      stack.quantity,
+    );
+
+    inventoryItemIds = result.inventoryItemIds;
   }
 
   return inventoryItemIds;
@@ -87,26 +139,25 @@ export function addItemQuantityToInventory(
 ): InventoryOperationResult {
   assertItemDefinitionExists(itemId);
 
-  const normalizedQuantity = normalizeInventoryQuantity(quantity);
-  const previousQuantity = countInventoryItem(inventoryItemIds, itemId);
-
-  if (normalizedQuantity <= 0) {
-    return {
-      itemId,
-      previousQuantity,
-      nextQuantity: previousQuantity,
-      quantityChanged: 0,
-      inventoryItemIds: [...inventoryItemIds],
-    };
-  }
-
   const itemDefinition = getItemDefinitionById(itemId);
+  const normalizedQuantity =
+    normalizePositiveInventoryMutationQuantity(quantity);
+  const previousQuantity = countInventoryItem(inventoryItemIds, itemId);
 
   if (!itemDefinition.stackable && normalizedQuantity > 1) {
     throw new Error(
       `Non-stackable item ${itemId} cannot be added with quantity ${normalizedQuantity}.`,
     );
   }
+
+  assertItemStackLimit({
+    itemId,
+    currentQuantity: previousQuantity,
+    quantityToAdd: normalizedQuantity,
+    maxStackSize: itemDefinition.maxStackSize,
+  });
+
+  assertInventoryCapacity(inventoryItemIds.length, normalizedQuantity);
 
   const addedItemIds = Array.from(
     {
@@ -131,6 +182,10 @@ export function addItemStacksToInventory(
   let nextInventoryItemIds = [...inventoryItemIds];
 
   for (const stack of stacks) {
+    if (normalizeInventoryQuantity(stack.quantity) <= 0) {
+      continue;
+    }
+
     const result = addItemQuantityToInventory(
       nextInventoryItemIds,
       stack.itemId,
@@ -150,18 +205,9 @@ export function removeItemQuantityFromInventory(
 ): InventoryOperationResult {
   assertItemDefinitionExists(itemId);
 
-  const normalizedQuantity = normalizeInventoryQuantity(quantity);
+  const normalizedQuantity =
+    normalizePositiveInventoryMutationQuantity(quantity);
   const previousQuantity = countInventoryItem(inventoryItemIds, itemId);
-
-  if (normalizedQuantity <= 0) {
-    return {
-      itemId,
-      previousQuantity,
-      nextQuantity: previousQuantity,
-      quantityChanged: 0,
-      inventoryItemIds: [...inventoryItemIds],
-    };
-  }
 
   if (previousQuantity < normalizedQuantity) {
     throw new Error(

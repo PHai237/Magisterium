@@ -15,8 +15,6 @@ import {
   createBattleState,
 } from '../factory/battle.factory';
 
-import { TURN_GAUGE_READY_VALUE } from '../battle.constants';
-
 import type {
   BattleActorState,
   BattleActorType,
@@ -47,11 +45,11 @@ const DEFAULT_DERIVED_STATS: DerivedStats = {
   pDef: 5,
   mDef: 4,
 
-  actionSpeed: 10,
-  accuracy: 90,
+  actionSpeed: 100,
+  accuracy: 95,
   evasionRate: 5,
 
-  critRate: 10,
+  critRate: 5,
   critDamageBonus: 50,
 
   fleeRate: 10,
@@ -72,6 +70,7 @@ interface CreateActorInput {
   hp?: number;
   mp?: number;
   stamina?: number;
+  isExhausted?: boolean;
   derivedStats?: Partial<DerivedStats>;
 }
 
@@ -85,94 +84,102 @@ function createActor(input: CreateActorInput): BattleActorState {
     actorId: input.actorId,
     actorType: input.actorType ?? 'character',
 
+    skillIds: [],
+    inventoryItemIds: [],
+
     baseStats: DEFAULT_BASE_STATS,
     derivedStats,
+    resistances: {},
 
     currentState: {
       hp: input.hp ?? derivedStats.maxHp,
       mp: input.mp ?? derivedStats.maxMp,
       stamina: input.stamina ?? derivedStats.maxStamina,
     },
+
+    isExhausted: input.isExhausted,
+    shield: 0,
   });
 }
 
-function createTestBattle(
-  actors: BattleActorState[],
-  overrides: Partial<BattleState> = {},
-): BattleState {
-  return {
-    ...createBattleState({
-      battleId: 'turn_test_battle',
-      seed: 'turn_test_seed',
-      actors,
-    }),
-    ...overrides,
-  };
-}
+function createStartedBattleState(input?: {
+  hero?: BattleActorState;
+  slime?: BattleActorState;
+  turnOrder?: BattleTurnOrderEntry[];
+  overrides?: Partial<BattleState>;
+}): BattleState {
+  const hero =
+    input?.hero ??
+    createActor({
+      actorId: 'hero',
+      actorType: 'character',
+      derivedStats: {
+        actionSpeed: 100,
+      },
+    });
 
-function createTurnEntry(
-  overrides: Partial<BattleTurnOrderEntry> = {},
-): BattleTurnOrderEntry {
-  return {
-    actorId: 'actor_1',
-    actionSpeed: 10,
-    initiative: 0,
-    turnGauge: 0,
-    hasActedThisRound: false,
+  const slime =
+    input?.slime ??
+    createActor({
+      actorId: 'slime',
+      actorType: 'monster',
+      derivedStats: {
+        actionSpeed: 50,
+      },
+    });
 
-    ...overrides,
+  const battleState = createBattleState({
+    battleId: 'battle_1',
+    seed: 'seed_1',
+    actors: [hero, slime],
+  });
+
+  return {
+    ...battleState,
+    status: 'in_progress',
+    activeActorId: undefined,
+    turnOrder: input?.turnOrder ?? battleState.turnOrder,
+    ...input?.overrides,
   };
 }
 
 describe('battle turn engine', () => {
   describe('sortReadyEntries', () => {
     it('should sort ready entries by gauge, speed, then initiative', () => {
-      const slowHighGauge = createTurnEntry({
-        actorId: 'slow_high_gauge',
-        actionSpeed: 10,
-        initiative: 2,
-        turnGauge: 130,
-      });
+      const entries: BattleTurnOrderEntry[] = [
+        {
+          actorId: 'slow',
+          actionSpeed: 10,
+          initiative: 0,
+          turnGauge: 100,
+          hasActedThisRound: false,
+        },
+        {
+          actorId: 'fast',
+          actionSpeed: 20,
+          initiative: 1,
+          turnGauge: 100,
+          hasActedThisRound: false,
+        },
+        {
+          actorId: 'over_ready',
+          actionSpeed: 5,
+          initiative: 2,
+          turnGauge: 120,
+          hasActedThisRound: false,
+        },
+      ];
 
-      const fastSameGauge = createTurnEntry({
-        actorId: 'fast_same_gauge',
-        actionSpeed: 30,
-        initiative: 3,
-        turnGauge: 120,
-      });
-
-      const earlySameGauge = createTurnEntry({
-        actorId: 'early_same_gauge',
-        actionSpeed: 20,
-        initiative: 0,
-        turnGauge: 120,
-      });
-
-      const lateSameGauge = createTurnEntry({
-        actorId: 'late_same_gauge',
-        actionSpeed: 20,
-        initiative: 1,
-        turnGauge: 120,
-      });
-
-      expect(
-        sortReadyEntries([
-          lateSameGauge,
-          earlySameGauge,
-          fastSameGauge,
-          slowHighGauge,
-        ]).map((entry) => entry.actorId),
-      ).toEqual([
-        'slow_high_gauge',
-        'fast_same_gauge',
-        'early_same_gauge',
-        'late_same_gauge',
+      expect(sortReadyEntries(entries).map((entry) => entry.actorId)).toEqual([
+        'over_ready',
+        'fast',
+        'slow',
       ]);
     });
   });
 
   describe('filterTurnOrderToLivingActors', () => {
-    it('should remove dead or missing actors from turn order', () => {
+    it('should keep only entries for living actors', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -184,16 +191,28 @@ describe('battle turn engine', () => {
         hp: 0,
       });
 
-      const turnOrder = [
-        createTurnEntry({
+      const turnOrder: BattleTurnOrderEntry[] = [
+        {
           actorId: 'hero',
-        }),
-        createTurnEntry({
+          actionSpeed: 10,
+          initiative: 0,
+          turnGauge: 0,
+          hasActedThisRound: false,
+        },
+        {
           actorId: 'slime',
-        }),
-        createTurnEntry({
-          actorId: 'missing_actor',
-        }),
+          actionSpeed: 10,
+          initiative: 1,
+          turnGauge: 0,
+          hasActedThisRound: false,
+        },
+        {
+          actorId: 'missing',
+          actionSpeed: 10,
+          initiative: 2,
+          turnGauge: 0,
+          hasActedThisRound: false,
+        },
       ];
 
       expect(
@@ -206,7 +225,7 @@ describe('battle turn engine', () => {
   });
 
   describe('findNextReadyLivingEntry', () => {
-    it('should return the highest-priority ready living actor', () => {
+    it('should find the highest-priority ready living entry', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -217,165 +236,35 @@ describe('battle turn engine', () => {
         actorType: 'monster',
       });
 
-      const deadGoblin = createActor({
-        actorId: 'dead_goblin',
-        actorType: 'monster',
-        hp: 0,
-      });
-
-      const turnOrder = [
-        createTurnEntry({
-          actorId: 'dead_goblin',
-          actionSpeed: 999,
-          turnGauge: 999,
-        }),
-        createTurnEntry({
+      const turnOrder: BattleTurnOrderEntry[] = [
+        {
+          actorId: 'hero',
+          actionSpeed: 10,
+          initiative: 0,
+          turnGauge: 100,
+          hasActedThisRound: false,
+        },
+        {
           actorId: 'slime',
-          actionSpeed: 50,
-          turnGauge: TURN_GAUGE_READY_VALUE,
-        }),
-        createTurnEntry({
-          actorId: 'hero',
-          actionSpeed: 100,
-          turnGauge: TURN_GAUGE_READY_VALUE,
-        }),
-      ];
-
-      const readyEntry = findNextReadyLivingEntry(turnOrder, {
-        hero,
-        slime,
-        dead_goblin: deadGoblin,
-      });
-
-      expect(readyEntry?.actorId).toBe('hero');
-    });
-
-    it('should return undefined when no living actor is ready', () => {
-      const hero = createActor({
-        actorId: 'hero',
-        actorType: 'character',
-      });
-
-      const turnOrder = [
-        createTurnEntry({
-          actorId: 'hero',
-          turnGauge: TURN_GAUGE_READY_VALUE - 1,
-        }),
+          actionSpeed: 20,
+          initiative: 1,
+          turnGauge: 100,
+          hasActedThisRound: false,
+        },
       ];
 
       expect(
         findNextReadyLivingEntry(turnOrder, {
           hero,
-        }),
-      ).toBeUndefined();
-    });
-  });
-
-  describe('consumeActorTurnGauge', () => {
-    it('should consume only the selected actor gauge and mark it as acted', () => {
-      const hero = createActor({
-        actorId: 'hero',
-      });
-
-      const slime = createActor({
-        actorId: 'slime',
-        actorType: 'monster',
-      });
-
-      const battle = createTestBattle([hero, slime], {
-        turnOrder: [
-          createTurnEntry({
-            actorId: 'hero',
-            turnGauge: 150,
-            hasActedThisRound: false,
-          }),
-          createTurnEntry({
-            actorId: 'slime',
-            turnGauge: 80,
-            hasActedThisRound: false,
-          }),
-        ],
-      });
-
-      const nextTurnOrder = consumeActorTurnGauge(battle, 'hero');
-
-      expect(nextTurnOrder).toEqual([
-        {
-          actorId: 'hero',
-          actionSpeed: 10,
-          initiative: 0,
-          turnGauge: 50,
-          hasActedThisRound: true,
-        },
-        {
-          actorId: 'slime',
-          actionSpeed: 10,
-          initiative: 0,
-          turnGauge: 80,
-          hasActedThisRound: false,
-        },
-      ]);
-    });
-  });
-
-  describe('shouldAdvanceRound', () => {
-    it('should return true when every living actor has acted', () => {
-      const hero = createActor({
-        actorId: 'hero',
-      });
-
-      const slime = createActor({
-        actorId: 'slime',
-        actorType: 'monster',
-      });
-
-      const battle = createTestBattle([hero, slime], {
-        status: 'in_progress',
-        turnOrder: [
-          createTurnEntry({
-            actorId: 'hero',
-            hasActedThisRound: true,
-          }),
-          createTurnEntry({
-            actorId: 'slime',
-            hasActedThisRound: true,
-          }),
-        ],
-      });
-
-      expect(shouldAdvanceRound(battle)).toBe(true);
+          slime,
+        })?.actorId,
+      ).toBe('slime');
     });
 
-    it('should return false when any living actor has not acted', () => {
+    it('should ignore ready defeated actors', () => {
       const hero = createActor({
         actorId: 'hero',
-      });
-
-      const slime = createActor({
-        actorId: 'slime',
-        actorType: 'monster',
-      });
-
-      const battle = createTestBattle([hero, slime], {
-        status: 'in_progress',
-        turnOrder: [
-          createTurnEntry({
-            actorId: 'hero',
-            hasActedThisRound: true,
-          }),
-          createTurnEntry({
-            actorId: 'slime',
-            hasActedThisRound: false,
-          }),
-        ],
-      });
-
-      expect(shouldAdvanceRound(battle)).toBe(false);
-    });
-
-    it('should return false when battle is already resolved', () => {
-      const hero = createActor({
-        actorId: 'hero',
+        actorType: 'character',
       });
 
       const defeatedSlime = createActor({
@@ -384,43 +273,207 @@ describe('battle turn engine', () => {
         hp: 0,
       });
 
-      const battle = createTestBattle([hero, defeatedSlime], {
-        status: 'in_progress',
+      const goblin = createActor({
+        actorId: 'goblin',
+        actorType: 'monster',
       });
 
-      expect(shouldAdvanceRound(battle)).toBe(false);
+      const turnOrder: BattleTurnOrderEntry[] = [
+        {
+          actorId: 'slime',
+          actionSpeed: 50,
+          initiative: 0,
+          turnGauge: 200,
+          hasActedThisRound: false,
+        },
+        {
+          actorId: 'goblin',
+          actionSpeed: 10,
+          initiative: 1,
+          turnGauge: 100,
+          hasActedThisRound: false,
+        },
+        {
+          actorId: 'hero',
+          actionSpeed: 20,
+          initiative: 2,
+          turnGauge: 90,
+          hasActedThisRound: false,
+        },
+      ];
+
+      expect(
+        findNextReadyLivingEntry(turnOrder, {
+          hero,
+          slime: defeatedSlime,
+          goblin,
+        })?.actorId,
+      ).toBe('goblin');
     });
   });
 
-  describe('resetRoundActedFlags', () => {
-    it('should reset hasActedThisRound only for living actors', () => {
+  describe('consumeActorTurnGauge', () => {
+    it('should consume the selected actor turn gauge and mark acted', () => {
       const hero = createActor({
         actorId: 'hero',
+        actorType: 'character',
       });
 
-      const deadSlime = createActor({
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createStartedBattleState({
+        hero,
+        slime,
+        turnOrder: [
+          {
+            actorId: 'hero',
+            actionSpeed: 100,
+            initiative: 0,
+            turnGauge: 120,
+            hasActedThisRound: false,
+          },
+          {
+            actorId: 'slime',
+            actionSpeed: 50,
+            initiative: 1,
+            turnGauge: 70,
+            hasActedThisRound: false,
+          },
+        ],
+      });
+
+      expect(consumeActorTurnGauge(battleState, 'hero')).toEqual([
+        {
+          actorId: 'hero',
+          actionSpeed: 100,
+          initiative: 0,
+          turnGauge: 20,
+          hasActedThisRound: true,
+        },
+        {
+          actorId: 'slime',
+          actionSpeed: 50,
+          initiative: 1,
+          turnGauge: 70,
+          hasActedThisRound: false,
+        },
+      ]);
+    });
+  });
+
+  describe('round handling', () => {
+    it('should advance round when all living actors acted', () => {
+      const hero = createActor({
+        actorId: 'hero',
+        actorType: 'character',
+      });
+
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createStartedBattleState({
+        hero,
+        slime,
+        turnOrder: [
+          {
+            actorId: 'hero',
+            actionSpeed: 100,
+            initiative: 0,
+            turnGauge: 0,
+            hasActedThisRound: true,
+          },
+          {
+            actorId: 'slime',
+            actionSpeed: 50,
+            initiative: 1,
+            turnGauge: 0,
+            hasActedThisRound: true,
+          },
+        ],
+      });
+
+      expect(shouldAdvanceRound(battleState)).toBe(true);
+    });
+
+    it('should not advance round when at least one living actor has not acted', () => {
+      const hero = createActor({
+        actorId: 'hero',
+        actorType: 'character',
+      });
+
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createStartedBattleState({
+        hero,
+        slime,
+        turnOrder: [
+          {
+            actorId: 'hero',
+            actionSpeed: 100,
+            initiative: 0,
+            turnGauge: 0,
+            hasActedThisRound: true,
+          },
+          {
+            actorId: 'slime',
+            actionSpeed: 50,
+            initiative: 1,
+            turnGauge: 0,
+            hasActedThisRound: false,
+          },
+        ],
+      });
+
+      expect(shouldAdvanceRound(battleState)).toBe(false);
+    });
+
+    it('should not advance round when battle is already resolved', () => {
+      const hero = createActor({
+        actorId: 'hero',
+        actorType: 'character',
+      });
+
+      const defeatedSlime = createActor({
         actorId: 'slime',
         actorType: 'monster',
         hp: 0,
       });
 
-      const turnOrder = [
-        createTurnEntry({
+      const battleState = createStartedBattleState({
+        hero,
+        slime: defeatedSlime,
+      });
+
+      expect(shouldAdvanceRound(battleState)).toBe(false);
+    });
+
+    it('should reset hasActedThisRound for all entries, including defeated actors', () => {
+      const turnOrder: BattleTurnOrderEntry[] = [
+        {
           actorId: 'hero',
+          actionSpeed: 10,
+          initiative: 0,
+          turnGauge: 0,
           hasActedThisRound: true,
-        }),
-        createTurnEntry({
+        },
+        {
           actorId: 'slime',
+          actionSpeed: 10,
+          initiative: 1,
+          turnGauge: 0,
           hasActedThisRound: true,
-        }),
+        },
       ];
 
-      expect(
-        resetRoundActedFlags(turnOrder, {
-          hero,
-          slime: deadSlime,
-        }),
-      ).toEqual([
+      expect(resetRoundActedFlags(turnOrder)).toEqual([
         {
           actorId: 'hero',
           actionSpeed: 10,
@@ -431,18 +484,17 @@ describe('battle turn engine', () => {
         {
           actorId: 'slime',
           actionSpeed: 10,
-          initiative: 0,
+          initiative: 1,
           turnGauge: 0,
-          hasActedThisRound: true,
+          hasActedThisRound: false,
         },
       ]);
     });
-  });
 
-  describe('advanceRoundIfNeeded', () => {
-    it('should advance round and append round events when all living actors acted', () => {
+    it('should append round end and start events when advancing round', () => {
       const hero = createActor({
         actorId: 'hero',
+        actorType: 'character',
       });
 
       const slime = createActor({
@@ -450,64 +502,55 @@ describe('battle turn engine', () => {
         actorType: 'monster',
       });
 
-      const battle = createTestBattle([hero, slime], {
-        status: 'in_progress',
-        roundNumber: 1,
+      const battleState = createStartedBattleState({
+        hero,
+        slime,
         turnOrder: [
-          createTurnEntry({
+          {
             actorId: 'hero',
+            actionSpeed: 100,
+            initiative: 0,
+            turnGauge: 0,
             hasActedThisRound: true,
-          }),
-          createTurnEntry({
+          },
+          {
             actorId: 'slime',
+            actionSpeed: 50,
+            initiative: 1,
+            turnGauge: 0,
             hasActedThisRound: true,
-          }),
+          },
         ],
       });
 
-      const nextBattle = advanceRoundIfNeeded(battle);
+      const nextState = advanceRoundIfNeeded(battleState);
 
-      expect(nextBattle.roundNumber).toBe(2);
+      expect(nextState.roundNumber).toBe(2);
       expect(
-        nextBattle.turnOrder.every((entry) => !entry.hasActedThisRound),
+        nextState.turnOrder.every((entry) => !entry.hasActedThisRound),
       ).toBe(true);
 
-      expect(nextBattle.events.map((event) => event.type)).toEqual([
-        'ROUND_ENDED',
-        'ROUND_STARTED',
-      ]);
-    });
-
-    it('should return the same battle when round should not advance', () => {
-      const hero = createActor({
-        actorId: 'hero',
-      });
-
-      const slime = createActor({
-        actorId: 'slime',
-        actorType: 'monster',
-      });
-
-      const battle = createTestBattle([hero, slime], {
-        status: 'in_progress',
-        turnOrder: [
-          createTurnEntry({
-            actorId: 'hero',
-            hasActedThisRound: true,
+      expect(nextState.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'ROUND_ENDED',
+            phase: 'completed',
+            actorId: 'battle_engine',
+            message: 'Round 1 ended.',
           }),
-          createTurnEntry({
-            actorId: 'slime',
-            hasActedThisRound: false,
+          expect.objectContaining({
+            type: 'ROUND_STARTED',
+            phase: 'initiation',
+            actorId: 'battle_engine',
+            message: 'Round 2 started.',
           }),
-        ],
-      });
-
-      expect(advanceRoundIfNeeded(battle)).toBe(battle);
+        ]),
+      );
     });
   });
 
   describe('startBattle', () => {
-    it('should start a created battle and select the first active actor', () => {
+    it('should start created battle and advance to the first actor', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -524,48 +567,52 @@ describe('battle turn engine', () => {
         },
       });
 
-      const battle = createTestBattle([hero, slime]);
-      const startedBattle = startBattle(battle);
+      const battleState = createBattleState({
+        battleId: 'battle_start_test',
+        seed: 'seed_start_test',
+        actors: [hero, slime],
+      });
+
+      const startedBattle = startBattle(battleState);
 
       expect(startedBattle.status).toBe('in_progress');
       expect(startedBattle.activeActorId).toBe('hero');
       expect(startedBattle.turnNumber).toBe(1);
 
-      expect(startedBattle.events.map((event) => event.type)).toEqual(
+      expect(startedBattle.events).toEqual(
         expect.arrayContaining([
-          'BATTLE_STARTED',
-          'ROUND_STARTED',
-          'TURN_STARTED',
+          expect.objectContaining({
+            type: 'BATTLE_STARTED',
+            phase: 'initiation',
+          }),
+          expect.objectContaining({
+            type: 'ROUND_STARTED',
+            phase: 'initiation',
+            message: 'Round 1 started.',
+          }),
+          expect.objectContaining({
+            type: 'TURN_STARTED',
+            phase: 'initiation',
+            actorId: 'hero',
+          }),
         ]),
       );
     });
 
-    it('should return the same battle when battle is not in created status', () => {
-      const hero = createActor({
-        actorId: 'hero',
-      });
+    it('should not restart a battle that is not created', () => {
+      const battleState = createStartedBattleState();
 
-      const battle = createTestBattle([hero], {
-        status: 'in_progress',
-      });
-
-      expect(startBattle(battle)).toBe(battle);
+      expect(startBattle(battleState)).toBe(battleState);
     });
   });
 
   describe('advanceBattleToNextActor', () => {
-    it('should select a ready living actor and restore turn-start resources', () => {
+    it('should advance to the next ready living actor', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
-        mp: 10,
-        stamina: 20,
         derivedStats: {
           actionSpeed: 100,
-          maxMp: 50,
-          maxStamina: 100,
-          mpRegen: 3,
-          staminaRegen: 7,
         },
       });
 
@@ -577,40 +624,107 @@ describe('battle turn engine', () => {
         },
       });
 
-      const battle = createTestBattle([hero, slime], {
-        status: 'in_progress',
-        turnNumber: 0,
+      const battleState = createStartedBattleState({
+        hero,
+        slime,
         turnOrder: [
-          createTurnEntry({
+          {
             actorId: 'hero',
             actionSpeed: 100,
-            turnGauge: TURN_GAUGE_READY_VALUE,
-          }),
-          createTurnEntry({
+            initiative: 0,
+            turnGauge: 100,
+            hasActedThisRound: false,
+          },
+          {
             actorId: 'slime',
             actionSpeed: 50,
-            turnGauge: 0,
-          }),
+            initiative: 1,
+            turnGauge: 50,
+            hasActedThisRound: false,
+          },
         ],
       });
 
-      const nextBattle = advanceBattleToNextActor(battle);
+      const nextState = advanceBattleToNextActor(battleState);
 
-      expect(nextBattle.activeActorId).toBe('hero');
-      expect(nextBattle.turnNumber).toBe(1);
-      expect(nextBattle.actors.hero.mp).toBe(13);
-      expect(nextBattle.actors.hero.stamina).toBe(27);
+      expect(nextState.activeActorId).toBe('hero');
+      expect(nextState.turnNumber).toBe(1);
+      expect(nextState.status).toBe('in_progress');
 
-      expect(nextBattle.events.map((event) => event.type)).toEqual(
+      expect(nextState.events).toEqual(
         expect.arrayContaining([
-          'RESOURCE_RESTORED',
-          'RESOURCE_RESTORED',
-          'TURN_STARTED',
+          expect.objectContaining({
+            type: 'TURN_STARTED',
+            actorId: 'hero',
+          }),
         ]),
       );
     });
 
-    it('should end with victory when no living monsters remain', () => {
+    it('should restore turn start resources before starting the actor turn', () => {
+      const hero = createActor({
+        actorId: 'hero',
+        actorType: 'character',
+        mp: 10,
+        stamina: 10,
+        derivedStats: {
+          actionSpeed: 100,
+          mpRegen: 3,
+          staminaRegen: 5,
+        },
+      });
+
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+        derivedStats: {
+          actionSpeed: 10,
+        },
+      });
+
+      const battleState = createStartedBattleState({
+        hero,
+        slime,
+        turnOrder: [
+          {
+            actorId: 'hero',
+            actionSpeed: 100,
+            initiative: 0,
+            turnGauge: 100,
+            hasActedThisRound: false,
+          },
+          {
+            actorId: 'slime',
+            actionSpeed: 10,
+            initiative: 1,
+            turnGauge: 0,
+            hasActedThisRound: false,
+          },
+        ],
+      });
+
+      const nextState = advanceBattleToNextActor(battleState);
+
+      expect(nextState.actors.hero.mp).toBe(13);
+      expect(nextState.actors.hero.stamina).toBe(15);
+
+      expect(nextState.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'RESOURCE_RESTORED',
+            actorId: 'hero',
+            value: 3,
+          }),
+          expect.objectContaining({
+            type: 'RESOURCE_RESTORED',
+            actorId: 'hero',
+            value: 5,
+          }),
+        ]),
+      );
+    });
+
+    it('should end battle in victory when no living monsters remain', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -622,24 +736,32 @@ describe('battle turn engine', () => {
         hp: 0,
       });
 
-      const battle = createTestBattle([hero, defeatedSlime], {
-        status: 'in_progress',
+      const battleState = createStartedBattleState({
+        hero,
+        slime: defeatedSlime,
       });
 
-      const nextBattle = advanceBattleToNextActor(battle);
+      const nextState = advanceBattleToNextActor(battleState);
 
-      expect(nextBattle.status).toBe('victory');
-      expect(nextBattle.activeActorId).toBeUndefined();
-      expect(nextBattle.turnOrder.map((entry) => entry.actorId)).toEqual([
+      expect(nextState.status).toBe('victory');
+      expect(nextState.activeActorId).toBeUndefined();
+
+      expect(nextState.turnOrder.map((entry) => entry.actorId)).toEqual([
         'hero',
       ]);
 
-      expect(nextBattle.events.map((event) => event.type)).toContain(
-        'BATTLE_ENDED',
+      expect(nextState.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'BATTLE_ENDED',
+            phase: 'completed',
+            message: 'Battle ended in victory.',
+          }),
+        ]),
       );
     });
 
-    it('should end with defeat when no living characters remain', () => {
+    it('should end battle in defeat when no living characters remain', () => {
       const defeatedHero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -651,20 +773,50 @@ describe('battle turn engine', () => {
         actorType: 'monster',
       });
 
-      const battle = createTestBattle([defeatedHero, slime], {
-        status: 'in_progress',
+      const battleState = createStartedBattleState({
+        hero: defeatedHero,
+        slime,
       });
 
-      const nextBattle = advanceBattleToNextActor(battle);
+      const nextState = advanceBattleToNextActor(battleState);
 
-      expect(nextBattle.status).toBe('defeat');
-      expect(nextBattle.activeActorId).toBeUndefined();
-      expect(nextBattle.turnOrder.map((entry) => entry.actorId)).toEqual([
+      expect(nextState.status).toBe('defeat');
+      expect(nextState.activeActorId).toBeUndefined();
+
+      expect(nextState.turnOrder.map((entry) => entry.actorId)).toEqual([
         'slime',
       ]);
 
-      expect(nextBattle.events.map((event) => event.type)).toContain(
-        'BATTLE_ENDED',
+      expect(nextState.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'BATTLE_ENDED',
+            phase: 'completed',
+            message: 'Battle ended in defeat.',
+          }),
+        ]),
+      );
+    });
+
+    it('should throw when battle is in progress but no living turn order entries remain', () => {
+      const hero = createActor({
+        actorId: 'hero',
+        actorType: 'character',
+      });
+
+      const slime = createActor({
+        actorId: 'slime',
+        actorType: 'monster',
+      });
+
+      const battleState = createStartedBattleState({
+        hero,
+        slime,
+        turnOrder: [],
+      });
+
+      expect(() => advanceBattleToNextActor(battleState)).toThrow(
+        'Battle battle_1 is in progress but has no living turn order entries.',
       );
     });
   });

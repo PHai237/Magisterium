@@ -1329,4 +1329,98 @@ describe('CharacterService', () => {
 
     expect(service.findCurrent('user_1')).toBeNull();
   });
+  it('should reject adding an item quantity above its max stack size', () => {
+    const created = service.create({
+      name: 'StackLimit',
+      originId: 'mercenary',
+      userId: 'user_1',
+    });
+
+    expect(() =>
+      service.addInventoryItem(created.id, 'user_1', 'minor_hp_potion', 21),
+    ).toThrow(BadRequestException);
+  });
+
+  it('should sanitize dirty current state before applying out-of-battle consumables', () => {
+    const created = service.create({
+      name: 'DirtyPotionUser',
+      originId: 'mercenary',
+      userId: 'user_1',
+    });
+
+    updateStoredCharacterForTest(service, created.id, (character) => ({
+      ...character,
+      currentState: {
+        ...character.currentState,
+        hp: 999_999,
+      },
+    }));
+
+    const result = service.useConsumableItemOutOfBattle(
+      created.id,
+      'user_1',
+      'minor_hp_potion',
+    );
+
+    expect(result.character.currentState.hp).toBe(
+      result.character.derivedStats.maxHp,
+    );
+
+    expect(result.itemUse.effects).toEqual([]);
+  });
+
+  it('should merge battle inventory deltas without dropping out-of-battle inventory changes', () => {
+    const created = service.create({
+      name: 'BattleMerge',
+      originId: 'mercenary',
+      userId: 'user_1',
+    });
+
+    const battleStartingInventoryItemIds = [...created.inventoryItemIds];
+    const battleInventoryItemIds = created.inventoryItemIds.filter(
+      (itemId) => itemId !== 'minor_hp_potion',
+    );
+
+    updateStoredCharacterForTest(service, created.id, (character) => ({
+      ...character,
+      inventoryItemIds: [...character.inventoryItemIds, 'goblin_ear'],
+    }));
+
+    const result = service.applyBattleReward(
+      created.id,
+      'user_1',
+      createBattleRewardSummary({
+        exp: 0,
+        moneyBronze: 0,
+        items: [],
+      }),
+      {
+        battleStartingInventoryItemIds,
+        battleInventoryItemIds,
+      },
+    );
+
+    expect(result.character.inventoryItemIds).not.toContain('minor_hp_potion');
+    expect(result.character.inventoryItemIds).toContain('goblin_ear');
+  });
+
+  it('should reject non-finite reward EXP', () => {
+    const created = service.create({
+      name: 'BadExp',
+      originId: 'mercenary',
+      userId: 'user_1',
+    });
+
+    expect(() =>
+      service.applyBattleReward(
+        created.id,
+        'user_1',
+        createBattleRewardSummary({
+          exp: Number.POSITIVE_INFINITY,
+          moneyBronze: 0,
+          items: [],
+        }),
+      ),
+    ).toThrow(BadRequestException);
+  });
 });

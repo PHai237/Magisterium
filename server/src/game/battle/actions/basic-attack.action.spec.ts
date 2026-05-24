@@ -126,6 +126,7 @@ function findSeedForBasicAttackHitOutcome(input: {
         input.targetId,
         '',
         '',
+        '',
       ].join(':'),
     );
 

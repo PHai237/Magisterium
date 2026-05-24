@@ -80,7 +80,15 @@ describe('monster factory', () => {
 
       expect(derivedStats.maxHp).toBe(28);
       expect(derivedStats.maxMp).toBe(0);
+      expect(derivedStats.maxStamina).toBe(40);
+
       expect(derivedStats.pAtk).toBe(6);
+      expect(derivedStats.mAtk).toBe(0);
+      expect(derivedStats.healingPotency).toBe(0);
+
+      expect(derivedStats.pDef).toBe(1);
+      expect(derivedStats.mDef).toBe(0);
+
       expect(derivedStats.actionSpeed).toBe(8);
     });
   });
@@ -98,6 +106,7 @@ describe('monster factory', () => {
 
       expect(actor.baseStats).toEqual(slimeDefinition.baseStats);
       expect(actor.baseStats).not.toBe(slimeDefinition.baseStats);
+
       expect(actor.derivedStats.maxHp).toBe(28);
       expect(actor.derivedStats.pAtk).toBe(6);
 
@@ -111,6 +120,29 @@ describe('monster factory', () => {
       expect(actor.activeStatusEffects).toEqual([]);
       expect(actor.activeModifiers).toEqual([]);
       expect(actor.procCountThisTurn).toBe(0);
+      expect(actor.inventoryItemIds).toEqual([]);
+    });
+
+    it('should generate a deterministic fallback actor id when instanceId is omitted', () => {
+      const slimeDefinition = getMonsterDefinitionById('slime');
+
+      const actor = createMonsterBattleActorFromDefinition(slimeDefinition);
+
+      expect(actor.actorId).toBe('slime_1');
+      expect(actor.actorType).toBe('monster');
+    });
+
+    it('should use the provided fallback sequence number when instanceId is omitted', () => {
+      const slimeDefinition = getMonsterDefinitionById('slime');
+
+      const actor = createMonsterBattleActorFromDefinition(
+        slimeDefinition,
+        {},
+        3,
+      );
+
+      expect(actor.actorId).toBe('slime_3');
+      expect(actor.actorType).toBe('monster');
     });
 
     it('should allow battle-specific state overrides', () => {
@@ -146,12 +178,12 @@ describe('monster factory', () => {
       expect(actor.derivedStats.pAtk).toBe(13);
     });
 
-    it('should generate an actor id when instanceId is omitted', () => {
+    it('should generate a deterministic actor id when instanceId is omitted', () => {
       const actor = createMonsterBattleActor({
         monsterId: 'slime',
       });
 
-      expect(actor.actorId).toContain('slime_');
+      expect(actor.actorId).toBe('slime_1');
       expect(actor.actorType).toBe('monster');
     });
   });
@@ -175,6 +207,58 @@ describe('monster factory', () => {
       ]);
 
       expect(actors.every((actor) => actor.actorType === 'monster')).toBe(true);
+    });
+
+    it('should generate deterministic unique actor ids for duplicate monster types', () => {
+      const actors = createMonsterBattleActors([
+        {
+          monsterId: 'slime',
+        },
+        {
+          monsterId: 'slime',
+        },
+        {
+          monsterId: 'goblin',
+        },
+        {
+          monsterId: 'slime',
+        },
+      ]);
+
+      expect(actors.map((actor) => actor.actorId)).toEqual([
+        'slime_1',
+        'slime_2',
+        'goblin_1',
+        'slime_3',
+      ]);
+
+      expect(actors.map((actor) => actor.monsterId)).toEqual([
+        'slime',
+        'slime',
+        'goblin',
+        'slime',
+      ]);
+    });
+
+    it('should preserve explicit instance ids while generating missing ids deterministically', () => {
+      const actors = createMonsterBattleActors([
+        {
+          monsterId: 'slime',
+          instanceId: 'custom_slime',
+        },
+        {
+          monsterId: 'slime',
+        },
+        {
+          monsterId: 'slime',
+        },
+      ]);
+
+      expect(actors.map((actor) => actor.actorId)).toEqual([
+        'custom_slime',
+        'slime_2',
+        'slime_3',
+      ]);
     });
   });
 
@@ -218,6 +302,43 @@ describe('monster factory', () => {
           'TURN_STARTED',
         ]),
       );
+    });
+
+    it('should create battle state with duplicate monster types using generated unique ids', () => {
+      const hero = createBattleActorState({
+        actorId: 'hero',
+        actorType: 'character',
+
+        baseStats: DEFAULT_HERO_BASE_STATS,
+        derivedStats: DEFAULT_HERO_DERIVED_STATS,
+
+        currentState: {
+          hp: DEFAULT_HERO_DERIVED_STATS.maxHp,
+          mp: DEFAULT_HERO_DERIVED_STATS.maxMp,
+          stamina: DEFAULT_HERO_DERIVED_STATS.maxStamina,
+        },
+      });
+
+      const monsters = createMonsterBattleActors([
+        {
+          monsterId: 'slime',
+        },
+        {
+          monsterId: 'slime',
+        },
+      ]);
+
+      const battle = createBattleState({
+        battleId: 'duplicate_monster_actor_id_battle_test',
+        seed: 'duplicate_monster_actor_id_seed',
+        actors: [hero, ...monsters],
+      });
+
+      expect(Object.keys(battle.actors)).toEqual([
+        'hero',
+        'slime_1',
+        'slime_2',
+      ]);
     });
   });
 });

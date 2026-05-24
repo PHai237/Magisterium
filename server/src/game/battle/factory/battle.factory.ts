@@ -49,6 +49,7 @@ export interface CreateBattleActorStateInput {
 
   skillIds?: SkillId[];
   inventoryItemIds?: ItemId[];
+  battleStartInventoryItemIds?: ItemId[];
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;
@@ -70,7 +71,7 @@ export interface CreateBattleActorStateInput {
 }
 
 export interface CreateBattleActorFromMonsterInput {
-  actorId?: string;
+  actorId: string;
   monsterId: MonsterId;
   aiTargetingMode?: MonsterAiTargetingMode;
 
@@ -101,6 +102,8 @@ export interface CreateBattleStateInput {
 
   encounterId?: EncounterId;
   zoneId?: EncounterZoneId;
+
+  ownerUserId?: string;
 
   actors: BattleActorState[];
 }
@@ -177,15 +180,32 @@ function cloneSkillIds(skillIds?: readonly SkillId[]): SkillId[] {
   return skillIds ? [...skillIds] : [];
 }
 
-function cloneInventoryItemIds(
-  inventoryItemIds: readonly ItemId[] | undefined,
-): ItemId[] {
-  return [...(inventoryItemIds ?? [])];
+function cloneInventoryItemIds(inventoryItemIds?: readonly ItemId[]): ItemId[] {
+  return inventoryItemIds ? [...inventoryItemIds] : [];
+}
+
+function assertSupportedActiveCombatState(input: {
+  activeStatusEffects?: ActiveStatusEffect[];
+  activeModifiers?: StatModifier[];
+}): void {
+  if ((input.activeStatusEffects?.length ?? 0) > 0) {
+    throw new Error(
+      'Active status effects are not supported by battle calculations yet.',
+    );
+  }
+
+  if ((input.activeModifiers?.length ?? 0) > 0) {
+    throw new Error(
+      'Active modifiers are not supported by battle calculations yet.',
+    );
+  }
 }
 
 export function createBattleActorState(
   input: CreateBattleActorStateInput,
 ): BattleActorState {
+  assertSupportedActiveCombatState(input);
+
   const hp = normalizeCurrentResource(
     input.hp ?? input.currentState?.hp,
     input.derivedStats.maxHp,
@@ -213,6 +233,9 @@ export function createBattleActorState(
 
     skillIds: cloneSkillIds(input.skillIds),
     inventoryItemIds: cloneInventoryItemIds(input.inventoryItemIds),
+    battleStartInventoryItemIds: input.battleStartInventoryItemIds
+      ? cloneInventoryItemIds(input.battleStartInventoryItemIds)
+      : undefined,
 
     baseStats: input.baseStats,
     derivedStats: input.derivedStats,
@@ -243,6 +266,7 @@ export function createBattleActorFromCharacterSnapshot(
 
     skillIds: character.equippedSkillIds,
     inventoryItemIds: character.inventoryItemIds,
+    battleStartInventoryItemIds: character.inventoryItemIds,
 
     baseStats: character.baseStats,
     derivedStats: character.derivedStats,
@@ -263,13 +287,14 @@ export function createBattleActorFromMonsterInput(
   input: CreateBattleActorFromMonsterInput,
 ): BattleActorState {
   return createBattleActorState({
-    actorId: input.actorId ?? input.monsterId,
+    actorId: input.actorId,
     actorType: 'monster',
 
     monsterId: input.monsterId,
     aiTargetingMode: input.aiTargetingMode,
 
     skillIds: input.skillIds ?? [],
+    inventoryItemIds: [],
 
     baseStats: input.baseStats,
     derivedStats: input.derivedStats,
@@ -313,6 +338,8 @@ export function createBattleState(input: CreateBattleStateInput): BattleState {
 
     encounterId: input.encounterId,
     zoneId: input.zoneId,
+
+    ownerUserId: input.ownerUserId,
 
     roundNumber: 1,
     turnNumber: 0,

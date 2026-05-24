@@ -97,14 +97,7 @@ export function resolveSkillTargets(
       return targets;
     }
 
-    case 'ally_all': {
-      const targets = getLivingAlliesOf(battleState, actor);
-
-      if (targets.length === 0) {
-        throw new Error('Skill requires at least one living ally target.');
-      }
-
-      return targets;
-    }
+    case 'ally_all':
+      return getLivingAlliesOf(battleState, actor);
   }
 }

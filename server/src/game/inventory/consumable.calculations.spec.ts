@@ -183,3 +183,67 @@ describe('consumable calculations', () => {
     ]);
   });
 });
+
+it('should omit zero-amount rest effects when the character is already fully recovered', () => {
+  const character = createCharacter({
+    name: 'FullRestUser',
+    originId: 'mercenary',
+    userId: 'user_1',
+  });
+
+  const snapshot = createCharacterSnapshot(character);
+
+  const result = applyConsumableItemEffectsToCharacter(
+    character,
+    snapshot.derivedStats,
+    'one_night_inn_voucher',
+    'out_of_battle',
+  );
+
+  expect(result.character.currentState).toEqual(character.currentState);
+  expect(result.character.fatigue).toBe(0);
+  expect(result.effects).toEqual([]);
+});
+
+it('should keep only meaningful rest effects when some resources are already full', () => {
+  const character = createCharacter({
+    name: 'PartialRestUser',
+    originId: 'scholar',
+    userId: 'user_1',
+  });
+
+  const snapshot = createCharacterSnapshot(character);
+
+  const partiallyDrainedCharacter = {
+    ...character,
+    fatigue: 0.5,
+    currentState: {
+      ...character.currentState,
+      hp: snapshot.derivedStats.maxHp,
+      mp: 0,
+      stamina: snapshot.derivedStats.maxStamina,
+    },
+  };
+
+  const result = applyConsumableItemEffectsToCharacter(
+    partiallyDrainedCharacter,
+    snapshot.derivedStats,
+    'one_night_inn_voucher',
+    'out_of_battle',
+  );
+
+  expect(result.character.currentState).toEqual({
+    hp: snapshot.derivedStats.maxHp,
+    mp: snapshot.derivedStats.maxMp,
+    stamina: snapshot.derivedStats.maxStamina,
+  });
+
+  expect(result.character.fatigue).toBe(0);
+
+  expect(result.effects.map((effect) => effect.target)).toEqual([
+    'MP',
+    'Fatigue',
+  ]);
+
+  expect(result.effects.every((effect) => effect.amountApplied > 0)).toBe(true);
+});

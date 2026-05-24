@@ -23,6 +23,7 @@ import type {
   CurrencyAmount,
   CurrentState,
   DerivedStats,
+  ItemId,
   OriginDefinition,
   OriginId,
   StarterKitDefinition,
@@ -32,6 +33,8 @@ import type {
 } from './character.types';
 
 import { collectEquipmentStatModifiers } from '../inventory/equipment-modifier.calculations';
+import { findEquipmentSlotConflicts } from '../inventory/equipment.calculations';
+import { getItemDefinitionById } from '../item/item.registry';
 
 import type { StatModifier } from '../passive/passive.types';
 
@@ -68,6 +71,23 @@ const DERIVED_STAT_KEYS = [
   'procRate',
 ] as const;
 
+const MAX_SAFE_STAT_CALCULATION_VALUE = 1_000_000;
+
+function assertFiniteStatCalculationValue(
+  value: number,
+  label: string,
+): number {
+  if (!Number.isFinite(value)) {
+    throw new Error(`${label} must be a finite number.`);
+  }
+
+  if (Math.abs(value) > MAX_SAFE_STAT_CALCULATION_VALUE) {
+    throw new Error(`${label} exceeds the safe stat calculation limit.`);
+  }
+
+  return value;
+}
+
 function isBaseStatModifierTarget(target: string): target is StatKey {
   return BASE_STAT_KEYS.includes(target as StatKey);
 }
@@ -88,7 +108,26 @@ function sortStatModifiers(modifiers: readonly StatModifier[]): StatModifier[] {
   });
 }
 
-function resolveModifierValue(
+function resolveBaseStatModifierValue(
+  modifier: StatModifier,
+  rawBaseStats: BaseStats,
+): number {
+  if (!modifier.valueSource || modifier.valueSource.type === 'constant') {
+    return modifier.value;
+  }
+
+  if (modifier.valueSource.type === 'stat_ratio') {
+    return (
+      rawBaseStats[modifier.valueSource.sourceStat] * modifier.valueSource.ratio
+    );
+  }
+
+  throw new Error(
+    `Base stat modifier ${modifier.id} cannot use derived_stat_ratio value source.`,
+  );
+}
+
+function resolveDerivedStatModifierValue(
   modifier: StatModifier,
   rawBaseStats: BaseStats,
   rawDerivedStats: DerivedStats,
@@ -118,20 +157,43 @@ function applyModifierToNumber(
   modifier: StatModifier,
   resolvedModifierValue: number,
 ): number {
+  const safeCurrentValue = assertFiniteStatCalculationValue(
+    currentValue,
+    `Current stat value for modifier ${modifier.id}`,
+  );
+
+  const safeResolvedModifierValue = assertFiniteStatCalculationValue(
+    resolvedModifierValue,
+    `Resolved modifier value for modifier ${modifier.id}`,
+  );
+
+  let nextValue: number;
+
   switch (modifier.operation) {
     case 'add':
-      return modifier.valueType === 'percent'
-        ? currentValue + currentValue * (resolvedModifierValue / 100)
-        : currentValue + resolvedModifierValue;
+      nextValue =
+        modifier.valueType === 'percent'
+          ? safeCurrentValue +
+            safeCurrentValue * (safeResolvedModifierValue / 100)
+          : safeCurrentValue + safeResolvedModifierValue;
+      break;
 
     case 'multiply':
-      return modifier.valueType === 'percent'
-        ? currentValue * (1 + resolvedModifierValue / 100)
-        : currentValue * resolvedModifierValue;
+      nextValue =
+        modifier.valueType === 'percent'
+          ? safeCurrentValue * (1 + safeResolvedModifierValue / 100)
+          : safeCurrentValue * safeResolvedModifierValue;
+      break;
 
     case 'override':
-      return resolvedModifierValue;
+      nextValue = safeResolvedModifierValue;
+      break;
   }
+
+  return assertFiniteStatCalculationValue(
+    nextValue,
+    `Calculated stat value for modifier ${modifier.id}`,
+  );
 }
 
 export function clamp(value: number, min: number, max: number): number {
@@ -402,7 +464,6 @@ export function applyModifiersToBaseStats(
   baseStats: BaseStats,
   modifiers: readonly StatModifier[] = [],
 ): BaseStats {
-  const rawDerivedStats = calculateRawDerivedStats(baseStats);
   const nextBaseStats: BaseStats = {
     ...baseStats,
   };
@@ -412,10 +473,9 @@ export function applyModifiersToBaseStats(
       continue;
     }
 
-    const resolvedModifierValue = resolveModifierValue(
+    const resolvedModifierValue = resolveBaseStatModifierValue(
       modifier,
       baseStats,
-      rawDerivedStats,
     );
 
     nextBaseStats[modifier.target] = Math.max(
@@ -447,7 +507,7 @@ export function applyModifiersToDerivedStats(
       continue;
     }
 
-    const resolvedModifierValue = resolveModifierValue(
+    const resolvedModifierValue = resolveDerivedStatModifierValue(
       modifier,
       baseStats,
       derivedStats,
@@ -500,20 +560,90 @@ export function clampCurrentState(
   };
 }
 
+function countItemIds(itemIds: readonly ItemId[]): Map<ItemId, number> {
+  const counts = new Map<ItemId, number>();
+
+  for (const itemId of itemIds) {
+    counts.set(itemId, (counts.get(itemId) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
+export function sanitizeEquippedItemIds(
+  equippedItemIds: readonly ItemId[],
+  inventoryItemIds: readonly ItemId[],
+): ItemId[] {
+  const inventoryCounts = countItemIds(inventoryItemIds);
+  const equippedCounts = new Map<ItemId, number>();
+  const seenEquippedItemIds = new Set<ItemId>();
+  const sanitizedEquippedItemIds: ItemId[] = [];
+
+  for (const itemId of equippedItemIds) {
+    if (seenEquippedItemIds.has(itemId)) {
+      continue;
+    }
+
+    const inventoryQuantity = inventoryCounts.get(itemId) ?? 0;
+    const alreadyEquippedQuantity = equippedCounts.get(itemId) ?? 0;
+
+    if (
+      inventoryQuantity <= 0 ||
+      alreadyEquippedQuantity >= inventoryQuantity
+    ) {
+      continue;
+    }
+
+    let itemDefinition: ReturnType<typeof getItemDefinitionById>;
+
+    try {
+      itemDefinition = getItemDefinitionById(itemId);
+    } catch {
+      continue;
+    }
+
+    if (!itemDefinition.equipment) {
+      continue;
+    }
+
+    if (
+      findEquipmentSlotConflicts(sanitizedEquippedItemIds, itemId).length > 0
+    ) {
+      continue;
+    }
+
+    sanitizedEquippedItemIds.push(itemId);
+    equippedCounts.set(itemId, alreadyEquippedQuantity + 1);
+    seenEquippedItemIds.add(itemId);
+  }
+
+  return sanitizedEquippedItemIds;
+}
+
 export function createCharacterSnapshot(
   character: Character,
 ): CharacterSnapshot {
+  const sanitizedEquippedItemIds = sanitizeEquippedItemIds(
+    character.equippedItemIds,
+    character.inventoryItemIds,
+  );
+
   const rawBaseStats = calculateBaseStats(character.stats);
   const equipmentModifiers = collectEquipmentStatModifiers(
-    character.equippedItemIds,
+    sanitizedEquippedItemIds,
   );
 
   const baseStats = applyModifiersToBaseStats(rawBaseStats, equipmentModifiers);
-
-  const derivedStats = calculateDerivedStats(baseStats, equipmentModifiers);
+  const rawDerivedStats = calculateRawDerivedStats(baseStats);
+  const derivedStats = applyModifiersToDerivedStats(
+    rawDerivedStats,
+    baseStats,
+    equipmentModifiers,
+  );
 
   return {
     ...character,
+    equippedItemIds: sanitizedEquippedItemIds,
     currentState: clampCurrentState(character.currentState, derivedStats),
     baseStats,
     derivedStats,

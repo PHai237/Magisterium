@@ -102,6 +102,20 @@ const DERIVED_STAT_KEYS: readonly (keyof DerivedStats)[] = [
   'procRate',
 ];
 
+const SUPPORTED_SKILL_EFFECT_TYPES = new Set<SkillEffect['type']>([
+  'damage',
+  'heal',
+  'shield',
+]);
+
+function findUnsupportedSkillEffect(
+  skill: SkillDefinition,
+): SkillEffect | undefined {
+  return skill.effects.find(
+    (effect) => !SUPPORTED_SKILL_EFFECT_TYPES.has(effect.type),
+  );
+}
+
 function isBaseStatKey(source: SkillScalingSource): source is StatKey {
   return BASE_STAT_KEYS.includes(source as StatKey);
 }
@@ -304,6 +318,17 @@ export function resolveUseSkill(
       battleState,
       actor,
       `Actor ${actor.actorId} has not equipped skill: ${skill.id}.`,
+      skill.id,
+    );
+  }
+
+  const unsupportedEffect = findUnsupportedSkillEffect(skill);
+
+  if (unsupportedEffect) {
+    return createSkillActionCancelledResult(
+      battleState,
+      actor,
+      `Skill ${skill.id} has unsupported effect type: ${unsupportedEffect.type}.`,
       skill.id,
     );
   }

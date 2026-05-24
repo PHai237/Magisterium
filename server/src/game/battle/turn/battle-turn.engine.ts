@@ -50,7 +50,7 @@ export function filterTurnOrderToLivingActors(
   return turnOrder.filter((entry) => {
     const actor = actors[entry.actorId];
 
-    return actor && isActorAlive(actor);
+    return Boolean(actor && isActorAlive(actor));
   });
 }
 
@@ -101,20 +101,11 @@ export function shouldAdvanceRound(battleState: BattleState): boolean {
 
 export function resetRoundActedFlags(
   turnOrder: BattleTurnOrderEntry[],
-  actors: Record<string, BattleActorState>,
 ): BattleTurnOrderEntry[] {
-  return turnOrder.map((entry) => {
-    const actor = actors[entry.actorId];
-
-    if (!actor || !isActorAlive(actor)) {
-      return entry;
-    }
-
-    return {
-      ...entry,
-      hasActedThisRound: false,
-    };
-  });
+  return turnOrder.map((entry) => ({
+    ...entry,
+    hasActedThisRound: false,
+  }));
 }
 
 export function advanceRoundIfNeeded(battleState: BattleState): BattleState {
@@ -129,10 +120,7 @@ export function advanceRoundIfNeeded(battleState: BattleState): BattleState {
     {
       ...battleState,
       roundNumber: nextRoundNumber,
-      turnOrder: resetRoundActedFlags(
-        battleState.turnOrder,
-        battleState.actors,
-      ),
+      turnOrder: resetRoundActedFlags(battleState.turnOrder),
       updatedAt: new Date().toISOString(),
     },
     [
@@ -173,6 +161,7 @@ export function advanceBattleToNextActor(
           battleState.turnOrder,
           battleState.actors,
         ),
+        updatedAt: new Date().toISOString(),
       },
       [
         createSystemEvent(
@@ -190,6 +179,12 @@ export function advanceBattleToNextActor(
     battleState.actors,
   );
 
+  if (livingTurnOrder.length === 0) {
+    throw new Error(
+      `Battle ${battleState.battleId} is in progress but has no living turn order entries.`,
+    );
+  }
+
   const advancedTurnOrder = advanceTurnGaugeUntilReady(livingTurnOrder);
 
   const readyEntry = findNextReadyLivingEntry(
@@ -198,13 +193,9 @@ export function advanceBattleToNextActor(
   );
 
   if (!readyEntry) {
-    return {
-      ...battleState,
-      status: 'in_progress',
-      activeActorId: undefined,
-      turnOrder: advancedTurnOrder,
-      updatedAt: new Date().toISOString(),
-    };
+    throw new Error(
+      `Battle ${battleState.battleId} could not find a ready living actor after advancing turn gauge.`,
+    );
   }
 
   const nextTurnNumber = battleState.turnNumber + 1;
