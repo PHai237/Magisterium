@@ -339,9 +339,9 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
   },
   {
     id: 'one_night_inn_voucher',
-    name: 'One-Night Inn Voucher',
+    name: 'One-Night Inn Pass',
     description:
-      'A single-use voucher for one safe night at a basic inn. Intended for full recovery outside battle.',
+      'A single-use pass for one safe night at a basic inn. Intended for full recovery outside battle.',
     category: 'voucher',
     rarity: 'common',
     stackable: true,
@@ -362,7 +362,7 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
         },
       ],
     },
-    tags: ['starter', 'voucher', 'rest', 'inn'],
+    tags: ['starter', 'pass', 'rest', 'inn'],
   },
   {
     id: 'slime_gel',

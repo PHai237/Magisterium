@@ -848,7 +848,7 @@ describe('CharacterService', () => {
       });
     });
 
-    it('should use inn voucher, fully rest, recover fatigue, and consume voucher', () => {
+    it('should use inn pass, fully rest, recover fatigue, and consume it', () => {
       const created = service.create({
         name: 'RestUser',
         originId: 'mercenary',

@@ -28,3 +28,11 @@ road event cut the player's info and increase the size of text, also longer text
 
 fix the char creation's page
 
+add ? to every stats and items so players can understand without asking or searching
+
+add a pop up to character selection so when people click it, it will show all infomation
+
+add a better pop up for deletion
+
+manage address email is typing both username and email at the same time
+

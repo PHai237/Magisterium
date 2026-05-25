@@ -166,6 +166,27 @@ export interface CharacterSnapshot extends Character {
   derivedStats: DerivedStats;
 }
 
+export interface StartingKitItemPreview {
+  itemId: ItemId;
+  name: string;
+  quantity: number;
+}
+
+export interface StartingKitPreview {
+  id: StarterKitId;
+  name: string;
+  moneyBronze: number;
+  items: StartingKitItemPreview[];
+}
+
+export interface CharacterCreationPreview {
+  originId: OriginId;
+  baseStats: BaseStats;
+  derivedStats: DerivedStats;
+  currentState: CurrentState;
+  startingKit: StartingKitPreview;
+}
+
 export interface CreateCharacterInput {
   name: string;
   originId: OriginId;

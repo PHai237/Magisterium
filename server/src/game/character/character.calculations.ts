@@ -326,7 +326,7 @@ export function getOriginById(originId: OriginId): OriginDefinition {
 }
 
 export function getStarterKitById(
-  starterKitId: StarterKitId,
+  starterKitId: StarterKitId = DEFAULT_STARTER_KIT_ID,
 ): StarterKitDefinition {
   const found = STARTER_KIT_DEFINITIONS.find((kit) => kit.id === starterKitId);
 
