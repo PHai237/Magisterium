@@ -1,6 +1,9 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
+  OnModuleInit,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 
@@ -8,6 +11,8 @@ import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'crypto';
 
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { RegisterAuthDto } from './dto/register-auth.dto';
+
+import { DatabaseService } from '../database/database.service';
 
 import type {
   AuthResponse,
@@ -20,11 +25,22 @@ const PASSWORD_SALT_BYTES = 16;
 const PASSWORD_HASH_BYTES = 64;
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
+
   private readonly usersById = new Map<string, StoredAuthUser>();
   private readonly userIdsByUsername = new Map<string, string>();
   private readonly userIdsByEmail = new Map<string, string>();
   private readonly userIdsByToken = new Map<string, string>();
+
+  constructor(
+    @Optional()
+    private readonly databaseService?: DatabaseService,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.hydrateAuthStateFromDatabase();
+  }
 
   register(dto: RegisterAuthDto): AuthResponse {
     const usernameKey = this.normalizeUsernameKey(dto.username);
@@ -54,6 +70,8 @@ export class AuthService {
     this.usersById.set(user.id, user);
     this.userIdsByUsername.set(usernameKey, user.id);
     this.userIdsByEmail.set(emailKey, user.id);
+
+    this.persistAuthUser(user);
 
     return this.createAuthResponse(user);
   }
@@ -85,6 +103,7 @@ export class AuthService {
 
     if (!user) {
       this.userIdsByToken.delete(token);
+      this.deleteAuthSession(token);
 
       return null;
     }
@@ -97,6 +116,7 @@ export class AuthService {
 
     if (token) {
       this.userIdsByToken.delete(token);
+      this.deleteAuthSession(token);
     }
 
     return {
@@ -109,12 +129,61 @@ export class AuthService {
     this.userIdsByUsername.clear();
     this.userIdsByEmail.clear();
     this.userIdsByToken.clear();
+
+    this.persistClearAuthState();
+  }
+
+  private async hydrateAuthStateFromDatabase(): Promise<void> {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    try {
+      await this.databaseService.initialize();
+
+      const users = await this.databaseService.loadAuthUsers();
+
+      this.usersById.clear();
+      this.userIdsByUsername.clear();
+      this.userIdsByEmail.clear();
+
+      for (const user of users) {
+        this.usersById.set(user.id, user);
+        this.userIdsByUsername.set(
+          this.normalizeUsernameKey(user.username),
+          user.id,
+        );
+        this.userIdsByEmail.set(this.normalizeEmailKey(user.email), user.id);
+      }
+
+      const sessions = await this.databaseService.loadAuthSessions();
+
+      this.userIdsByToken.clear();
+
+      for (const session of sessions) {
+        if (this.usersById.has(session.userId)) {
+          this.userIdsByToken.set(session.token, session.userId);
+        }
+      }
+
+      this.logger.log(
+        `Hydrated ${users.length} auth users and ${sessions.length} sessions from database.`,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown database error.';
+
+      this.logger.error(`Failed to hydrate auth state: ${message}`);
+
+      throw error;
+    }
   }
 
   private createAuthResponse(user: StoredAuthUser): AuthResponse {
     const token = this.createSessionToken();
 
     this.userIdsByToken.set(token, user.id);
+    this.persistAuthSession(token, user.id);
 
     return {
       user: this.toSessionSnapshot(user),
@@ -203,5 +272,63 @@ export class AuthService {
     }
 
     return token;
+  }
+
+  private persistAuthUser(user: StoredAuthUser): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService.upsertAuthUser(user).catch((error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : 'Unknown database error.';
+
+      this.logger.error(`Failed to persist auth user ${user.id}: ${message}`);
+    });
+  }
+
+  private persistAuthSession(token: string, userId: string): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService
+      .upsertAuthSession(token, userId)
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : 'Unknown database error.';
+
+        this.logger.error(
+          `Failed to persist auth session for user ${userId}: ${message}`,
+        );
+      });
+  }
+
+  private deleteAuthSession(token: string): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService
+      .deleteAuthSession(token)
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : 'Unknown database error.';
+
+        this.logger.error(`Failed to delete auth session: ${message}`);
+      });
+  }
+
+  private persistClearAuthState(): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService.clearAuthState().catch((error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : 'Unknown database error.';
+
+      this.logger.error(`Failed to clear auth state: ${message}`);
+    });
   }
 }

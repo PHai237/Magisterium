@@ -1,7 +1,10 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 
 import { CreateCharacterDto } from './dto/create-character.dto';
@@ -13,6 +16,8 @@ import {
   normalizeOptionalCharacterName,
   normalizeRequiredUserId,
 } from './character.validation';
+
+import { DatabaseService } from '../database/database.service';
 
 import { createCharacter } from '../game/character/character.factory';
 
@@ -121,9 +126,20 @@ const MAX_SAFE_TOTAL_EXP = 100_000_000;
 const MAX_SAFE_REWARD_EXP = 1_000_000;
 
 @Injectable()
-export class CharacterService {
+export class CharacterService implements OnModuleInit {
   private readonly characters = new Map<string, Character>();
   private readonly currentCharacterIdsByUserScope = new Map<string, string>();
+
+  private readonly logger = new Logger(CharacterService.name);
+
+  constructor(
+    @Optional()
+    private readonly databaseService?: DatabaseService,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.hydrateCharacterStateFromDatabase();
+  }
 
   ping() {
     return {
@@ -164,6 +180,9 @@ export class CharacterService {
 
     this.characters.set(character.id, character);
     this.currentCharacterIdsByUserScope.set(userId, character.id);
+
+    this.persistCharacter(character);
+    this.persistCurrentCharacter(userId, character.id);
 
     return createCharacterSnapshot(character);
   }
@@ -231,6 +250,7 @@ export class CharacterService {
     };
 
     this.characters.set(id, nextCharacter);
+    this.persistCharacter(nextCharacter);
     this.repairCurrentCharacterForUserScope(userScope);
 
     return createCharacterSnapshot(nextCharacter);
@@ -291,6 +311,7 @@ export class CharacterService {
     };
 
     this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
@@ -355,6 +376,7 @@ export class CharacterService {
     };
 
     this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
@@ -400,6 +422,7 @@ export class CharacterService {
     };
 
     this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
@@ -441,6 +464,7 @@ export class CharacterService {
     };
 
     this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
@@ -477,6 +501,7 @@ export class CharacterService {
     };
 
     this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
@@ -546,6 +571,7 @@ export class CharacterService {
     };
 
     this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
@@ -569,6 +595,7 @@ export class CharacterService {
     this.assertCharacterBelongsToUserScope(character, userScope);
 
     this.currentCharacterIdsByUserScope.set(userScope, character.id);
+    this.persistCurrentCharacter(userScope, character.id);
 
     return createCharacterSnapshot(character);
   }
@@ -580,6 +607,7 @@ export class CharacterService {
     this.assertCharacterBelongsToUserScope(character, userScope);
 
     this.characters.delete(id);
+    this.deletePersistedCharacter(id);
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
@@ -591,6 +619,8 @@ export class CharacterService {
   clearCharacters(): void {
     this.characters.clear();
     this.currentCharacterIdsByUserScope.clear();
+
+    this.persistClearCharacterState();
   }
 
   private buildStartingKitPreview(starterKit: StarterKitDefinition) {
@@ -996,11 +1026,13 @@ export class CharacterService {
 
     if (!fallbackCharacter) {
       this.currentCharacterIdsByUserScope.delete(userScope);
+      this.deletePersistedCurrentCharacter(userScope);
 
       return null;
     }
 
     this.currentCharacterIdsByUserScope.set(userScope, fallbackCharacter.id);
+    this.persistCurrentCharacter(userScope, fallbackCharacter.id);
 
     return createCharacterSnapshot(fallbackCharacter);
   }
@@ -1023,10 +1055,142 @@ export class CharacterService {
 
     if (!fallbackCharacter) {
       this.currentCharacterIdsByUserScope.delete(userScope);
+      this.deletePersistedCurrentCharacter(userScope);
 
       return;
     }
 
     this.currentCharacterIdsByUserScope.set(userScope, fallbackCharacter.id);
+    this.persistCurrentCharacter(userScope, fallbackCharacter.id);
+  }
+
+  private async hydrateCharacterStateFromDatabase(): Promise<void> {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    try {
+      await this.databaseService.initialize();
+
+      const characters = await this.databaseService.loadCharacters();
+
+      this.characters.clear();
+
+      for (const character of characters) {
+        this.characters.set(character.id, character);
+      }
+
+      const currentCharacters =
+        await this.databaseService.loadCurrentCharacters();
+
+      this.currentCharacterIdsByUserScope.clear();
+
+      for (const currentCharacter of currentCharacters) {
+        const character = this.characters.get(currentCharacter.characterId);
+
+        if (character && character.userId === currentCharacter.userId) {
+          this.currentCharacterIdsByUserScope.set(
+            currentCharacter.userId,
+            currentCharacter.characterId,
+          );
+        }
+      }
+
+      for (const character of characters) {
+        this.repairCurrentCharacterForUserScope(character.userId);
+      }
+
+      this.logger.log(
+        `Hydrated ${characters.length} characters from database.`,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown database error.';
+
+      this.logger.error(`Failed to hydrate character state: ${message}`);
+
+      throw error;
+    }
+  }
+
+  private persistCharacter(character: Character): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService
+      .upsertCharacter(character)
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : 'Unknown database error.';
+
+        this.logger.error(
+          `Failed to persist character ${character.id}: ${message}`,
+        );
+      });
+  }
+
+  private deletePersistedCharacter(characterId: string): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService
+      .deleteCharacter(characterId)
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : 'Unknown database error.';
+
+        this.logger.error(
+          `Failed to delete persisted character ${characterId}: ${message}`,
+        );
+      });
+  }
+
+  private persistCurrentCharacter(userId: string, characterId: string): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService
+      .setCurrentCharacter(userId, characterId)
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : 'Unknown database error.';
+
+        this.logger.error(
+          `Failed to persist current character for user ${userId}: ${message}`,
+        );
+      });
+  }
+
+  private deletePersistedCurrentCharacter(userId: string): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService
+      .deleteCurrentCharacter(userId)
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : 'Unknown database error.';
+
+        this.logger.error(
+          `Failed to delete current character for user ${userId}: ${message}`,
+        );
+      });
+  }
+
+  private persistClearCharacterState(): void {
+    if (!this.databaseService?.isEnabled()) {
+      return;
+    }
+
+    void this.databaseService.clearCharacterState().catch((error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : 'Unknown database error.';
+
+      this.logger.error(`Failed to clear character state: ${message}`);
+    });
   }
 }
