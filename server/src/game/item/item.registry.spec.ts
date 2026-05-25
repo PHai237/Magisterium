@@ -183,7 +183,7 @@ describe('item registry', () => {
     expect(isStackableItem('rusty_sword')).toBe(false);
   });
 
-  it('should treat inn voucher as voucher category with consumable capability', () => {
+  it('should treat inn pass as voucher category with consumable capability', () => {
     const voucher = getItemDefinitionById('one_night_inn_voucher');
 
     expect(voucher.category).toBe('voucher');

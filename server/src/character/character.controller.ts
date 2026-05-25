@@ -15,6 +15,7 @@ import { CreateCharacterDto } from './dto/create-character.dto';
 import { InventoryItemActionDto } from './dto/inventory-item-action.dto';
 import { InventoryItemQuantityDto } from './dto/inventory-item-quantity.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
+import { PreviewCharacterDto } from './dto/preview-character.dto';
 
 import {
   normalizeRequiredUserId,
@@ -30,6 +31,16 @@ export class CharacterController {
   @Get('ping')
   ping() {
     return this.characterService.ping();
+  }
+
+  @Post('preview')
+  preview(
+    @Body() previewCharacterDto: PreviewCharacterDto,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    this.readRequiredUserIdHeader(userIdHeader);
+
+    return this.characterService.createPreview(previewCharacterDto);
   }
 
   @Post()

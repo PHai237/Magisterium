@@ -51,10 +51,7 @@ export function createCharacter(input: CreateCharacterInput): Character {
   const originItemIds: ItemId[] = originDef.startingItemIds;
   const starterKitItemIds: ItemId[] = starterKitDef.startingItemIds;
 
-  const inventoryItemIds = uniqueIds<ItemId>([
-    ...originItemIds,
-    ...starterKitItemIds,
-  ]);
+  const inventoryItemIds: ItemId[] = [...originItemIds, ...starterKitItemIds];
 
   const equippedItemIds = uniqueIds<ItemId>(originItemIds);
 

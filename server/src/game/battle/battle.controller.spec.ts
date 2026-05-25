@@ -646,7 +646,8 @@ describe('BattleController', () => {
       'user_1',
       reward,
       {
-        battleStartingInventoryItemIds: characterActor.battleStartInventoryItemIds,
+        battleStartingInventoryItemIds:
+          characterActor.battleStartInventoryItemIds,
         battleInventoryItemIds: characterActor.inventoryItemIds,
         battleCurrentState: {
           hp: characterActor.hp,

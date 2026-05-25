@@ -1,0 +1,207 @@
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'crypto';
+
+import { LoginAuthDto } from './dto/login-auth.dto';
+import { RegisterAuthDto } from './dto/register-auth.dto';
+
+import type {
+  AuthResponse,
+  StoredAuthUser,
+  UserSessionSnapshot,
+} from './auth.types';
+
+const TOKEN_BYTES = 32;
+const PASSWORD_SALT_BYTES = 16;
+const PASSWORD_HASH_BYTES = 64;
+
+@Injectable()
+export class AuthService {
+  private readonly usersById = new Map<string, StoredAuthUser>();
+  private readonly userIdsByUsername = new Map<string, string>();
+  private readonly userIdsByEmail = new Map<string, string>();
+  private readonly userIdsByToken = new Map<string, string>();
+
+  register(dto: RegisterAuthDto): AuthResponse {
+    const usernameKey = this.normalizeUsernameKey(dto.username);
+    const emailKey = this.normalizeEmailKey(dto.email);
+
+    if (this.userIdsByUsername.has(usernameKey)) {
+      throw new BadRequestException('Username is already taken.');
+    }
+
+    if (this.userIdsByEmail.has(emailKey)) {
+      throw new BadRequestException('Email is already registered.');
+    }
+
+    const now = new Date().toISOString();
+    const passwordSalt = this.createPasswordSalt();
+
+    const user: StoredAuthUser = {
+      id: this.createUserId(),
+      username: dto.username.trim(),
+      email: emailKey,
+      role: 'player',
+      createdAt: now,
+      passwordSalt,
+      passwordHash: this.hashPassword(dto.password, passwordSalt),
+    };
+
+    this.usersById.set(user.id, user);
+    this.userIdsByUsername.set(usernameKey, user.id);
+    this.userIdsByEmail.set(emailKey, user.id);
+
+    return this.createAuthResponse(user);
+  }
+
+  login(dto: LoginAuthDto): AuthResponse {
+    const user = this.findUserByIdentifier(dto.identifier);
+
+    if (!user || !this.verifyPassword(dto.password, user)) {
+      throw new UnauthorizedException('Invalid username/email or password.');
+    }
+
+    return this.createAuthResponse(user);
+  }
+
+  me(authorizationHeader?: string | string[]): UserSessionSnapshot | null {
+    const token = this.extractBearerToken(authorizationHeader);
+
+    if (!token) {
+      return null;
+    }
+
+    const userId = this.userIdsByToken.get(token);
+
+    if (!userId) {
+      return null;
+    }
+
+    const user = this.usersById.get(userId);
+
+    if (!user) {
+      this.userIdsByToken.delete(token);
+
+      return null;
+    }
+
+    return this.toSessionSnapshot(user);
+  }
+
+  logout(authorizationHeader?: string | string[]) {
+    const token = this.extractBearerToken(authorizationHeader);
+
+    if (token) {
+      this.userIdsByToken.delete(token);
+    }
+
+    return {
+      success: true,
+    };
+  }
+
+  clearAuthState(): void {
+    this.usersById.clear();
+    this.userIdsByUsername.clear();
+    this.userIdsByEmail.clear();
+    this.userIdsByToken.clear();
+  }
+
+  private createAuthResponse(user: StoredAuthUser): AuthResponse {
+    const token = this.createSessionToken();
+
+    this.userIdsByToken.set(token, user.id);
+
+    return {
+      user: this.toSessionSnapshot(user),
+      token,
+    };
+  }
+
+  private toSessionSnapshot(user: StoredAuthUser): UserSessionSnapshot {
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+    };
+  }
+
+  private findUserByIdentifier(identifier: string): StoredAuthUser | undefined {
+    const normalizedIdentifier = identifier.trim();
+    const usernameKey = this.normalizeUsernameKey(normalizedIdentifier);
+    const emailKey = this.normalizeEmailKey(normalizedIdentifier);
+
+    const userId =
+      this.userIdsByUsername.get(usernameKey) ??
+      this.userIdsByEmail.get(emailKey);
+
+    if (!userId) {
+      return undefined;
+    }
+
+    return this.usersById.get(userId);
+  }
+
+  private verifyPassword(password: string, user: StoredAuthUser): boolean {
+    const candidateHash = this.hashPassword(password, user.passwordSalt);
+
+    const candidateBuffer = Buffer.from(candidateHash, 'hex');
+    const storedBuffer = Buffer.from(user.passwordHash, 'hex');
+
+    if (candidateBuffer.length !== storedBuffer.length) {
+      return false;
+    }
+
+    return timingSafeEqual(candidateBuffer, storedBuffer);
+  }
+
+  private hashPassword(password: string, salt: string): string {
+    return scryptSync(password, salt, PASSWORD_HASH_BYTES).toString('hex');
+  }
+
+  private createPasswordSalt(): string {
+    return randomBytes(PASSWORD_SALT_BYTES).toString('hex');
+  }
+
+  private createSessionToken(): string {
+    return randomBytes(TOKEN_BYTES).toString('hex');
+  }
+
+  private createUserId(): string {
+    return `user_${randomUUID()}`;
+  }
+
+  private normalizeUsernameKey(username: string): string {
+    return username.trim().toLowerCase();
+  }
+
+  private normalizeEmailKey(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private extractBearerToken(
+    authorizationHeader?: string | string[],
+  ): string | undefined {
+    const rawHeader = Array.isArray(authorizationHeader)
+      ? authorizationHeader[0]
+      : authorizationHeader;
+
+    if (!rawHeader) {
+      return undefined;
+    }
+
+    const [scheme, token] = rawHeader.trim().split(/\s+/u);
+
+    if (scheme?.toLowerCase() !== 'bearer' || !token) {
+      return undefined;
+    }
+
+    return token;
+  }
+}

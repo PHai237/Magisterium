@@ -59,7 +59,7 @@ export const STARTER_KIT_DEFINITIONS: StarterKitDefinition[] = [
     id: 'novice_adventurer_kit',
     name: 'Novice Adventurer Kit',
     description:
-      'A humble first-day kit for a new adventurer: enough to survive one bad mistake, but not enough to live comfortably.',
+      'A humble first-day kit for a new adventurer: one bread, one small HP potion, one small MP potion, and one safe night at a basic inn.',
     startingMoneyBronze: 10,
     startingItemIds: [
       'stamina_bread',

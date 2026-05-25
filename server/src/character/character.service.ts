@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { CreateCharacterDto } from './dto/create-character.dto';
+import { PreviewCharacterDto } from './dto/preview-character.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
 
 import {
@@ -17,7 +18,13 @@ import { createCharacter } from '../game/character/character.factory';
 
 import {
   addBronze,
+  buildCurrentState,
+  buildStatsForOrigin,
+  calculateBaseStats,
+  calculateDerivedStats,
   createCharacterSnapshot,
+  getDefaultStarterKit,
+  getOriginById,
 } from '../game/character/character.calculations';
 
 import {
@@ -33,7 +40,10 @@ import type {
   InventoryOperationResult,
 } from '../game/inventory/inventory.types';
 
-import { hasItemDefinition } from '../game/item/item.registry';
+import {
+  getItemDefinitionById,
+  hasItemDefinition,
+} from '../game/item/item.registry';
 
 import {
   equipItem,
@@ -52,9 +62,11 @@ import type {
 
 import type {
   Character,
+  CharacterCreationPreview,
   CharacterSnapshot,
   CurrentState,
   ItemId,
+  StarterKitDefinition,
 } from '../game/character/character.types';
 
 import type {
@@ -118,6 +130,25 @@ export class CharacterService {
       status: 'ok',
       module: 'character',
       message: 'Character module is ready.',
+    };
+  }
+
+  createPreview(dto: PreviewCharacterDto): CharacterCreationPreview {
+    const originDef = getOriginById(dto.originId);
+    const starterKitDef = getDefaultStarterKit();
+
+    const stats = buildStatsForOrigin(originDef);
+    const baseStats = calculateBaseStats(stats);
+    const derivedStats = calculateDerivedStats(baseStats);
+    const currentState = buildCurrentState(derivedStats);
+
+    return {
+      originId: originDef.id,
+      baseStats,
+      derivedStats,
+      currentState,
+
+      startingKit: this.buildStartingKitPreview(starterKitDef),
     };
   }
 
@@ -560,6 +591,31 @@ export class CharacterService {
   clearCharacters(): void {
     this.characters.clear();
     this.currentCharacterIdsByUserScope.clear();
+  }
+
+  private buildStartingKitPreview(starterKit: StarterKitDefinition) {
+    const itemQuantityById = new Map<ItemId, number>();
+
+    for (const itemId of starterKit.startingItemIds) {
+      itemQuantityById.set(itemId, (itemQuantityById.get(itemId) ?? 0) + 1);
+    }
+
+    return {
+      id: starterKit.id,
+      name: starterKit.name,
+      moneyBronze: starterKit.startingMoneyBronze,
+      items: Array.from(itemQuantityById.entries()).map(
+        ([itemId, quantity]) => {
+          const itemDefinition = getItemDefinitionById(itemId);
+
+          return {
+            itemId,
+            name: itemDefinition.name,
+            quantity,
+          };
+        },
+      ),
+    };
   }
 
   private calculateTotalExpRequiredForLevel(level: number): number {
