@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import type { BattleContentSource } from './features/battle/battleTypes';
 import { BattlePage } from './features/battle/BattlePage';
-import { LOCAL_STORAGE_KEYS } from './features/character-creation/constants';
+import { characterRepository } from './services/characterRepository';
 import { CharacterCreationForm } from './features/character-creation/CharacterCreationForm';
 import type { Character } from './features/character-creation/types';
 import { CharacterProfilePage } from './features/character-profile/CharacterProfilePage';
@@ -66,11 +66,7 @@ function App() {
   } = useCurrentCharacter();
 
   function persistCharacter(updatedCharacter: Character) {
-    localStorage.setItem(
-      LOCAL_STORAGE_KEYS.currentCharacter,
-      JSON.stringify(updatedCharacter),
-    );
-
+    characterRepository.saveCurrentCharacter(updatedCharacter);
     loadCharacter();
   }
 
