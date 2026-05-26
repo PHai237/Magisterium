@@ -121,6 +121,7 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
 
           <form
             className="auth-form"
+            autoComplete={mode === "register" ? "off" : "on"}
             onSubmit={(event) => void handleAuthSubmit(event)}
           >
             {error ? <div className="error-banner">{error}</div> : null}
@@ -133,12 +134,16 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
 
                 <input
                   id="auth-identifier"
+                  name="magisterium-login-identifier"
                   type="text"
                   value={usernameOrEmail}
                   onChange={(event) => setUsernameOrEmail(event.target.value)}
                   placeholder="Enter your account name..."
                   disabled={busy}
                   autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                 />
               </div>
             ) : (
@@ -150,12 +155,18 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
 
                   <input
                     id="auth-username"
+                    name="magisterium-register-username"
                     type="text"
                     value={username}
                     onChange={(event) => setUsername(event.target.value)}
                     placeholder="Choose a username..."
                     disabled={busy}
-                    autoComplete="username"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-form-type="other"
+                    data-lpignore="true"
                   />
                 </div>
 
@@ -166,12 +177,16 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
 
                   <input
                     id="auth-email"
+                    name="magisterium-register-email"
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="Enter your email address..."
                     disabled={busy}
                     autoComplete="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                   />
                 </div>
               </>
@@ -184,6 +199,11 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
 
               <input
                 id="auth-password"
+                name={
+                  mode === "login"
+                    ? "magisterium-login-password"
+                    : "magisterium-register-password"
+                }
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -203,6 +223,7 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
 
                 <input
                   id="auth-confirm"
+                  name="magisterium-register-confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}

@@ -109,6 +109,18 @@ export function App() {
     <main className="phase5-root">
       <header className="phase5-topbar phase5-topbar--gate">
         <MagisteriumBrand />
+
+        {user ? (
+          <div className="phase5-topbar__actions">
+            <button
+              className="phase5-logout-button"
+              type="button"
+              onClick={() => void handleLogout()}
+            >
+              Logout
+            </button>
+          </div>
+        ) : null}
       </header>
 
       <section className="phase5-workspace">
