@@ -6,6 +6,7 @@ import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { StatBar } from "../../components/ui/StatBar";
 import { ENCOUNTER_OPTIONS } from "../../domain/magisterium.constants";
+import "./battle.css";
 import type {
   BattleActorState,
   BattleState,

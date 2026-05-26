@@ -10,6 +10,7 @@ import type {
 } from "../../domain/magisterium.types";
 import { compactLabel } from "../../lib/format";
 import { charactersApi } from "./characters.api";
+import "./character.css";
 
 interface CharacterPanelProps {
   userId: string;

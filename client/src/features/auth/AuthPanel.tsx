@@ -3,6 +3,7 @@ import { type FormEvent, useState } from "react";
 import { Button } from "../../components/ui/Button";
 import type { AuthResponse } from "../../domain/magisterium.types";
 import { authApi } from "./auth.api";
+import "./auth.css";
 
 interface AuthPanelProps {
   onAuthSuccess: (response: AuthResponse) => void;
