@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/Button";
 import type { AuthResponse } from "../../domain/magisterium.types";
 import { authApi } from "./auth.api";
 import "./auth.css";
+import { AmbientParticlesCanvas } from "./components/AmbientParticlesCanvas";
 
 interface AuthPanelProps {
   onAuthSuccess: (response: AuthResponse) => void;
@@ -116,6 +117,8 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
 
   return (
     <div className="auth-page">
+      <AmbientParticlesCanvas />
+
       <div className="auth-container">
         <div className={`auth-flip auth-flip--${mode}`}>
           <div className="auth-flip__inner">

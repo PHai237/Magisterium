@@ -1,4 +1,6 @@
 .auth-page {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   height: 100%;
   display: grid;
@@ -11,7 +13,30 @@
     var(--bg);
 }
 
+.auth-ambient-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.82;
+}
+
+.auth-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(15, 17, 21, 0.04), transparent 18rem),
+    linear-gradient(180deg, rgba(15, 17, 21, 0.16), rgba(15, 17, 21, 0.36));
+}
+
 .auth-container {
+  position: relative;
+  z-index: 1;
   width: min(100%, 28.5rem);
   animation: auth-card-enter 360ms ease both;
 }
