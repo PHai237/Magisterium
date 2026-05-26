@@ -276,6 +276,19 @@
   font-size: 0.9rem;
 }
 
+.character-name-input {
+  border-color: rgba(168, 85, 247, 0.24);
+  background:
+    radial-gradient(circle at 20% 50%, rgba(168, 85, 247, 0.08), transparent 12rem),
+    var(--bg);
+  color: var(--text-strong);
+}
+
+.character-name-input::placeholder {
+  color: rgba(192, 132, 252, 0.58);
+  font-style: italic;
+}
+
 .resource-preview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -546,38 +559,6 @@
   padding-top: 0.25rem;
 }
 
-.character-sidebar__content {
-  scrollbar-width: thin;
-  scrollbar-color: #334155 var(--bg);
-}
-
-.character-sidebar__content::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.character-sidebar__content::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-.character-sidebar__content::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 999px;
-}
-
-.character-name-input {
-  border-color: rgba(168, 85, 247, 0.24);
-  background:
-    radial-gradient(circle at 20% 50%, rgba(168, 85, 247, 0.08), transparent 12rem),
-    var(--bg);
-  color: var(--text-strong);
-}
-
-.character-name-input::placeholder {
-  color: rgba(192, 132, 252, 0.58);
-  font-style: italic;
-}
-
 .character-info-dot {
   width: 1.05rem;
   height: 1.05rem;
@@ -690,7 +671,7 @@
 }
 
 .character-confirm-dialog {
-  width: min(100%, 26rem);
+  width: min(100%, 28rem);
   border: 1px solid rgba(251, 113, 133, 0.34);
   border-radius: 1rem;
   background:
@@ -727,6 +708,9 @@
   margin: 0;
   color: var(--text-strong);
   font-size: 1.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .character-confirm-copy span {
@@ -735,6 +719,7 @@
   color: var(--muted-strong);
   font-size: 0.86rem;
   line-height: 1.5;
+  white-space: nowrap;
 }
 
 .character-confirm-actions {
@@ -742,6 +727,25 @@
   justify-content: flex-end;
   gap: 0.7rem;
   margin-top: 1.15rem;
+}
+
+.character-sidebar__content {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 var(--bg);
+}
+
+.character-sidebar__content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.character-sidebar__content::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.character-sidebar__content::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
 }
 
 @media (max-width: 1180px) {
@@ -787,8 +791,14 @@
   }
 
   .origin-controls,
-  .character-create-actions {
+  .character-create-actions,
+  .character-confirm-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .character-confirm-copy h2,
+  .character-confirm-copy span {
+    white-space: normal;
   }
 }

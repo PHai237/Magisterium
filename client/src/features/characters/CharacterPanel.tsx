@@ -268,18 +268,15 @@ export function CharacterPanel({
             aria-labelledby="character-delete-title"
           >
             <div className="character-confirm-icon" aria-hidden="true">
-              ✦
+              🗑
             </div>
 
             <div className="character-confirm-copy">
               <p>Delete Character</p>
               <h2 id="character-delete-title">
-                Release {pendingDeleteCharacter.name}?
+                Delete {pendingDeleteCharacter.name}?
               </h2>
-              <span>
-                This Weaver will be removed from your roster. This action cannot
-                be undone.
-              </span>
+              <span>This action cannot be undone.</span>
             </div>
 
             {error ? <div className="error-banner">{error}</div> : null}

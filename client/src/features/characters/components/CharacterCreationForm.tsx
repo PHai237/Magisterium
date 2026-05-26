@@ -31,8 +31,8 @@ const STAT_HINTS: Record<string, string> = {
   DEX: "Improves accuracy, evasion, and speed.",
   CON: "Increases HP and physical defense.",
   INT: "Increases magic damage and MP.",
-  WIS: "Improves magic defense, healing, and status resist.",
-  LUK: "Improves crits and combat procs."
+  WIS: "Improves magic defense, buff/debuff power, and status resist.",
+  LUK: "Improves crits, evasion, flee chance, second chance, and combat procs."
 };
 
 export function CharacterCreationForm({

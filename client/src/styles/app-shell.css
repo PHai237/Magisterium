@@ -8,6 +8,8 @@
 }
 
 .phase5-topbar {
+  position: relative;
+  z-index: 50;
   flex: 0 0 68px;
   height: 68px;
   border-bottom: 1px solid var(--border);
@@ -75,23 +77,40 @@
   width: 2.25rem;
   height: 2.25rem;
   min-height: 2.25rem;
+  border-color: rgba(251, 113, 133, 0.42);
   border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.12), transparent 1rem),
+    rgba(251, 113, 133, 0.09);
+  color: #fecdd3;
   padding: 0;
   display: grid;
   place-items: center;
   font-size: 0.95rem;
+  box-shadow:
+    0 0 0 4px rgba(251, 113, 133, 0.045),
+    0 12px 26px rgba(0, 0, 0, 0.26);
+}
+
+.phase5-logout-button--icon:hover {
+  border-color: rgba(251, 113, 133, 0.78);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.16), transparent 1rem),
+    rgba(251, 113, 133, 0.18);
+  color: #fff1f2;
+  transform: translateY(-1px);
 }
 
 .phase5-logout-button--icon::after {
   content: attr(data-tooltip);
   position: absolute;
-  top: calc(100% + 0.55rem);
-  right: 0;
-  z-index: 10;
-  border: 1px solid rgba(168, 85, 247, 0.34);
+  top: 50%;
+  right: calc(100% + 0.55rem);
+  z-index: 100;
+  border: 1px solid rgba(251, 113, 133, 0.38);
   border-radius: 999px;
-  background: rgba(11, 15, 23, 0.96);
-  color: #f8fafc;
+  background: rgba(11, 15, 23, 0.98);
+  color: #fff1f2;
   padding: 0.34rem 0.62rem;
   font-size: 0.68rem;
   font-weight: 900;
@@ -100,16 +119,39 @@
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-0.25rem);
+  transform: translateY(-50%) translateX(0.25rem);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.36);
   transition:
     opacity 160ms ease,
     transform 160ms ease;
 }
 
+.phase5-logout-button--icon::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 0.28rem);
+  z-index: 101;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-top: 1px solid rgba(251, 113, 133, 0.38);
+  border-right: 1px solid rgba(251, 113, 133, 0.38);
+  background: rgba(11, 15, 23, 0.98);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) rotate(45deg);
+  transition: opacity 160ms ease;
+}
+
 .phase5-logout-button--icon:hover::after,
 .phase5-logout-button--icon:focus-visible::after {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(-50%) translateX(0);
+}
+
+.phase5-logout-button--icon:hover::before,
+.phase5-logout-button--icon:focus-visible::before {
+  opacity: 1;
 }
 
 .phase5-workspace {
