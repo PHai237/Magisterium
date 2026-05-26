@@ -5,6 +5,9 @@ import type {
   CharacterSnapshot,
   UserSessionSnapshot
 } from "../domain/magisterium.types";
+
+import { MagisteriumBrand } from "../components/brand/MagisteriumBrand";
+
 import { AuthPanel } from "../features/auth/AuthPanel";
 import { authApi } from "../features/auth/auth.api";
 import { CharacterPanel } from "../features/characters/CharacterPanel";
@@ -105,19 +108,23 @@ export function App() {
   return (
     <main className="phase5-root">
       <header className="phase5-topbar phase5-topbar--gate">
-        <div className="phase5-brand phase5-brand--gate">
-          <h1>MAGISTERIUM</h1>
+        <MagisteriumBrand subtitle={user ? "Character Gate" : "Account Access"} />
+
+        <div className="phase5-topbar__center">
+          {user ? "Choose your current Weaver" : "Enter the realm"}
         </div>
 
-        {user ? (
-          <button
-            className="phase5-logout-button"
-            type="button"
-            onClick={() => void handleLogout()}
-          >
-            Logout
-          </button>
-        ) : null}
+        <div className="phase5-topbar__actions">
+          {user ? (
+            <button
+              className="phase5-logout-button"
+              type="button"
+              onClick={() => void handleLogout()}
+            >
+              Logout
+            </button>
+          ) : null}
+        </div>
       </header>
 
       <section className="phase5-workspace">

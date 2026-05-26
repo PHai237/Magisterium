@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/Button";
 import type { CharacterSnapshot } from "../../domain/magisterium.types";
 import { compactLabel, formatNumber } from "../../lib/format";
 import { BattlePanel } from "../battles/BattlePanel";
+import { MagisteriumBrand } from "../../components/brand/MagisteriumBrand";
 
 interface GameShellProps {
   userId: string;
@@ -179,10 +180,7 @@ export function GameShell({
   return (
     <div className="gameshell-root">
       <header className="gameshell-header">
-        <div className="gameshell-brand">
-          <h1>MAGISTERIUM</h1>
-          <span>SPATIAL GAME CORE</span>
-        </div>
+        <MagisteriumBrand subtitle="Spatial Game Core" compact />
 
         <div
           className={`gameshell-location ${
