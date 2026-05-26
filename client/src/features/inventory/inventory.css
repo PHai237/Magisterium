@@ -182,7 +182,7 @@
 .inventory-equipment-slot {
   position: absolute;
   width: 4.15rem;
-  height: 3.7rem;
+  height: 3.85rem;
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 0.78rem;
   background:
@@ -192,19 +192,21 @@
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 0.16rem;
-  padding: 0.25rem;
+  gap: 0.38rem;
+  padding: 0.36rem 0.3rem 0.32rem;
   box-shadow:
     0 10px 24px rgba(0, 0, 0, 0.28),
     0 0 0 1px rgba(255, 255, 255, 0.02) inset;
 }
 
 .inventory-equipment-slot span {
-  font-size: 1.12rem;
+  display: block;
+  font-size: 1.14rem;
   line-height: 1;
 }
 
 .inventory-equipment-slot small {
+  display: block;
   color: #64748b;
   font-size: 0.5rem;
   font-weight: 850;
