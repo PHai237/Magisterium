@@ -151,6 +151,26 @@ export interface CharacterInventoryMutationResult {
   inventoryChange: InventoryOperationResult;
 }
 
+export type ConsumableEffectTarget = "HP" | "MP" | "Stamina" | "Fatigue";
+
+export interface ConsumableEffectApplication {
+  effectType: string;
+  target: ConsumableEffectTarget;
+  previousValue: number;
+  nextValue: number;
+  amountApplied: number;
+}
+
+export interface CharacterConsumableMutationResult
+  extends CharacterInventoryMutationResult {
+  itemUse: {
+    itemId: ItemId;
+    context: "battle" | "out_of_battle";
+    consumesOnUse: boolean;
+    effects: ConsumableEffectApplication[];
+  };
+}
+
 export interface CharacterEquipmentMutationResult {
   character: CharacterSnapshot;
   equipmentChange: {

@@ -157,7 +157,9 @@ export function GameShell({
 
         {isInventoryOpen ? (
           <InventoryOverlay
+            userId={userId}
             currentCharacter={currentCharacter}
+            onCharacterUpdated={onCharacterUpdated}
             onClose={() => setIsInventoryOpen(false)}
           />
         ) : null}

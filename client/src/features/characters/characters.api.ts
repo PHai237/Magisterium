@@ -1,9 +1,9 @@
 import { apiDelete, apiGet, apiPost, apiPut } from "../../lib/api/api-client";
 
 import type {
+  CharacterConsumableMutationResult,
   CharacterCreationPreview,
   CharacterEquipmentMutationResult,
-  CharacterInventoryMutationResult,
   CharacterSnapshot,
   InventoryItemStack,
   ItemId,
@@ -43,9 +43,13 @@ export const charactersApi = {
   },
 
   setCurrent(userId: string, characterId: string) {
-    return apiPost<CharacterSnapshot>(`/characters/${characterId}/current`, undefined, {
-      userId
-    });
+    return apiPost<CharacterSnapshot>(
+      `/characters/${characterId}/current`,
+      undefined,
+      {
+        userId
+      }
+    );
   },
 
   getById(userId: string, characterId: string) {
@@ -59,15 +63,21 @@ export const charactersApi = {
   },
 
   delete(userId: string, characterId: string) {
-    return apiDelete<{ deleted: boolean; id: string }>(`/characters/${characterId}`, {
-      userId
-    });
+    return apiDelete<{ deleted: boolean; id: string }>(
+      `/characters/${characterId}`,
+      {
+        userId
+      }
+    );
   },
 
   getInventory(userId: string, characterId: string) {
-    return apiGet<InventoryItemStack[]>(`/characters/${characterId}/inventory`, {
-      userId
-    });
+    return apiGet<InventoryItemStack[]>(
+      `/characters/${characterId}/inventory`,
+      {
+        userId
+      }
+    );
   },
 
   equip(userId: string, characterId: string, itemId: ItemId) {
@@ -87,7 +97,7 @@ export const charactersApi = {
   },
 
   useConsumable(userId: string, characterId: string, itemId: ItemId) {
-    return apiPost<CharacterInventoryMutationResult>(
+    return apiPost<CharacterConsumableMutationResult>(
       `/characters/${characterId}/consumables/use`,
       { itemId },
       { userId }
