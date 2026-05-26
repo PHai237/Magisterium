@@ -108,23 +108,7 @@ export function App() {
   return (
     <main className="phase5-root">
       <header className="phase5-topbar phase5-topbar--gate">
-        <MagisteriumBrand subtitle={user ? "Character Gate" : "Account Access"} />
-
-        <div className="phase5-topbar__center">
-          {user ? "Choose your current Weaver" : "Enter the realm"}
-        </div>
-
-        <div className="phase5-topbar__actions">
-          {user ? (
-            <button
-              className="phase5-logout-button"
-              type="button"
-              onClick={() => void handleLogout()}
-            >
-              Logout
-            </button>
-          ) : null}
-        </div>
+        <MagisteriumBrand />
       </header>
 
       <section className="phase5-workspace">

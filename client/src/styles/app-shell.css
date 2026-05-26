@@ -20,6 +20,7 @@
 }
 
 .phase5-topbar--gate {
+  grid-template-columns: 1fr;
   justify-content: initial;
 }
 

@@ -180,17 +180,7 @@ export function GameShell({
   return (
     <div className="gameshell-root">
       <header className="gameshell-header">
-        <MagisteriumBrand subtitle="Spatial Game Core" compact />
-
-        <div
-          className={`gameshell-location ${
-            mapView === "world" ? "gameshell-location--world" : ""
-          }`}
-        >
-          {mapView === "town"
-            ? "Weaver's Stronghold (Town)"
-            : "The Wildlands (World Map)"}
-        </div>
+        <MagisteriumBrand compact />
 
         <div className="gameshell-actions">
           <Button type="button" variant="ghost" onClick={onBackToCharacters}>
@@ -359,39 +349,6 @@ function GameShellStyles() {
         gap: 1rem;
         padding: 0 2rem;
         z-index: 5;
-      }
-
-      .gameshell-brand h1 {
-        margin: 0;
-        color: #f8fafc;
-        font-size: 1.15rem;
-        font-weight: 950;
-        letter-spacing: 0.25em;
-      }
-
-      .gameshell-brand span {
-        color: #475569;
-        font-size: 0.62rem;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-      }
-
-      .gameshell-location {
-        border: 1px solid rgba(168, 85, 247, 0.24);
-        border-radius: 0.65rem;
-        background: rgba(168, 85, 247, 0.08);
-        color: #c084fc;
-        padding: 0.42rem 1rem;
-        font-size: 0.72rem;
-        font-weight: 900;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .gameshell-location--world {
-        border-color: rgba(251, 113, 133, 0.26);
-        background: rgba(251, 113, 133, 0.08);
-        color: #fb7185;
       }
 
       .gameshell-actions {
@@ -742,10 +699,6 @@ function GameShellStyles() {
         .gameshell-header,
         .gameshell-footer {
           padding: 0 1rem;
-        }
-
-        .gameshell-location {
-          display: none;
         }
 
         .gameshell-stats {
