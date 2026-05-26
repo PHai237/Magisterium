@@ -14,6 +14,7 @@ import { charactersApi } from "./characters.api";
 interface CharacterPanelProps {
   userId: string;
   onCurrentCharacterChange?: (character: CharacterSnapshot | null) => void;
+  onEnterWorld?: (character: CharacterSnapshot) => void;
 }
 
 interface LoadState {
@@ -47,7 +48,8 @@ function formatQuantity(quantity: number): string {
 
 export function CharacterPanel({
   userId,
-  onCurrentCharacterChange
+  onCurrentCharacterChange,
+  onEnterWorld
 }: CharacterPanelProps) {
   const [data, setData] = useState<LoadState>(initialLoadState);
   const [preview, setPreview] = useState<CharacterCreationPreview | null>(null);
@@ -322,8 +324,14 @@ export function CharacterPanel({
 
         <Button
           className="character-enter-button"
-          disabled={!data.current}
+          disabled={!data.current || busy}
           variant="secondary"
+          type="button"
+          onClick={() => {
+            if (data.current) {
+              onEnterWorld?.(data.current);
+            }
+          }}
         >
           {data.current ? `Enter as ${data.current.name}` : "Enter World"}
         </Button>
