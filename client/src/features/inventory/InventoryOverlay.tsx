@@ -1,5 +1,5 @@
 import type { CharacterSnapshot } from "../../domain/magisterium.types";
-import { compactLabel } from "../../lib/format";
+import { formatNumber } from "../../lib/format";
 import "./inventory.css";
 
 interface InventoryOverlayProps {
@@ -16,22 +16,68 @@ const EQUIPMENT_SLOTS = [
   { id: "boots", label: "Boots", icon: "◌", className: "slot-boots" }
 ] as const;
 
-const INVENTORY_PREVIEW_ITEMS = ["🗡️", "🧪", "🔷", "🍞", "🏨", "◇"];
+const INVENTORY_FILTERS = ["All", "Weapon", "Armor", "Consumable", "Material"];
 
-function getInitialLetter(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
+const INVENTORY_PREVIEW_ITEMS = [
+  {
+    icon: "🗡️",
+    name: "Rusty Sword",
+    tooltip: "Weapon · Starter blade · Equipment stats later"
+  },
+  {
+    icon: "🧪",
+    name: "Minor HP Potion",
+    tooltip: "Consumable · Restores HP · Detail popup later"
+  },
+  {
+    icon: "🔷",
+    name: "Minor MP Potion",
+    tooltip: "Consumable · Restores MP · Detail popup later"
+  },
+  {
+    icon: "🍞",
+    name: "Stamina Bread",
+    tooltip: "Consumable · Restores stamina · Detail popup later"
+  },
+  {
+    icon: "🏨",
+    name: "Inn Voucher",
+    tooltip: "Voucher · One-night rest · Detail popup later"
+  }
+];
+
+function getCurrencyBreakdown(totalBronze: number) {
+  const safeBronze = Math.max(0, Math.floor(totalBronze));
+  const gold = Math.floor(safeBronze / 10_000);
+  const silver = Math.floor((safeBronze % 10_000) / 100);
+  const bronze = safeBronze % 100;
+
+  return { gold, silver, bronze };
 }
 
 export function InventoryOverlay({
   currentCharacter,
   onClose
 }: InventoryOverlayProps) {
+  const money = getCurrencyBreakdown(currentCharacter.moneyBronze);
+
   return (
     <section className="inventory-overlay" aria-label="Inventory">
       <header className="inventory-overlay__header">
-        <div>
-          <p>Inventory</p>
-          <h2>Character Bag</h2>
+        <div className="inventory-overlay__heading">
+          <h2>Inventory</h2>
+
+          <div className="inventory-wallet" aria-label="Wallet">
+            <span>
+              <strong>{formatNumber(money.gold)}</strong> Gold
+            </span>
+            <span>
+              <strong>{formatNumber(money.silver)}</strong> Silver
+            </span>
+            <span>
+              <strong>{formatNumber(money.bronze)}</strong> Bronze
+            </span>
+          </div>
         </div>
 
         <button
@@ -46,14 +92,6 @@ export function InventoryOverlay({
 
       <div className="inventory-overlay__layout">
         <aside className="inventory-paperdoll">
-          <div className="inventory-paperdoll__identity">
-            <strong>{currentCharacter.name}</strong>
-            <span>
-              Lv. {currentCharacter.progression.level} ·{" "}
-              {compactLabel(currentCharacter.originId)}
-            </span>
-          </div>
-
           <div className="inventory-paperdoll__stage">
             {EQUIPMENT_SLOTS.map((slot) => (
               <div
@@ -67,8 +105,8 @@ export function InventoryOverlay({
             ))}
 
             <div className="inventory-character-model">
-              <div className="inventory-character-model__avatar">
-                {getInitialLetter(currentCharacter.name)}
+              <div className="inventory-character-model__avatar" aria-hidden="true">
+                ◈
               </div>
               <span>Avatar Preview</span>
             </div>
@@ -76,13 +114,20 @@ export function InventoryOverlay({
         </aside>
 
         <main className="inventory-bag">
-          <div className="inventory-bag__title">
-            <strong>Bag Slots</strong>
-            <span>Backend connection comes next.</span>
+          <div className="inventory-filterbar" aria-label="Inventory filters">
+            {INVENTORY_FILTERS.map((filter, index) => (
+              <button
+                key={filter}
+                type="button"
+                className={index === 0 ? "inventory-filterbar__item inventory-filterbar__item--active" : "inventory-filterbar__item"}
+              >
+                {filter}
+              </button>
+            ))}
           </div>
 
           <div className="inventory-bag-grid">
-            {Array.from({ length: 30 }).map((_, index) => {
+            {Array.from({ length: 35 }).map((_, index) => {
               const previewItem = INVENTORY_PREVIEW_ITEMS[index];
 
               return (
@@ -92,9 +137,10 @@ export function InventoryOverlay({
                   className={`inventory-bag-cell${
                     previewItem ? " inventory-bag-cell--filled" : ""
                   }`}
-                  aria-label={previewItem ? "Preview item slot" : "Empty slot"}
+                  aria-label={previewItem?.name ?? "Empty slot"}
+                  data-tooltip={previewItem?.tooltip}
                 >
-                  {previewItem ? <span>{previewItem}</span> : null}
+                  {previewItem ? <span>{previewItem.icon}</span> : null}
                 </button>
               );
             })}
