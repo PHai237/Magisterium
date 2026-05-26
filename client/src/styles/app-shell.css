@@ -1,0 +1,121 @@
+.phase5-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.phase5-topbar {
+  flex: 0 0 68px;
+  height: 68px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #12151c, #0f1115);
+  padding: 0 1.25rem;
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(10rem, auto) minmax(12rem, 1fr);
+  align-items: center;
+  gap: 1rem;
+}
+
+.phase5-topbar--gate {
+  justify-content: initial;
+}
+
+.phase5-topbar__center {
+  justify-self: center;
+  min-width: 0;
+  border: 1px solid rgba(168, 85, 247, 0.22);
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.08);
+  color: #c084fc;
+  padding: 0.34rem 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.phase5-topbar__actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.phase5-logout-button {
+  min-height: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted-strong);
+  padding: 0.28rem 0.75rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.phase5-logout-button:hover {
+  border-color: #475569;
+  background: rgba(255, 255, 255, 0.065);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.phase5-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.phase5-loading-screen {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1180px) {
+  .phase5-root {
+    min-height: 100vh;
+    height: auto;
+  }
+
+  .phase5-topbar {
+    height: auto;
+    min-height: 68px;
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+    padding: 0.8rem;
+  }
+
+  .phase5-topbar__center {
+    justify-self: start;
+  }
+
+  .phase5-topbar__actions {
+    justify-self: start;
+  }
+
+  .phase5-workspace {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 760px) {
+  .phase5-topbar__center {
+    white-space: normal;
+  }
+}

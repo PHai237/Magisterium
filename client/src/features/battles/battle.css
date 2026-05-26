@@ -1,0 +1,187 @@
+.feature-grid {
+  height: 100%;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.9fr) minmax(28rem, 1.4fr);
+  gap: 1rem;
+  align-items: start;
+  padding: 1.25rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.form-grid label,
+.command-panel label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--muted-strong);
+  font-size: 0.88rem;
+}
+
+.option-list,
+.roster-list,
+.inventory-list,
+.event-log {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.option-card,
+.inventory-row,
+.actor-card,
+.roster-card,
+.event-log li {
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.85rem;
+}
+
+.roster-card {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+}
+
+.roster-card--active,
+.actor-card--active {
+  border-color: rgba(168, 85, 247, 0.72);
+  background: rgba(168, 85, 247, 0.11);
+}
+
+.resource-grid,
+.character-sheet,
+.battle-arena,
+.command-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.stat-grid,
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.stat-chip,
+.metric-grid > div {
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.stat-chip span,
+.metric-grid span {
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+}
+
+.stat-chip strong,
+.metric-grid strong {
+  color: var(--text);
+  font-size: 1.15rem;
+}
+
+.badge-row,
+.battle-summary,
+.button-row,
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.inventory-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.actor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.8rem;
+}
+
+.actor-card {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.actor-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.event-log {
+  list-style: none;
+  padding: 0;
+}
+
+.event-log li {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.event-log li span {
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.event-log li p {
+  margin: 0;
+  color: var(--muted-strong);
+}
+
+.feature-grid {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 var(--bg);
+}
+
+.feature-grid::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.feature-grid::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.feature-grid::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+
+@media (max-width: 1180px) {
+  .feature-grid {
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .stat-grid,
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .feature-grid {
+    padding: 0.8rem;
+  }
+}
