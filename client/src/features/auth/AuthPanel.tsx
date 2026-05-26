@@ -24,11 +24,7 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  function switchMode() {
-    setMode((previousMode) =>
-      previousMode === "login" ? "register" : "login"
-    );
-
+  function clearFormFields() {
     setError(null);
     setUsernameOrEmail("");
     setUsername("");
@@ -37,16 +33,28 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
     setConfirmPassword("");
   }
 
-  function validateForm(): string | null {
-    if (mode === "login" && !usernameOrEmail.trim()) {
+  function switchMode() {
+    if (busy) {
+      return;
+    }
+
+    setMode((previousMode) =>
+      previousMode === "login" ? "register" : "login"
+    );
+
+    clearFormFields();
+  }
+
+  function validateForm(submitMode: AuthMode): string | null {
+    if (submitMode === "login" && !usernameOrEmail.trim()) {
       return "Username or email is required.";
     }
 
-    if (mode === "register" && !username.trim()) {
+    if (submitMode === "register" && !username.trim()) {
       return "Username is required.";
     }
 
-    if (mode === "register" && !email.trim()) {
+    if (submitMode === "register" && !email.trim()) {
       return "Email is required.";
     }
 
@@ -54,21 +62,24 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
       return "Password is required.";
     }
 
-    if (mode === "register" && password !== confirmPassword) {
+    if (submitMode === "register" && password !== confirmPassword) {
       return "Passwords do not match.";
     }
 
     return null;
   }
 
-  async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleAuthSubmit(
+    event: FormEvent<HTMLFormElement>,
+    submitMode: AuthMode
+  ) {
     event.preventDefault();
 
     if (busy) {
       return;
     }
 
-    const validationError = validateForm();
+    const validationError = validateForm(submitMode);
 
     if (validationError) {
       setError(validationError);
@@ -80,7 +91,7 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
 
     try {
       const response =
-        mode === "login"
+        submitMode === "login"
           ? await authApi.login({
               identifier: usernameOrEmail.trim(),
               password
@@ -106,48 +117,125 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
   return (
     <div className="auth-page">
       <div className="auth-container">
-        <section className="auth-card">
-          <header className="auth-header">
-            <h2 className="auth-title">
-              {mode === "login" ? "Welcome back" : "Create your account"}
-            </h2>
+        <div className={`auth-flip auth-flip--${mode}`}>
+          <div className="auth-flip__inner">
+            <section className="auth-card auth-face auth-face--front">
+              <button
+                type="button"
+                className="auth-flip-button"
+                onClick={switchMode}
+                disabled={busy}
+                aria-label="Flip to register"
+                data-tooltip="Register"
+              >
+                <span aria-hidden="true">⟲</span>
+              </button>
 
-            <p className="auth-subtitle">
-              {mode === "login"
-                ? "Enter your credentials to continue your journey."
-                : "Begin your journey in the world of Magisterium."}
-            </p>
-          </header>
+              <header className="auth-header">
+                <div className="auth-sigil" aria-hidden="true">
+                  <span className="auth-sigil__ring auth-sigil__ring--outer" />
+                  <span className="auth-sigil__ring auth-sigil__ring--inner" />
+                  <span className="auth-sigil__glyph">✦</span>
+                </div>
 
-          <form
-            className="auth-form"
-            autoComplete={mode === "register" ? "off" : "on"}
-            onSubmit={(event) => void handleAuthSubmit(event)}
-          >
-            {error ? <div className="error-banner">{error}</div> : null}
+                <h2 className="auth-title">Welcome back</h2>
 
-            {mode === "login" ? (
-              <div className="auth-field">
-                <label className="form-label" htmlFor="auth-identifier">
-                  Username or Email
-                </label>
+                <p className="auth-subtitle">
+                  Enter your credentials to continue your journey.
+                </p>
+              </header>
 
-                <input
-                  id="auth-identifier"
-                  name="magisterium-login-identifier"
-                  type="text"
-                  value={usernameOrEmail}
-                  onChange={(event) => setUsernameOrEmail(event.target.value)}
-                  placeholder="Enter your account name..."
-                  disabled={busy}
-                  autoComplete="username"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                />
-              </div>
-            ) : (
-              <>
+              <form
+                className="auth-form"
+                autoComplete="on"
+                onSubmit={(event) => void handleAuthSubmit(event, "login")}
+              >
+                {mode === "login" && error ? (
+                  <div className="error-banner" role="alert">
+                    {error}
+                  </div>
+                ) : null}
+
+                <div className="auth-field">
+                  <label className="form-label" htmlFor="auth-identifier">
+                    Username or Email
+                  </label>
+
+                  <input
+                    id="auth-identifier"
+                    name="magisterium-login-identifier"
+                    type="text"
+                    value={usernameOrEmail}
+                    onChange={(event) => setUsernameOrEmail(event.target.value)}
+                    placeholder="Enter your account name..."
+                    disabled={busy || mode !== "login"}
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
+                </div>
+
+                <div className="auth-field">
+                  <label className="form-label" htmlFor="auth-login-password">
+                    Password
+                  </label>
+
+                  <input
+                    id="auth-login-password"
+                    name="magisterium-login-password"
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Enter your password..."
+                    disabled={busy || mode !== "login"}
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="auth-submit-btn"
+                  disabled={busy || mode !== "login"}
+                >
+                  {busy && mode === "login"
+                    ? "Connecting..."
+                    : "Enter Magisterium"}
+                </Button>
+              </form>
+            </section>
+
+            <section className="auth-card auth-face auth-face--back">
+              <button
+                type="button"
+                className="auth-flip-button"
+                onClick={switchMode}
+                disabled={busy}
+                aria-label="Flip to login"
+                data-tooltip="Login"
+              >
+                <span aria-hidden="true">⟲</span>
+              </button>
+
+              <header className="auth-header">
+                <h2 className="auth-title">Create your account</h2>
+
+                <p className="auth-subtitle">
+                  Begin your journey in the world of Magisterium.
+                </p>
+              </header>
+
+              <form
+                className="auth-form"
+                autoComplete="off"
+                onSubmit={(event) => void handleAuthSubmit(event, "register")}
+              >
+                {mode === "register" && error ? (
+                  <div className="error-banner" role="alert">
+                    {error}
+                  </div>
+                ) : null}
+
                 <div className="auth-field">
                   <label className="form-label" htmlFor="auth-username">
                     Username
@@ -160,7 +248,7 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
                     value={username}
                     onChange={(event) => setUsername(event.target.value)}
                     placeholder="Choose a username..."
-                    disabled={busy}
+                    disabled={busy || mode !== "register"}
                     autoComplete="off"
                     autoCapitalize="none"
                     autoCorrect="off"
@@ -182,86 +270,61 @@ export function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="Enter your email address..."
-                    disabled={busy}
+                    disabled={busy || mode !== "register"}
                     autoComplete="email"
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
                   />
                 </div>
-              </>
-            )}
 
-            <div className="auth-field">
-              <label className="form-label" htmlFor="auth-password">
-                Password
-              </label>
+                <div className="auth-field">
+                  <label className="form-label" htmlFor="auth-register-password">
+                    Password
+                  </label>
 
-              <input
-                id="auth-password"
-                name={
-                  mode === "login"
-                    ? "magisterium-login-password"
-                    : "magisterium-register-password"
-                }
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Enter your password..."
-                disabled={busy}
-                autoComplete={
-                  mode === "login" ? "current-password" : "new-password"
-                }
-              />
-            </div>
+                  <input
+                    id="auth-register-password"
+                    name="magisterium-register-password"
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Enter your password..."
+                    disabled={busy || mode !== "register"}
+                    autoComplete="new-password"
+                  />
+                </div>
 
-            {mode === "register" ? (
-              <div className="auth-field">
-                <label className="form-label" htmlFor="auth-confirm">
-                  Confirm Password
-                </label>
+                <div className="auth-field">
+                  <label className="form-label" htmlFor="auth-confirm">
+                    Confirm Password
+                  </label>
 
-                <input
-                  id="auth-confirm"
-                  name="magisterium-register-confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  placeholder="Retype your password..."
-                  disabled={busy}
-                  autoComplete="new-password"
-                />
-              </div>
-            ) : null}
+                  <input
+                    id="auth-confirm"
+                    name="magisterium-register-confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Retype your password..."
+                    disabled={busy || mode !== "register"}
+                    autoComplete="new-password"
+                  />
+                </div>
 
-            <Button type="submit" className="auth-submit-btn" disabled={busy}>
-              {busy
-                ? mode === "login"
-                  ? "Connecting..."
-                  : "Creating account..."
-                : mode === "login"
-                  ? "Enter Magisterium"
-                  : "Create Account"}
-            </Button>
-          </form>
-
-          <div className="auth-switch-zone">
-            <span>
-              {mode === "login"
-                ? "New to the realm?"
-                : "Already have an account?"}
-            </span>
-
-            <button
-              type="button"
-              className="auth-switch-link"
-              onClick={switchMode}
-              disabled={busy}
-            >
-              {mode === "login" ? "Create Account" : "Sign In"}
-            </button>
+                <Button
+                  type="submit"
+                  className="auth-submit-btn"
+                  disabled={busy || mode !== "register"}
+                >
+                  {busy && mode === "register"
+                    ? "Creating account..."
+                    : "Create Account"}
+                </Button>
+              </form>
+            </section>
           </div>
-        </section>
+        </div>
       </div>
     </div>
   );
