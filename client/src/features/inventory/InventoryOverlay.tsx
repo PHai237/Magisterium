@@ -16,13 +16,19 @@ const EQUIPMENT_SLOTS = [
   { id: "boots", label: "Boots", icon: "◌", className: "slot-boots" }
 ] as const;
 
-const INVENTORY_FILTERS = ["All", "Weapon", "Armor", "Consumable", "Material"];
+const INVENTORY_FILTERS = [
+  { label: "All", icon: "✦" },
+  { label: "Weapon", icon: "⚔️" },
+  { label: "Armor", icon: "🛡️" },
+  { label: "Consumable", icon: "🧪" },
+  { label: "Material", icon: "◇" }
+] as const;
 
 const INVENTORY_PREVIEW_ITEMS = [
   {
     icon: "🗡️",
     name: "Rusty Sword",
-    tooltip: "Weapon · Starter blade · Equipment stats later"
+    tooltip: "Weapon · Starter blade · Detail popup later"
   },
   {
     icon: "🧪",
@@ -68,13 +74,15 @@ export function InventoryOverlay({
           <h2>Inventory</h2>
 
           <div className="inventory-wallet" aria-label="Wallet">
-            <span>
+            <span className="inventory-wallet__coin inventory-wallet__coin--gold">
               <strong>{formatNumber(money.gold)}</strong> Gold
             </span>
-            <span>
+
+            <span className="inventory-wallet__coin inventory-wallet__coin--silver">
               <strong>{formatNumber(money.silver)}</strong> Silver
             </span>
-            <span>
+
+            <span className="inventory-wallet__coin inventory-wallet__coin--bronze">
               <strong>{formatNumber(money.bronze)}</strong> Bronze
             </span>
           </div>
@@ -114,20 +122,8 @@ export function InventoryOverlay({
         </aside>
 
         <main className="inventory-bag">
-          <div className="inventory-filterbar" aria-label="Inventory filters">
-            {INVENTORY_FILTERS.map((filter, index) => (
-              <button
-                key={filter}
-                type="button"
-                className={index === 0 ? "inventory-filterbar__item inventory-filterbar__item--active" : "inventory-filterbar__item"}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-
           <div className="inventory-bag-grid">
-            {Array.from({ length: 35 }).map((_, index) => {
+            {Array.from({ length: 25 }).map((_, index) => {
               const previewItem = INVENTORY_PREVIEW_ITEMS[index];
 
               return (
@@ -145,6 +141,22 @@ export function InventoryOverlay({
               );
             })}
           </div>
+
+          <nav className="inventory-type-tabs" aria-label="Inventory filters">
+            {INVENTORY_FILTERS.map((filter, index) => (
+              <button
+                key={filter.label}
+                type="button"
+                className={`inventory-type-tab${
+                  index === 0 ? " inventory-type-tab--active" : ""
+                }`}
+                aria-label={filter.label}
+                data-tooltip={filter.label}
+              >
+                <span aria-hidden="true">{filter.icon}</span>
+              </button>
+            ))}
+          </nav>
         </main>
       </div>
     </section>

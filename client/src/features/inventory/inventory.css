@@ -3,14 +3,14 @@
   left: 50%;
   bottom: 0.85rem;
   z-index: 12;
-  width: min(56rem, calc(100% - 2rem));
+  width: min(64rem, calc(100% - 2rem));
   height: min(31rem, calc(100% - 2rem));
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 1.1rem 1.1rem 0.9rem 0.9rem;
   background:
     radial-gradient(circle at 18% 0%, rgba(168, 85, 247, 0.13), transparent 18rem),
     radial-gradient(circle at 82% 0%, rgba(250, 204, 21, 0.1), transparent 18rem),
-    rgba(10, 14, 23, 0.97);
+    rgba(8, 12, 21, 0.985);
   box-shadow:
     0 -18px 80px rgba(0, 0, 0, 0.62),
     0 0 0 1px rgba(255, 255, 255, 0.025) inset;
@@ -52,10 +52,12 @@
   flex-wrap: wrap;
 }
 
-.inventory-wallet span {
-  border: 1px solid rgba(250, 204, 21, 0.18);
+.inventory-wallet__coin {
+  border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 999px;
-  background: rgba(250, 204, 21, 0.055);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 1.9rem),
+    rgba(15, 23, 42, 0.72);
   color: #cbd5e1;
   padding: 0.24rem 0.52rem;
   font-size: 0.68rem;
@@ -63,9 +65,35 @@
   white-space: nowrap;
 }
 
-.inventory-wallet strong {
-  color: #facc15;
+.inventory-wallet__coin strong {
   font-weight: 950;
+}
+
+.inventory-wallet__coin--gold {
+  border-color: rgba(250, 204, 21, 0.32);
+}
+
+.inventory-wallet__coin--gold strong,
+.inventory-wallet__coin--gold {
+  color: #facc15;
+}
+
+.inventory-wallet__coin--silver {
+  border-color: rgba(203, 213, 225, 0.32);
+}
+
+.inventory-wallet__coin--silver strong,
+.inventory-wallet__coin--silver {
+  color: #e2e8f0;
+}
+
+.inventory-wallet__coin--bronze {
+  border-color: rgba(217, 119, 6, 0.34);
+}
+
+.inventory-wallet__coin--bronze strong,
+.inventory-wallet__coin--bronze {
+  color: #d97706;
 }
 
 .inventory-overlay__close {
@@ -98,7 +126,7 @@
 .inventory-overlay__layout {
   height: calc(100% - 3.45rem);
   display: grid;
-  grid-template-columns: minmax(19rem, 4fr) minmax(0, 6fr);
+  grid-template-columns: minmax(23rem, 42%) minmax(0, 58%);
   min-height: 0;
 }
 
@@ -106,7 +134,7 @@
   min-width: 0;
   min-height: 0;
   border-right: 1px solid rgba(148, 163, 184, 0.16);
-  padding: 0.85rem;
+  padding: 0.9rem 1.15rem;
 }
 
 .inventory-paperdoll__stage {
@@ -119,8 +147,8 @@
 }
 
 .inventory-character-model {
-  width: 9.2rem;
-  height: 15.2rem;
+  width: 8.7rem;
+  height: 12.8rem;
   border: 1px dashed rgba(226, 232, 240, 0.16);
   border-radius: 0.9rem;
   background:
@@ -129,12 +157,12 @@
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 0.65rem;
+  gap: 0.62rem;
 }
 
 .inventory-character-model__avatar {
-  width: 3.35rem;
-  height: 3.35rem;
+  width: 3.25rem;
+  height: 3.25rem;
   border: 1px solid rgba(168, 85, 247, 0.42);
   border-radius: 999px;
   background: rgba(168, 85, 247, 0.24);
@@ -156,7 +184,7 @@
   width: 3.35rem;
   height: 3.35rem;
   border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 0.7rem;
+  border-radius: 0.72rem;
   background: rgba(2, 6, 23, 0.58);
   color: #94a3b8;
   display: grid;
@@ -180,87 +208,80 @@
 }
 
 .inventory-equipment-slot--slot-weapon {
-  top: 10%;
-  left: 7%;
+  top: 5%;
+  left: 50%;
   border-color: rgba(250, 204, 21, 0.36);
+  transform: translateX(-50%);
   box-shadow:
     0 0 0 4px rgba(250, 204, 21, 0.035),
     0 12px 26px rgba(0, 0, 0, 0.32);
 }
 
-.inventory-equipment-slot--slot-head {
-  top: 10%;
-  right: 7%;
-}
-
 .inventory-equipment-slot--slot-armor {
-  top: 42%;
+  top: 27%;
   left: 7%;
 }
 
-.inventory-equipment-slot--slot-offhand {
-  top: 42%;
+.inventory-equipment-slot--slot-head {
+  top: 27%;
   right: 7%;
 }
 
 .inventory-equipment-slot--slot-accessory {
-  bottom: 10%;
+  bottom: 27%;
   left: 7%;
 }
 
-.inventory-equipment-slot--slot-boots {
-  bottom: 10%;
+.inventory-equipment-slot--slot-offhand {
+  bottom: 27%;
   right: 7%;
+}
+
+.inventory-equipment-slot--slot-boots {
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .inventory-bag {
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 0.72rem;
+  grid-template-columns: minmax(0, 1fr) 3.3rem;
+  gap: 0.7rem;
   padding: 0.85rem;
 }
 
-.inventory-filterbar {
-  display: flex;
-  align-items: center;
-  gap: 0.42rem;
-  min-width: 0;
-  overflow-x: auto;
-  padding-bottom: 0.1rem;
-}
-
-.inventory-filterbar__item {
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  border-radius: 999px;
-  background: rgba(2, 6, 23, 0.34);
-  color: #94a3b8;
-  padding: 0.3rem 0.64rem;
-  font-size: 0.68rem;
-  font-weight: 900;
-  white-space: nowrap;
-  transition:
-    border-color 150ms ease,
-    background-color 150ms ease,
-    color 150ms ease;
-}
-
-.inventory-filterbar__item:hover,
-.inventory-filterbar__item--active {
-  border-color: rgba(168, 85, 247, 0.48);
-  background: rgba(168, 85, 247, 0.12);
-  color: #f8fafc;
-}
-
 .inventory-bag-grid {
+  min-width: 0;
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-auto-rows: minmax(3.65rem, 1fr);
+  grid-auto-rows: minmax(3.7rem, 1fr);
   gap: 0.55rem;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 0.1rem 0.25rem 0.2rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(226, 232, 240, 0.18) rgba(2, 6, 23, 0.24);
+}
+
+.inventory-bag-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.inventory-bag-grid::-webkit-scrollbar-track {
+  background: rgba(2, 6, 23, 0.24);
+  border-radius: 999px;
+}
+
+.inventory-bag-grid::-webkit-scrollbar-thumb {
+  background: rgba(226, 232, 240, 0.18);
+  border-radius: 999px;
+}
+
+.inventory-bag-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(226, 232, 240, 0.28);
 }
 
 .inventory-bag-cell {
@@ -330,6 +351,79 @@
   transform: translateX(-50%) translateY(0);
 }
 
+.inventory-type-tabs {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 0.42rem;
+  padding-top: 0.08rem;
+}
+
+.inventory-type-tab {
+  position: relative;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 0 0.72rem 0.72rem 0;
+  background:
+    radial-gradient(circle at 0% 50%, rgba(255, 255, 255, 0.06), transparent 2.1rem),
+    rgba(2, 6, 23, 0.48);
+  color: #cbd5e1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 1rem;
+  box-shadow:
+    -4px 0 12px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.015) inset;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.inventory-type-tab:hover,
+.inventory-type-tab--active {
+  border-color: rgba(168, 85, 247, 0.48);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(168, 85, 247, 0.15), transparent 2.1rem),
+    rgba(168, 85, 247, 0.12);
+  color: #f8fafc;
+  transform: translateX(-2px);
+}
+
+.inventory-type-tab::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 0.55rem);
+  z-index: 130;
+  border: 1px solid rgba(168, 85, 247, 0.36);
+  border-radius: 999px;
+  background: rgba(11, 15, 23, 0.98);
+  color: #f8fafc;
+  padding: 0.34rem 0.58rem;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) translateX(0.25rem);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.36);
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+.inventory-type-tab:hover::after,
+.inventory-type-tab:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
 @media (max-width: 980px) {
   .inventory-overlay {
     width: calc(100% - 1rem);
@@ -346,6 +440,10 @@
     min-height: 18rem;
     border-right: 0;
     border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  .inventory-bag {
+    grid-template-columns: minmax(0, 1fr) 3.1rem;
   }
 
   .inventory-bag-grid {

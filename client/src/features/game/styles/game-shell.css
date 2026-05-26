@@ -171,7 +171,7 @@
 
 .gameshell-account-menu {
   position: absolute;
-  top: calc(100% + 0.54rem);
+  top: calc(100% + 0.9rem);
   right: -0.1rem;
   z-index: 80;
   width: max-content;
@@ -712,6 +712,8 @@
 }
 
 .gameshell-actionbar {
+  position: relative;
+  z-index: 40;
   height: 58px;
   flex: 0 0 58px;
   border-top: 1px solid #22293a;
@@ -764,7 +766,7 @@
   position: absolute;
   left: 50%;
   bottom: calc(100% + 0.62rem);
-  z-index: 90;
+  z-index: 160;
   border: 1px solid rgba(168, 85, 247, 0.36);
   border-radius: 999px;
   background: rgba(11, 15, 23, 0.98);
@@ -789,7 +791,7 @@
   position: absolute;
   left: 50%;
   bottom: calc(100% + 0.36rem);
-  z-index: 91;
+  z-index: 161;
   width: 0.45rem;
   height: 0.45rem;
   border-right: 1px solid rgba(168, 85, 247, 0.36);
