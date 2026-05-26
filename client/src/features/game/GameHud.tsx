@@ -1,45 +1,22 @@
 import type { CharacterSnapshot } from "../../domain/magisterium.types";
 import { compactLabel, formatNumber } from "../../lib/format";
+import { GameAccountMenu } from "./GameAccountMenu";
 
 interface GameHudProps {
   currentCharacter: CharacterSnapshot;
+  onBackToCharacters: () => void;
+  onLogout: () => void;
 }
 
-function getInitialLetter(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
-}
-
-function formatBronze(value: number): string {
-  if (value >= 1_000_000) {
-    return `${formatNumber(value / 1_000_000, 1)}M BRONZE`;
-  }
-
-  if (value >= 1_000) {
-    return `${formatNumber(value / 1_000, 1)}K BRONZE`;
-  }
-
-  return `${formatNumber(value)} BRONZE`;
-}
-
-export function GameHud({ currentCharacter }: GameHudProps) {
+export function GameHud({
+  currentCharacter,
+  onBackToCharacters,
+  onLogout
+}: GameHudProps) {
   return (
-    <footer className="gameshell-footer">
-      <div className="gameshell-profile">
-        <div className="gameshell-avatar">
-          {getInitialLetter(currentCharacter.name)}
-        </div>
-
-        <div>
-          <strong>{currentCharacter.name}</strong>
-          <span>
-            Lv. {currentCharacter.progression.level} ·{" "}
-            {compactLabel(currentCharacter.originId)}
-          </span>
-        </div>
-      </div>
-
-      <div className="gameshell-stats">
-        <div>
+    <section className="gameshell-hud" aria-label="Character status">
+      <div className="gameshell-vitals">
+        <div className="gameshell-vital gameshell-vital--hp">
           <span>HP</span>
           <strong>
             {formatNumber(currentCharacter.currentState.hp)} /{" "}
@@ -47,7 +24,7 @@ export function GameHud({ currentCharacter }: GameHudProps) {
           </strong>
         </div>
 
-        <div>
+        <div className="gameshell-vital gameshell-vital--mp">
           <span>MP</span>
           <strong>
             {formatNumber(currentCharacter.currentState.mp)} /{" "}
@@ -55,19 +32,30 @@ export function GameHud({ currentCharacter }: GameHudProps) {
           </strong>
         </div>
 
-        <div>
+        <div className="gameshell-vital gameshell-vital--stamina">
           <span>STA</span>
           <strong>
             {formatNumber(currentCharacter.currentState.stamina)} /{" "}
             {formatNumber(currentCharacter.derivedStats.maxStamina)}
           </strong>
         </div>
-
-        <div>
-          <span>🪙</span>
-          <strong>{formatBronze(currentCharacter.moneyBronze)}</strong>
-        </div>
       </div>
-    </footer>
+
+      <div className="gameshell-character-chip">
+        <div className="gameshell-character-chip__copy">
+          <strong>{currentCharacter.name}</strong>
+          <span>
+            Lv. {currentCharacter.progression.level} ·{" "}
+            {compactLabel(currentCharacter.originId)}
+          </span>
+        </div>
+
+        <GameAccountMenu
+          characterName={currentCharacter.name}
+          onBackToCharacters={onBackToCharacters}
+          onLogout={onLogout}
+        />
+      </div>
+    </section>
   );
 }

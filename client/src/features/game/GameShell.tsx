@@ -1,9 +1,10 @@
 import { useState } from "react";
 
-import { Button } from "../../components/ui/Button";
 import { MagisteriumBrand } from "../../components/brand/MagisteriumBrand";
 import type { CharacterSnapshot } from "../../domain/magisterium.types";
 import { BattlePanel } from "../battles/BattlePanel";
+import { InventoryOverlay } from "../inventory/InventoryOverlay";
+import { GameActionBar } from "./GameActionBar";
 import { GameHud } from "./GameHud";
 import { GamePanelFrame } from "./GamePanelFrame";
 import { TownMap } from "./maps/TownMap";
@@ -61,6 +62,12 @@ export function GameShell({
 }: GameShellProps) {
   const [mapView, setMapView] = useState<MapView>("town");
   const [activePanel, setActivePanel] = useState<ActivePanel>("map");
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+
+  function openPanel(panel: ActivePanel) {
+    setIsInventoryOpen(false);
+    setActivePanel(panel);
+  }
 
   if (activePanel === "battle") {
     return (
@@ -96,7 +103,7 @@ export function GameShell({
       <PlaceholderPanel
         title="Iron & Ember"
         subtitle="Forge & Armory"
-        description="Chỗ này sau sẽ nối InventoryPanel, equip, unequip, upgrade và reforging."
+        description="Chỗ này sau sẽ dùng cho upgrade, reforge, repair, crafting và equipment services."
         onBack={() => setActivePanel("map")}
       />
     );
@@ -118,15 +125,11 @@ export function GameShell({
       <header className="gameshell-header">
         <MagisteriumBrand compact />
 
-        <div className="gameshell-actions">
-          <Button type="button" variant="ghost" onClick={onBackToCharacters}>
-            Characters
-          </Button>
-
-          <Button type="button" variant="ghost" onClick={onLogout}>
-            Logout
-          </Button>
-        </div>
+        <GameHud
+          currentCharacter={currentCharacter}
+          onBackToCharacters={onBackToCharacters}
+          onLogout={onLogout}
+        />
       </header>
 
       <main className="gameshell-map">
@@ -134,20 +137,36 @@ export function GameShell({
 
         {mapView === "town" ? (
           <TownMap
-            onOpenInn={() => setActivePanel("inn")}
-            onOpenForge={() => setActivePanel("forge")}
-            onOpenArchive={() => setActivePanel("archive")}
-            onOpenWorld={() => setMapView("world")}
+            onOpenInn={() => openPanel("inn")}
+            onOpenForge={() => openPanel("forge")}
+            onOpenArchive={() => openPanel("archive")}
+            onOpenWorld={() => {
+              setIsInventoryOpen(false);
+              setMapView("world");
+            }}
           />
         ) : (
           <WorldMap
-            onReturnTown={() => setMapView("town")}
-            onOpenBattle={() => setActivePanel("battle")}
+            onReturnTown={() => {
+              setIsInventoryOpen(false);
+              setMapView("town");
+            }}
+            onOpenBattle={() => openPanel("battle")}
           />
         )}
+
+        {isInventoryOpen ? (
+          <InventoryOverlay
+            currentCharacter={currentCharacter}
+            onClose={() => setIsInventoryOpen(false)}
+          />
+        ) : null}
       </main>
 
-      <GameHud currentCharacter={currentCharacter} />
+      <GameActionBar
+        isInventoryOpen={isInventoryOpen}
+        onToggleInventory={() => setIsInventoryOpen((current) => !current)}
+      />
     </div>
   );
 }

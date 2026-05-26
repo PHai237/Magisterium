@@ -21,12 +21,228 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0 2rem;
-  z-index: 5;
+  z-index: 20;
 }
 
-.gameshell-actions {
+.gameshell-hud {
   display: flex;
-  gap: 0.6rem;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.gameshell-vitals {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.gameshell-vital {
+  min-width: 5.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0.55rem;
+  background: rgba(2, 6, 23, 0.48);
+  padding: 0.34rem 0.52rem;
+  display: grid;
+  gap: 0.08rem;
+}
+
+.gameshell-vital span {
+  color: #64748b;
+  font-size: 0.58rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.gameshell-vital strong {
+  color: #f8fafc;
+  font-size: 0.7rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.gameshell-vital--hp {
+  border-color: rgba(248, 113, 113, 0.2);
+  background: rgba(248, 113, 113, 0.055);
+}
+
+.gameshell-vital--hp span {
+  color: #f87171;
+}
+
+.gameshell-vital--mp {
+  border-color: rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.055);
+}
+
+.gameshell-vital--mp span {
+  color: #38bdf8;
+}
+
+.gameshell-vital--stamina {
+  border-color: rgba(234, 179, 8, 0.2);
+  background: rgba(234, 179, 8, 0.055);
+}
+
+.gameshell-vital--stamina span {
+  color: #eab308;
+}
+
+.gameshell-character-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.62rem;
+  min-width: 0;
+}
+
+.gameshell-character-chip__copy {
+  min-width: 0;
+  display: grid;
+  justify-items: end;
+  gap: 0.1rem;
+  text-align: right;
+}
+
+.gameshell-character-chip__copy strong {
+  max-width: 11rem;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gameshell-character-chip__copy span {
+  max-width: 12rem;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 0.66rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gameshell-account {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.gameshell-account__avatar {
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 1px solid rgba(168, 85, 247, 0.46);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.18), transparent 0.9rem),
+    rgba(168, 85, 247, 0.32);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 950;
+  box-shadow:
+    0 0 0 4px rgba(168, 85, 247, 0.055),
+    0 12px 26px rgba(0, 0, 0, 0.28);
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.gameshell-account__avatar:hover,
+.gameshell-account__avatar[aria-expanded="true"] {
+  border-color: rgba(216, 180, 254, 0.84);
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.22), transparent 0.9rem),
+    rgba(168, 85, 247, 0.46);
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 4px rgba(168, 85, 247, 0.08),
+    0 0 22px rgba(168, 85, 247, 0.22),
+    0 12px 26px rgba(0, 0, 0, 0.32);
+}
+
+.gameshell-account-menu {
+  position: absolute;
+  top: calc(100% + 0.65rem);
+  right: 0;
+  z-index: 80;
+  width: 14rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0.8rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(168, 85, 247, 0.12), transparent 10rem),
+    rgba(12, 17, 28, 0.98);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  padding: 0.45rem;
+  display: grid;
+  gap: 0.2rem;
+  backdrop-filter: blur(14px);
+}
+
+.gameshell-account-menu::before {
+  content: "";
+  position: absolute;
+  top: -0.36rem;
+  right: 0.78rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-left: 1px solid rgba(148, 163, 184, 0.22);
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(12, 17, 28, 0.98);
+  transform: rotate(45deg);
+}
+
+.gameshell-account-menu button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: #cbd5e1;
+  padding: 0.62rem 0.68rem;
+  display: flex;
+  align-items: center;
+  gap: 0.58rem;
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-align: left;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.gameshell-account-menu button:not(:disabled):hover {
+  background: rgba(168, 85, 247, 0.12);
+  color: #ffffff;
+}
+
+.gameshell-account-menu button:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.gameshell-account-menu__divider {
+  height: 1px;
+  background: rgba(148, 163, 184, 0.16);
+  margin: 0.22rem 0;
+}
+
+.gameshell-account-menu .gameshell-account-menu__danger {
+  color: #fecdd3;
+}
+
+.gameshell-account-menu .gameshell-account-menu__danger:hover {
+  background: rgba(251, 113, 133, 0.13);
+  color: #fff1f2;
 }
 
 .gameshell-map {
@@ -35,39 +251,76 @@
   min-height: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 44%, rgba(244, 214, 142, 0.13), transparent 16rem),
-    radial-gradient(circle at 18% 24%, rgba(80, 160, 96, 0.11), transparent 22rem),
-    radial-gradient(circle at 80% 72%, rgba(56, 189, 248, 0.09), transparent 20rem),
+    radial-gradient(circle at 50% 44%, rgba(244, 214, 142, 0.16), transparent 16rem),
+    radial-gradient(circle at 18% 24%, rgba(80, 160, 96, 0.15), transparent 22rem),
+    radial-gradient(circle at 80% 72%, rgba(56, 189, 248, 0.11), transparent 20rem),
     linear-gradient(135deg, #182116 0%, #24201a 52%, #141916 100%);
+}
+
+.gameshell-map::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 52%, rgba(0, 0, 0, 0.18) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(0, 0, 0, 0.12));
 }
 
 .gameshell-map__grid {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background-image:
-    linear-gradient(rgba(241, 245, 249, 0.075) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(241, 245, 249, 0.075) 1px, transparent 1px),
+    linear-gradient(rgba(241, 245, 249, 0.062) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(241, 245, 249, 0.062) 1px, transparent 1px),
     radial-gradient(circle at 50% 46%, rgba(241, 245, 249, 0.16) 0 3px, transparent 4px),
-    radial-gradient(circle at 50% 46%, rgba(241, 245, 249, 0.11) 0 72px, transparent 74px);
+    radial-gradient(circle at 50% 46%, rgba(241, 245, 249, 0.095) 0 72px, transparent 74px);
   background-size:
-    40px 40px,
-    40px 40px,
+    42px 42px,
+    42px 42px,
     100% 100%,
     100% 100%;
-  opacity: 0.95;
+  opacity: 0.9;
+}
+
+.gameshell-map-aura {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(1px);
+}
+
+.gameshell-map-aura--town {
+  left: 37%;
+  top: 34%;
+  width: 18rem;
+  height: 18rem;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.16), transparent 68%);
+}
+
+.gameshell-map-aura--world {
+  left: 39%;
+  top: 34%;
+  width: 19rem;
+  height: 19rem;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.11), transparent 70%);
 }
 
 .gameshell-river {
   position: absolute;
+  z-index: 1;
   left: -6%;
   top: 8%;
   width: 82%;
   height: 36%;
-  border-bottom: 42px solid rgba(56, 189, 248, 0.34);
+  border-bottom: 42px solid rgba(56, 189, 248, 0.36);
   border-radius: 0 0 50% 55%;
   transform: rotate(-17deg);
   filter:
-    drop-shadow(0 0 18px rgba(56, 189, 248, 0.22))
+    drop-shadow(0 0 18px rgba(56, 189, 248, 0.24))
     blur(0.15px);
   pointer-events: none;
 }
@@ -80,15 +333,92 @@
   bottom: -34px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(186, 230, 253, 0.34);
+  background: rgba(186, 230, 253, 0.38);
   filter: blur(3px);
 }
 
-.gameshell-district {
+.gameshell-town-road,
+.gameshell-world-path {
   position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 999px;
+}
+
+.gameshell-town-road {
+  background:
+    linear-gradient(90deg, rgba(250, 204, 21, 0.34), rgba(251, 191, 36, 0.18)),
+    rgba(146, 104, 44, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.11),
+    0 0 18px rgba(250, 204, 21, 0.08);
+}
+
+.gameshell-town-road--main {
+  left: 20%;
+  top: 48%;
+  width: 58%;
+  height: 1.15rem;
+  transform: rotate(-3deg);
+}
+
+.gameshell-town-road--cross {
+  left: 47%;
+  top: 18%;
+  width: 1rem;
+  height: 58%;
+  transform: rotate(8deg);
+}
+
+.gameshell-town-road--archive {
+  right: 12%;
+  top: 32%;
+  width: 24%;
+  height: 0.82rem;
+  transform: rotate(-22deg);
+}
+
+.gameshell-town-road--gate {
+  right: 12%;
+  bottom: 18%;
+  width: 21%;
+  height: 0.9rem;
+  transform: rotate(-32deg);
+}
+
+.gameshell-world-path {
+  background:
+    linear-gradient(90deg, rgba(148, 163, 184, 0.32), rgba(56, 189, 248, 0.16)),
+    rgba(15, 23, 42, 0.42);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.08);
+}
+
+.gameshell-world-path--main {
+  left: 17%;
+  top: 44%;
+  width: 42%;
+  height: 0.95rem;
+  transform: rotate(18deg);
+}
+
+.gameshell-world-path--danger {
+  left: 51%;
+  top: 39%;
+  width: 28%;
+  height: 0.78rem;
+  transform: rotate(-20deg);
+  background:
+    linear-gradient(90deg, rgba(251, 113, 133, 0.28), rgba(249, 115, 22, 0.12)),
+    rgba(15, 23, 42, 0.34);
+}
+
+.gameshell-district,
+.gameshell-world-region {
+  position: absolute;
+  z-index: 2;
   border: 1px dashed rgba(226, 232, 240, 0.22);
   border-radius: 1rem;
-  color: rgba(226, 232, 240, 0.34);
+  color: rgba(226, 232, 240, 0.38);
   background: rgba(255, 255, 255, 0.026);
   display: grid;
   place-items: center;
@@ -112,30 +442,172 @@
   width: 12rem;
   height: 7rem;
   border-radius: 999px;
+  color: rgba(250, 204, 21, 0.45);
+  border-color: rgba(250, 204, 21, 0.2);
+  background: rgba(250, 204, 21, 0.035);
+}
+
+.gameshell-district--market {
+  left: 10%;
+  bottom: 12%;
+  width: 14rem;
+  height: 7rem;
+  color: rgba(251, 191, 36, 0.4);
+  border-color: rgba(251, 191, 36, 0.18);
+}
+
+.gameshell-world-region--forest {
+  left: 38%;
+  top: 44%;
+  width: 14rem;
+  height: 10rem;
+  color: rgba(163, 230, 53, 0.42);
+  border-color: rgba(163, 230, 53, 0.2);
+  background: rgba(22, 101, 52, 0.08);
+}
+
+.gameshell-world-region--mountain {
+  right: 10%;
+  top: 14%;
+  width: 15rem;
+  height: 11rem;
+  color: rgba(251, 113, 133, 0.4);
+  border-color: rgba(251, 113, 133, 0.18);
+  background: rgba(127, 29, 29, 0.08);
+}
+
+.gameshell-map-detail,
+.gameshell-world-star,
+.gameshell-world-mist {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.gameshell-map-detail {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.78);
+  box-shadow:
+    0 0 0 4px rgba(250, 204, 21, 0.08),
+    0 0 16px rgba(250, 204, 21, 0.24);
+}
+
+.gameshell-map-detail--lamp-1 {
+  left: 37%;
+  top: 46%;
+}
+
+.gameshell-map-detail--lamp-2 {
+  left: 56%;
+  top: 47%;
+}
+
+.gameshell-map-detail--lamp-3 {
+  right: 22%;
+  bottom: 24%;
+}
+
+.gameshell-map-detail--tree-1,
+.gameshell-map-detail--tree-2,
+.gameshell-map-detail--tree-3 {
+  width: 1.1rem;
+  height: 1.1rem;
+  background: rgba(74, 222, 128, 0.26);
+  box-shadow:
+    0 0 0 6px rgba(74, 222, 128, 0.045),
+    0 0 18px rgba(74, 222, 128, 0.11);
+}
+
+.gameshell-map-detail--tree-1 {
+  left: 28%;
+  top: 24%;
+}
+
+.gameshell-map-detail--tree-2 {
+  left: 31%;
+  bottom: 20%;
+}
+
+.gameshell-map-detail--tree-3 {
+  right: 30%;
+  top: 19%;
+}
+
+.gameshell-world-star {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+  box-shadow:
+    0 0 0 3px rgba(248, 250, 252, 0.05),
+    0 0 14px rgba(147, 197, 253, 0.32);
+}
+
+.gameshell-world-star--one {
+  left: 28%;
+  top: 23%;
+}
+
+.gameshell-world-star--two {
+  right: 29%;
+  bottom: 24%;
+}
+
+.gameshell-world-star--three {
+  right: 16%;
+  top: 42%;
+}
+
+.gameshell-world-mist {
+  width: 16rem;
+  height: 5rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.09);
+  filter: blur(12px);
+}
+
+.gameshell-world-mist--one {
+  left: 20%;
+  bottom: 17%;
+  transform: rotate(-12deg);
+}
+
+.gameshell-world-mist--two {
+  right: 15%;
+  top: 35%;
+  transform: rotate(16deg);
 }
 
 .gameshell-node {
   position: absolute;
-  width: 7.8rem;
-  min-height: 6.5rem;
+  z-index: 4;
+  width: 7.6rem;
+  min-height: 6.25rem;
   border: 1.5px solid rgba(51, 65, 85, 0.92);
   border-radius: 0.95rem;
-  background: rgba(11, 15, 23, 0.9);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 4.6rem),
+    rgba(11, 15, 23, 0.9);
   color: #d7e1d2;
-  padding: 0.78rem 0.55rem;
+  padding: 0.72rem 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.18rem;
   cursor: pointer;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.025),
+    0 18px 42px rgba(0, 0, 0, 0.48);
   backdrop-filter: blur(7px);
   transition:
     transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
     border-color 220ms ease,
     box-shadow 220ms ease,
-    opacity 220ms ease;
+    opacity 220ms ease,
+    background-color 220ms ease;
 }
 
 .gameshell-node:not(:disabled):hover {
@@ -178,31 +650,29 @@
 .gameshell-node--inn {
   top: 12%;
   left: 44%;
-  border-color: rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.33);
 }
 
 .gameshell-node--forge {
   bottom: 23%;
   left: 14%;
-  border-color: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.32);
 }
 
 .gameshell-node--archive {
   top: 24%;
   right: 10%;
-  border-color: rgba(168, 85, 247, 0.3);
+  border-color: rgba(168, 85, 247, 0.38);
 }
 
 .gameshell-node--gate {
-  width: 9rem;
+  width: 8.8rem;
   bottom: 11%;
   right: 11%;
-  border-color: rgba(56, 189, 248, 0.32);
-  background: linear-gradient(
-    180deg,
-    rgba(19, 23, 34, 0.94),
-    rgba(56, 189, 248, 0.035)
-  );
+  border-color: rgba(56, 189, 248, 0.42);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.13), transparent 4.8rem),
+    linear-gradient(180deg, rgba(19, 23, 34, 0.94), rgba(56, 189, 248, 0.04));
 }
 
 .gameshell-node--gate strong {
@@ -212,7 +682,7 @@
 .gameshell-node--return {
   top: 20%;
   left: 10%;
-  border-color: rgba(56, 189, 248, 0.3);
+  border-color: rgba(56, 189, 248, 0.34);
 }
 
 .gameshell-node--shadowfen {
@@ -221,7 +691,10 @@
   width: 6.8rem;
   min-height: 6.8rem;
   border-radius: 999px;
-  border-color: rgba(251, 113, 133, 0.32);
+  border-color: rgba(74, 222, 128, 0.38);
+  background:
+    radial-gradient(circle at 50% 15%, rgba(74, 222, 128, 0.12), transparent 4.8rem),
+    rgba(11, 15, 23, 0.91);
 }
 
 .gameshell-node--locked {
@@ -230,79 +703,108 @@
   width: 6.8rem;
   min-height: 6.8rem;
   border-radius: 999px;
-  border-color: rgba(251, 113, 133, 0.18);
+  border-color: rgba(251, 113, 133, 0.24);
 }
 
-.gameshell-footer {
+.gameshell-actionbar {
   height: 58px;
   flex: 0 0 58px;
   border-top: 1px solid #22293a;
   background: #0b0d13;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0 2rem;
-}
-
-.gameshell-profile {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-width: 0;
-}
-
-.gameshell-avatar {
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 999px;
-  background: #a855f7;
-  color: white;
   display: grid;
   place-items: center;
-  font-size: 0.72rem;
-  font-weight: 950;
+  padding: 0 1.25rem;
 }
 
-.gameshell-profile strong {
-  display: block;
+.gameshell-actionbar__inventory {
+  position: relative;
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1px solid rgba(168, 85, 247, 0.42);
+  border-radius: 0.85rem;
+  background:
+    radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.16), transparent 1.1rem),
+    rgba(168, 85, 247, 0.12);
   color: #f8fafc;
-  font-size: 0.82rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 1.25rem;
+  box-shadow:
+    0 0 0 5px rgba(168, 85, 247, 0.045),
+    0 14px 28px rgba(0, 0, 0, 0.28);
+  transform: rotate(-4deg);
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
 }
 
-.gameshell-profile span {
-  display: block;
-  color: #64748b;
+.gameshell-actionbar__inventory:hover,
+.gameshell-actionbar__inventory--active {
+  border-color: rgba(216, 180, 254, 0.86);
+  background:
+    radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.2), transparent 1.1rem),
+    rgba(168, 85, 247, 0.24);
+  box-shadow:
+    0 0 0 6px rgba(168, 85, 247, 0.07),
+    0 0 26px rgba(168, 85, 247, 0.22),
+    0 16px 30px rgba(0, 0, 0, 0.34);
+  transform: translateY(-2px) rotate(0deg);
+}
+
+.gameshell-actionbar__inventory::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.62rem);
+  z-index: 90;
+  border: 1px solid rgba(168, 85, 247, 0.36);
+  border-radius: 999px;
+  background: rgba(11, 15, 23, 0.98);
+  color: #f8fafc;
+  padding: 0.36rem 0.64rem;
   font-size: 0.68rem;
-  font-weight: 800;
-}
-
-.gameshell-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  flex-wrap: wrap;
-}
-
-.gameshell-stats > div {
-  border: 1px solid #22293a;
-  border-radius: 0.5rem;
-  background: #06070a;
-  display: flex;
-  align-items: center;
-  gap: 0.38rem;
-  padding: 0.32rem 0.68rem;
-  font-size: 0.74rem;
-}
-
-.gameshell-stats span {
-  color: #64748b;
   font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(0.28rem);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.36);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
 }
 
-.gameshell-stats strong {
-  color: #f8fafc;
-  font-weight: 900;
+.gameshell-actionbar__inventory::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.36rem);
+  z-index: 91;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1px solid rgba(168, 85, 247, 0.36);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.36);
+  background: rgba(11, 15, 23, 0.98);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) rotate(45deg);
+  transition: opacity 160ms ease;
+}
+
+.gameshell-actionbar__inventory:hover::after,
+.gameshell-actionbar__inventory:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.gameshell-actionbar__inventory:hover::before,
+.gameshell-actionbar__inventory:focus-visible::before {
+  opacity: 1;
 }
 
 .gameshell-panel__header > div {
@@ -370,12 +872,25 @@
 
 @media (max-width: 980px) {
   .gameshell-header,
-  .gameshell-footer {
-    padding: 0 1rem;
+  .gameshell-panel__header {
+    height: auto;
+    min-height: 65px;
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
   }
 
-  .gameshell-stats {
+  .gameshell-hud {
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 0.55rem;
+  }
+
+  .gameshell-vitals {
     display: none;
+  }
+
+  .gameshell-character-chip__copy strong {
+    max-width: 8rem;
   }
 
   .gameshell-node {
