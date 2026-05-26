@@ -8,11 +8,11 @@ interface InventoryOverlayProps {
 }
 
 const EQUIPMENT_SLOTS = [
-  { id: "weapon", label: "Weapon", icon: "⚔️", className: "slot-weapon" },
   { id: "head", label: "Head", icon: "◌", className: "slot-head" },
+  { id: "hand", label: "Hand", icon: "⚔️", className: "slot-hand" },
+  { id: "offhand", label: "Off-hand", icon: "🛡️", className: "slot-offhand" },
   { id: "armor", label: "Armor", icon: "◌", className: "slot-armor" },
-  { id: "offhand", label: "Off-hand", icon: "◌", className: "slot-offhand" },
-  { id: "accessory", label: "Accessory", icon: "◌", className: "slot-accessory" },
+  { id: "legging", label: "Legging", icon: "◌", className: "slot-legging" },
   { id: "boots", label: "Boots", icon: "◌", className: "slot-boots" }
 ] as const;
 
