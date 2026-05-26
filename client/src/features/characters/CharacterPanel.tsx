@@ -290,6 +290,7 @@ export function CharacterPanel({
                     }`}
                     onClick={() => void selectCharacter(character.id)}
                     type="button"
+                    disabled={busy}
                   >
                     <span className="character-list-card__main">
                       <span className="character-avatar">
@@ -313,6 +314,7 @@ export function CharacterPanel({
           <button
             className="character-new-button"
             type="button"
+            disabled={busy || previewBusy}
             onClick={() => {
               setName("New Weaver");
               setOriginId("wanderer");
@@ -360,6 +362,7 @@ export function CharacterPanel({
                   onChange={(event) => setName(event.target.value)}
                   placeholder="Enter character name"
                   autoComplete="off"
+                  disabled={busy}
                 />
 
                 <div className="resource-preview">
@@ -440,18 +443,21 @@ export function CharacterPanel({
                       type="button"
                       variant="ghost"
                       onClick={selectPreviousOrigin}
+                      disabled={previewBusy}
                     >
                       Prev
                     </Button>
 
                     <span>
-                      Origin {normalizedOriginIndex + 1} / {ORIGIN_OPTIONS.length}
+                      Origin {normalizedOriginIndex + 1} /{" "}
+                      {ORIGIN_OPTIONS.length}
                     </span>
 
                     <Button
                       type="button"
                       variant="ghost"
                       onClick={selectNextOrigin}
+                      disabled={previewBusy}
                     >
                       Next
                     </Button>
@@ -478,6 +484,7 @@ export function CharacterPanel({
             <Button
               type="button"
               variant="ghost"
+              disabled={busy || previewBusy}
               onClick={() => {
                 setName("");
                 setOriginId("wanderer");
