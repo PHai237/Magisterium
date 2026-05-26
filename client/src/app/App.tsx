@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type {
   AuthResponse,
@@ -48,31 +48,34 @@ export function App() {
     void loadSession();
   }, []);
 
-  function handleAuthSuccess(response: AuthResponse) {
+  const handleAuthSuccess = useCallback((response: AuthResponse) => {
     writeStoredAuthToken(response.token);
     setUser(response.user);
     setCurrentCharacter(null);
     setScreen("character_gate");
-  }
+  }, []);
 
-  function handleCurrentCharacterChange(character: CharacterSnapshot | null) {
-    setCurrentCharacter(character);
+  const handleCurrentCharacterChange = useCallback(
+    (character: CharacterSnapshot | null) => {
+      setCurrentCharacter(character);
 
-    if (!character) {
-      setScreen("character_gate");
-    }
-  }
+      if (!character) {
+        setScreen("character_gate");
+      }
+    },
+    []
+  );
 
-  function handleEnterWorld(character: CharacterSnapshot) {
+  const handleEnterWorld = useCallback((character: CharacterSnapshot) => {
     setCurrentCharacter(character);
     setScreen("game");
-  }
+  }, []);
 
-  function handleCharacterUpdated(character: CharacterSnapshot) {
+  const handleCharacterUpdated = useCallback((character: CharacterSnapshot) => {
     setCurrentCharacter(character);
-  }
+  }, []);
 
-  async function handleLogout() {
+  const handleLogout = useCallback(async () => {
     try {
       await authApi.logout();
     } catch {
@@ -83,7 +86,7 @@ export function App() {
       setCurrentCharacter(null);
       setScreen("character_gate");
     }
-  }
+  }, []);
 
   if (user && currentCharacter && screen === "game") {
     return (
