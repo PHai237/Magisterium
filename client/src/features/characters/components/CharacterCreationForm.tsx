@@ -20,12 +20,6 @@ interface CharacterCreationFormProps {
   onReset: () => void;
 }
 
-const RESOURCE_HINTS: Record<string, string> = {
-  HP: "Health. If it reaches 0, you fall.",
-  MP: "Used to cast magical skills.",
-  Stamina: "Used for physical actions and travel."
-};
-
 const STAT_HINTS: Record<string, string> = {
   STR: "Increases physical damage.",
   DEX: "Improves accuracy, evasion, and speed.",
@@ -78,42 +72,18 @@ export function CharacterCreationForm({
 
               <div className="resource-preview">
                 <div className="resource-preview__item resource-preview__item--hp">
-                  <button
-                    type="button"
-                    className="character-info-dot character-resource-info-dot"
-                    aria-label="What is HP?"
-                    data-tooltip={RESOURCE_HINTS.HP}
-                  >
-                    !
-                  </button>
-                  <span>HP</span>
-                  <strong>{preview?.derivedStats.maxHp ?? "—"}</strong>
+                    <span>HP</span>
+                    <strong>{preview?.derivedStats.maxHp ?? "—"}</strong>
                 </div>
 
                 <div className="resource-preview__item resource-preview__item--mp">
-                  <button
-                    type="button"
-                    className="character-info-dot character-resource-info-dot"
-                    aria-label="What is MP?"
-                    data-tooltip={RESOURCE_HINTS.MP}
-                  >
-                    !
-                  </button>
-                  <span>MP</span>
-                  <strong>{preview?.derivedStats.maxMp ?? "—"}</strong>
+                    <span>MP</span>
+                    <strong>{preview?.derivedStats.maxMp ?? "—"}</strong>
                 </div>
 
                 <div className="resource-preview__item resource-preview__item--stamina">
-                  <button
-                    type="button"
-                    className="character-info-dot character-resource-info-dot"
-                    aria-label="What is Stamina?"
-                    data-tooltip={RESOURCE_HINTS.Stamina}
-                  >
-                    !
-                  </button>
-                  <span>Stamina</span>
-                  <strong>{preview?.derivedStats.maxStamina ?? "—"}</strong>
+                    <span>Stamina</span>
+                    <strong>{preview?.derivedStats.maxStamina ?? "—"}</strong>
                 </div>
               </div>
 

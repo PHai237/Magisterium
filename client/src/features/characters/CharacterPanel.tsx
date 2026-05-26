@@ -267,12 +267,15 @@ export function CharacterPanel({
             aria-modal="true"
             aria-labelledby="character-delete-title"
           >
-            <div className="character-confirm-icon" aria-hidden="true">
-              🗑
+            <div className="character-confirm-topline">
+              <div className="character-confirm-icon" aria-hidden="true">
+                🗑
+              </div>
+
+              <p>Delete Character</p>
             </div>
 
             <div className="character-confirm-copy">
-              <p>Delete Character</p>
               <h2 id="character-delete-title">
                 Delete {pendingDeleteCharacter.name}?
               </h2>
