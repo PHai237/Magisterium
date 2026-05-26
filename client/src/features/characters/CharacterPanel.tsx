@@ -34,8 +34,10 @@ export function CharacterPanel({
 }: CharacterPanelProps) {
   const [data, setData] = useState<LoadState>(initialLoadState);
   const [preview, setPreview] = useState<CharacterCreationPreview | null>(null);
-  const [name, setName] = useState("Wanderer Weaver");
+  const [name, setName] = useState("");
   const [originId, setOriginId] = useState<OriginId>("wanderer");
+  const [pendingDeleteCharacter, setPendingDeleteCharacter] =
+    useState<CharacterSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [previewBusy, setPreviewBusy] = useState(false);
@@ -117,7 +119,7 @@ export function CharacterPanel({
 
     try {
       const created = await charactersApi.create(userId, {
-        name,
+        name: name.trim(),
         originId
       });
 
@@ -132,7 +134,7 @@ export function CharacterPanel({
       }));
 
       onCurrentCharacterChange?.(created);
-      setName("New Weaver");
+      setName("");
     } catch (createError) {
       setError(
         createError instanceof Error
@@ -168,16 +170,24 @@ export function CharacterPanel({
     }
   }
 
-  async function deleteCurrentCharacter() {
-    if (!data.current) {
+  function requestDeleteCurrentCharacter() {
+    if (!data.current || busy) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Delete ${data.current.name}? This cannot be undone.`
-    );
+    setPendingDeleteCharacter(data.current);
+  }
 
-    if (!confirmed) {
+  function cancelDeleteCharacter() {
+    if (busy) {
+      return;
+    }
+
+    setPendingDeleteCharacter(null);
+  }
+
+  async function confirmDeleteCharacter() {
+    if (!pendingDeleteCharacter) {
       return;
     }
 
@@ -185,7 +195,8 @@ export function CharacterPanel({
     setError(null);
 
     try {
-      await charactersApi.delete(userId, data.current.id);
+      await charactersApi.delete(userId, pendingDeleteCharacter.id);
+      setPendingDeleteCharacter(null);
       await loadCharacters();
     } catch (deleteError) {
       setError(
@@ -199,7 +210,7 @@ export function CharacterPanel({
   }
 
   function prepareNewCharacter() {
-    setName("New Weaver");
+    setName("");
     setOriginId("wanderer");
   }
 
@@ -216,7 +227,7 @@ export function CharacterPanel({
           currentCharacter={data.current}
           busy={busy || previewBusy}
           onSelectCharacter={(characterId) => void selectCharacter(characterId)}
-          onDeleteCurrentCharacter={() => void deleteCurrentCharacter()}
+          onDeleteCurrentCharacter={requestDeleteCurrentCharacter}
           onPrepareNewCharacter={prepareNewCharacter}
         />
 
@@ -247,6 +258,54 @@ export function CharacterPanel({
         onSubmit={() => void createCharacter()}
         onReset={resetCreationForm}
       />
+
+      {pendingDeleteCharacter ? (
+        <div className="character-confirm-overlay">
+          <section
+            className="character-confirm-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="character-delete-title"
+          >
+            <div className="character-confirm-icon" aria-hidden="true">
+              ✦
+            </div>
+
+            <div className="character-confirm-copy">
+              <p>Delete Character</p>
+              <h2 id="character-delete-title">
+                Release {pendingDeleteCharacter.name}?
+              </h2>
+              <span>
+                This Weaver will be removed from your roster. This action cannot
+                be undone.
+              </span>
+            </div>
+
+            {error ? <div className="error-banner">{error}</div> : null}
+
+            <div className="character-confirm-actions">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy}
+                onClick={cancelDeleteCharacter}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="button"
+                variant="danger"
+                disabled={busy}
+                onClick={() => void confirmDeleteCharacter()}
+              >
+                {busy ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

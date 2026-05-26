@@ -113,11 +113,13 @@ export function App() {
         {user ? (
           <div className="phase5-topbar__actions">
             <button
-              className="phase5-logout-button"
+              className="phase5-logout-button phase5-logout-button--icon"
               type="button"
               onClick={() => void handleLogout()}
+              aria-label="Logout"
+              data-tooltip="Logout"
             >
-              Logout
+              <span aria-hidden="true">⏻</span>
             </button>
           </div>
         ) : null}

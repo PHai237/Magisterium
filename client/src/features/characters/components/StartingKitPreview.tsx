@@ -15,8 +15,19 @@ const STARTING_KIT_ITEM_ICONS: Record<string, string> = {
   one_night_inn_voucher: "🏨"
 };
 
+const STARTING_KIT_ITEM_HINTS: Record<string, string> = {
+  stamina_bread: "Restores a small amount of stamina.",
+  minor_hp_potion: "Heals 10 HP.",
+  minor_mp_potion: "Restores 10 MP.",
+  one_night_inn_voucher: "Grants one free inn rest."
+};
+
 function getStartingKitItemIcon(itemId: ItemId): string {
   return STARTING_KIT_ITEM_ICONS[itemId] ?? "◇";
+}
+
+function getStartingKitItemHint(itemId: ItemId): string {
+  return STARTING_KIT_ITEM_HINTS[itemId] ?? "Useful starter item.";
 }
 
 function formatQuantity(quantity: number): string {
@@ -49,6 +60,15 @@ export function StartingKitPreview({
               {formatQuantity(item.quantity)}
             </span>
             <span className="starting-kit-name">{item.name}</span>
+
+            <button
+              type="button"
+              className="character-info-dot starting-kit-info-dot"
+              aria-label={`What does ${item.name} do?`}
+              data-tooltip={getStartingKitItemHint(item.itemId)}
+            >
+              !
+            </button>
           </div>
         ))}
 

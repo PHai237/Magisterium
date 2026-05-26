@@ -70,6 +70,48 @@
   transform: translateY(-1px);
 }
 
+.phase5-logout-button--icon {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: 999px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+}
+
+.phase5-logout-button--icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 10;
+  border: 1px solid rgba(168, 85, 247, 0.34);
+  border-radius: 999px;
+  background: rgba(11, 15, 23, 0.96);
+  color: #f8fafc;
+  padding: 0.34rem 0.62rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.25rem);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.phase5-logout-button--icon:hover::after,
+.phase5-logout-button--icon:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .phase5-workspace {
   flex: 1 1 auto;
   min-height: 0;
