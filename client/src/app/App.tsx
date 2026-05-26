@@ -8,24 +8,38 @@ import type {
 import { AuthPanel } from "../features/auth/AuthPanel";
 import { authApi } from "../features/auth/auth.api";
 import { CharacterPanel } from "../features/characters/CharacterPanel";
+import { GameShell } from "../features/game/GameShell";
 import {
   clearStoredAuthToken,
   writeStoredAuthToken
 } from "../lib/storage/auth-token";
 
+type AppScreen = "character_gate" | "game";
+
 export function App() {
   const [user, setUser] = useState<UserSessionSnapshot | null>(null);
-  const [, setCurrentCharacter] = useState<CharacterSnapshot | null>(null);
+  const [currentCharacter, setCurrentCharacter] =
+    useState<CharacterSnapshot | null>(null);
+  const [screen, setScreen] = useState<AppScreen>("character_gate");
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     async function loadSession() {
       try {
         const sessionUser = await authApi.me();
+
         setUser(sessionUser);
+
+        if (!sessionUser) {
+          clearStoredAuthToken();
+          setCurrentCharacter(null);
+          setScreen("character_gate");
+        }
       } catch {
         clearStoredAuthToken();
         setUser(null);
+        setCurrentCharacter(null);
+        setScreen("character_gate");
       } finally {
         setInitializing(false);
       }
@@ -38,6 +52,24 @@ export function App() {
     writeStoredAuthToken(response.token);
     setUser(response.user);
     setCurrentCharacter(null);
+    setScreen("character_gate");
+  }
+
+  function handleCurrentCharacterChange(character: CharacterSnapshot | null) {
+    setCurrentCharacter(character);
+
+    if (!character) {
+      setScreen("character_gate");
+    }
+  }
+
+  function handleEnterWorld(character: CharacterSnapshot) {
+    setCurrentCharacter(character);
+    setScreen("game");
+  }
+
+  function handleCharacterUpdated(character: CharacterSnapshot) {
+    setCurrentCharacter(character);
   }
 
   async function handleLogout() {
@@ -49,7 +81,22 @@ export function App() {
       clearStoredAuthToken();
       setUser(null);
       setCurrentCharacter(null);
+      setScreen("character_gate");
     }
+  }
+
+  if (user && currentCharacter && screen === "game") {
+    return (
+      <main className="phase5-root">
+        <GameShell
+          userId={user.id}
+          currentCharacter={currentCharacter}
+          onBackToCharacters={() => setScreen("character_gate")}
+          onCharacterUpdated={handleCharacterUpdated}
+          onLogout={() => void handleLogout()}
+        />
+      </main>
+    );
   }
 
   return (
@@ -78,7 +125,8 @@ export function App() {
         ) : user ? (
           <CharacterPanel
             userId={user.id}
-            onCurrentCharacterChange={setCurrentCharacter}
+            onCurrentCharacterChange={handleCurrentCharacterChange}
+            onEnterWorld={handleEnterWorld}
           />
         ) : (
           <AuthPanel onAuthSuccess={handleAuthSuccess} />
