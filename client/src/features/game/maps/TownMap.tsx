@@ -27,11 +27,11 @@ export function TownMap({
 
       <MapNode
         className="gameshell-node--inn"
-        icon="🍞"
-        name="The Cozy Hearth"
-        subtitle="Inn / Tavern"
+        icon="🕯️"
+        name="The Inn"
+        subtitle="Rest & Recovery"
         onClick={onOpenInn}
-      />
+        />
 
       <MapNode
         className="gameshell-node--forge"

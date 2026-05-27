@@ -1,16 +1,16 @@
 import { useState } from "react";
 
 import { MagisteriumBrand } from "../../components/brand/MagisteriumBrand";
+import { Button } from "../../components/ui/Button";
 import type { CharacterSnapshot } from "../../domain/magisterium.types";
 import { BattlePanel } from "../battles/BattlePanel";
+import { InnPanel } from "../inn/InnPanel";
 import { InventoryOverlay } from "../inventory/InventoryOverlay";
 import { GameActionBar } from "./GameActionBar";
 import { GameHud } from "./GameHud";
-import { GamePanelFrame } from "./GamePanelFrame";
 import { TownMap } from "./maps/TownMap";
 import { WorldMap } from "./maps/WorldMap";
 import "./styles/game-shell.css";
-import { InnPanel } from "../inn/InnPanel";
 
 interface GameShellProps {
   userId: string;
@@ -37,20 +37,26 @@ function PlaceholderPanel({
   onBack
 }: PlaceholderPanelProps) {
   return (
-    <GamePanelFrame
-      title={title}
-      subtitle={subtitle}
-      returnLabel="← Return to Town"
-      onBack={onBack}
-    >
-      <main className="gameshell-panel__body">
-        <section className="gameshell-placeholder-card">
+    <main className="gameshell-content">
+      <header className="gameshell-content__header">
+        <Button type="button" variant="ghost" onClick={onBack}>
+          ← Return to Town
+        </Button>
+
+        <div>
+          <span>{subtitle}</span>
+          <strong>{title}</strong>
+        </div>
+      </header>
+
+      <section className="gameshell-content__body gameshell-content__body--stage">
+        <article className="gameshell-placeholder-card">
           <p>{subtitle}</p>
           <h2>{title}</h2>
           <span>{description}</span>
-        </section>
-      </main>
-    </GamePanelFrame>
+        </article>
+      </section>
+    </main>
   );
 }
 
@@ -70,76 +76,90 @@ export function GameShell({
     setActivePanel(panel);
   }
 
-  if (activePanel === "battle") {
-    return (
-      <GamePanelFrame
-        title="Shadowfen Woods"
-        subtitle="Expedition"
-        returnLabel="← Return to World Map"
-        onBack={() => setActivePanel("map")}
-        contentClassName="gameshell-panel__content"
-      >
-        <BattlePanel
-          userId={userId}
-          currentCharacter={currentCharacter}
-          onCharacterUpdated={onCharacterUpdated}
+  function returnToTownMap() {
+    setIsInventoryOpen(false);
+    setMapView("town");
+    setActivePanel("map");
+  }
+
+  function renderWorldBody() {
+    if (activePanel === "battle") {
+      return (
+        <main className="gameshell-content">
+          <header className="gameshell-content__header">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setActivePanel("map")}
+            >
+              ← Return to World Map
+            </Button>
+
+            <div>
+              <span>Expedition</span>
+              <strong>Shadowfen Woods</strong>
+            </div>
+          </header>
+
+          <section className="gameshell-content__body">
+            <BattlePanel
+              userId={userId}
+              currentCharacter={currentCharacter}
+              onCharacterUpdated={onCharacterUpdated}
+            />
+          </section>
+        </main>
+      );
+    }
+
+    if (activePanel === "inn") {
+      return (
+        <main className="gameshell-content">
+          <header className="gameshell-content__header">
+            <Button type="button" variant="ghost" onClick={returnToTownMap}>
+              ← Return to Town
+            </Button>
+
+            <div>
+              <span>Rest Service</span>
+              <strong>The Inn</strong>
+            </div>
+          </header>
+
+          <section className="gameshell-content__body gameshell-content__body--stage">
+            <InnPanel
+              userId={userId}
+              currentCharacter={currentCharacter}
+              onCharacterUpdated={onCharacterUpdated}
+            />
+          </section>
+        </main>
+      );
+    }
+
+    if (activePanel === "forge") {
+      return (
+        <PlaceholderPanel
+          title="Iron & Ember"
+          subtitle="Forge & Armory"
+          description="Chỗ này sau sẽ dùng cho upgrade, reforge, repair, crafting và equipment services."
+          onBack={returnToTownMap}
         />
-      </GamePanelFrame>
-    );
-  }
+      );
+    }
 
-  if (activePanel === "inn") {
-    return (
-      <GamePanelFrame
-        title="The Inn"
-        subtitle="Inn"
-        returnLabel="← Return to Town"
-        onBack={() => setActivePanel("map")}
-        contentClassName="gameshell-panel__content"
-      >
-        <InnPanel
-          userId={userId}
-          currentCharacter={currentCharacter}
-          onCharacterUpdated={onCharacterUpdated}
+    if (activePanel === "archive") {
+      return (
+        <PlaceholderPanel
+          title="The Grand Archive"
+          subtitle="Library / Runes"
+          description="Chỗ này sau sẽ nối skill, rune, passive và progression knowledge."
+          onBack={returnToTownMap}
         />
-      </GamePanelFrame>
-    );
-  }
+      );
+    }
 
-  if (activePanel === "forge") {
     return (
-      <PlaceholderPanel
-        title="Iron & Ember"
-        subtitle="Forge & Armory"
-        description="Chỗ này sau sẽ dùng cho upgrade, reforge, repair, crafting và equipment services."
-        onBack={() => setActivePanel("map")}
-      />
-    );
-  }
-
-  if (activePanel === "archive") {
-    return (
-      <PlaceholderPanel
-        title="The Grand Archive"
-        subtitle="Library / Runes"
-        description="Chỗ này sau sẽ nối skill, rune, passive và progression knowledge."
-        onBack={() => setActivePanel("map")}
-      />
-    );
-  }
-
-  return (
-    <div className="gameshell-root">
-      <header className="gameshell-header">
-        <MagisteriumBrand compact />
-
-        <GameHud
-          currentCharacter={currentCharacter}
-          onBackToCharacters={onBackToCharacters}
-          onLogout={onLogout}
-        />
-      </header>
-
       <main className="gameshell-map">
         <div className="gameshell-map__grid" />
 
@@ -162,16 +182,32 @@ export function GameShell({
             onOpenBattle={() => openPanel("battle")}
           />
         )}
-
-        {isInventoryOpen ? (
-          <InventoryOverlay
-            userId={userId}
-            currentCharacter={currentCharacter}
-            onCharacterUpdated={onCharacterUpdated}
-            onClose={() => setIsInventoryOpen(false)}
-          />
-        ) : null}
       </main>
+    );
+  }
+
+  return (
+    <div className="gameshell-root">
+      <header className="gameshell-header">
+        <MagisteriumBrand compact />
+
+        <GameHud
+          currentCharacter={currentCharacter}
+          onBackToCharacters={onBackToCharacters}
+          onLogout={onLogout}
+        />
+      </header>
+
+      {renderWorldBody()}
+
+      {isInventoryOpen ? (
+        <InventoryOverlay
+          userId={userId}
+          currentCharacter={currentCharacter}
+          onCharacterUpdated={onCharacterUpdated}
+          onClose={() => setIsInventoryOpen(false)}
+        />
+      ) : null}
 
       <GameActionBar
         isInventoryOpen={isInventoryOpen}

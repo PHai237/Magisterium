@@ -20,10 +20,12 @@ export function InnPanel({
   onCharacterUpdated
 }: InnPanelProps) {
   const [busy, setBusy] = useState(false);
+  const [restFlash, setRestFlash] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canAffordRest = currentCharacter.moneyBronze >= BASIC_INN_REST_PRICE_BRONZE;
+  const canAffordRest =
+    currentCharacter.moneyBronze >= BASIC_INN_REST_PRICE_BRONZE;
 
   async function restAtInn() {
     if (busy || !canAffordRest) {
@@ -42,8 +44,11 @@ export function InnPanel({
 
       onCharacterUpdated(result.character);
 
+      setRestFlash(true);
+      window.setTimeout(() => setRestFlash(false), 900);
+
       setMessage(
-        `Rest complete. ${formatNumber(result.rest.priceBronze)} Bronze spent.`
+        "You feel renewed, steady, and ready for the next expedition."
       );
     } catch (restError) {
       setError(
@@ -57,55 +62,83 @@ export function InnPanel({
   }
 
   return (
-    <main className="inn-panel">
-      <section className="inn-basic-card">
+    <article
+      className={`inn-basic-card ${restFlash ? "inn-basic-card--flash" : ""}`}
+    >
+      <div className="inn-basic-card__visual">
+        <div className="inn-basic-card__glow" aria-hidden="true" />
         <div className="inn-basic-card__sigil" aria-hidden="true">
           🕯️
         </div>
+      </div>
 
-        <div className="inn-basic-card__copy">
-          <p>The Cozy Hearth</p>
-          <h2>Rest for the night</h2>
-          <span>
-            Pay a small fee to fully recover HP, MP, and Stamina before your
-            next expedition.
-          </span>
+      <div className="inn-basic-card__copy">
+        <p>The Inn</p>
+        <h2>Rest for the night</h2>
+        <span>
+          A quiet room, warm light, and enough silence to recover before the
+          road calls again.
+        </span>
+      </div>
+
+      <section className="inn-service-box" aria-label="Rest service details">
+        <div className="inn-service-box__header">
+          <span>Service</span>
+          <strong>Overnight Rest</strong>
         </div>
 
-        <div className="inn-basic-card__price">
+        <div className="inn-service-list">
+          <div className="inn-service-row">
+            <span aria-hidden="true">❤️</span>
+            <strong>Fully restore HP</strong>
+            <em>+100%</em>
+          </div>
+
+          <div className="inn-service-row">
+            <span aria-hidden="true">💙</span>
+            <strong>Fully restore MP</strong>
+            <em>+100%</em>
+          </div>
+
+          <div className="inn-service-row">
+            <span aria-hidden="true">⚡</span>
+            <strong>Fully restore Stamina</strong>
+            <em>+100%</em>
+          </div>
+        </div>
+      </section>
+
+      <section className="inn-payment-panel" aria-label="Rest payment">
+        <div>
           <span>Price</span>
           <strong>{formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze</strong>
         </div>
 
-        <Button
-          type="button"
-          disabled={busy || !canAffordRest}
-          onClick={() => void restAtInn()}
-        >
-          {busy
-            ? "Resting..."
-            : canAffordRest
-              ? "Rest"
-              : "Not enough bronze"}
-        </Button>
-
-        <div className="inn-basic-card__wallet">
-          Wallet: <strong>{formatNumber(currentCharacter.moneyBronze)}</strong>{" "}
-          Bronze
+        <div>
+          <span>Wallet</span>
+          <strong>{formatNumber(currentCharacter.moneyBronze)} Bronze</strong>
         </div>
-
-        {message ? (
-          <div className="inn-basic-result inn-basic-result--success">
-            {message}
-          </div>
-        ) : null}
-
-        {error ? (
-          <div className="inn-basic-result inn-basic-result--error">
-            {error}
-          </div>
-        ) : null}
       </section>
-    </main>
+
+      <Button
+        type="button"
+        disabled={busy || !canAffordRest}
+        onClick={() => void restAtInn()}
+      >
+        {busy ? "Resting..." : canAffordRest ? "Rest" : "Not enough bronze"}
+      </Button>
+
+      {message ? (
+        <div className="inn-basic-result inn-basic-result--success" role="status">
+          {message}
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="inn-basic-result inn-basic-result--error" role="alert">
+          {error}
+        </div>
+      ) : null}
+    </article>
   );
 }

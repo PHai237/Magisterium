@@ -905,3 +905,97 @@
     min-height: 7.3rem;
   }
 }
+
+.gameshell-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(168, 85, 247, 0.08), transparent 26rem),
+    radial-gradient(circle at 75% 70%, rgba(56, 189, 248, 0.06), transparent 24rem),
+    #07090e;
+}
+
+.gameshell-content__header {
+  height: 56px;
+  flex: 0 0 56px;
+  border-bottom: 1px solid #22293a;
+  background:
+    linear-gradient(180deg, rgba(13, 16, 23, 0.92), rgba(7, 9, 14, 0.92));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.25rem;
+}
+
+.gameshell-content__header > div {
+  min-width: 0;
+  display: grid;
+  justify-items: end;
+  gap: 0.1rem;
+}
+
+.gameshell-content__header span {
+  color: #a855f7;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gameshell-content__header strong {
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gameshell-content__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.gameshell-content__body--stage {
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+}
+
+.gameshell-content__body {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #07090e;
+}
+
+.gameshell-content__body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.gameshell-content__body::-webkit-scrollbar-track {
+  background: #07090e;
+}
+
+.gameshell-content__body::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+
+@media (max-width: 760px) {
+  .gameshell-content__header {
+    height: auto;
+    min-height: 56px;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 0.8rem;
+  }
+
+  .gameshell-content__header > div {
+    justify-items: start;
+  }
+}
