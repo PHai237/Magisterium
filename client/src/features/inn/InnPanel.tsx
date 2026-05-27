@@ -37,6 +37,7 @@ export function InnPanel({
   const [paymentMethod, setPaymentMethod] = useState<InnPaymentMethod>(
     hasVoucher ? "voucher" : "bronze"
   );
+  const [isPaymentMenuOpen, setIsPaymentMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [restFlash, setRestFlash] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -45,26 +46,23 @@ export function InnPanel({
   useEffect(() => {
     if (paymentMethod === "voucher" && !hasVoucher) {
       setPaymentMethod("bronze");
-      return;
     }
+  }, [hasVoucher, paymentMethod]);
 
-    if (paymentMethod === "bronze" && !canAffordBronze && hasVoucher) {
-      setPaymentMethod("voucher");
-    }
-  }, [canAffordBronze, hasVoucher, paymentMethod]);
-
-  const canTogglePayment = hasVoucher;
   const canRest =
     paymentMethod === "voucher" ? hasVoucher : canAffordBronze;
 
-  function togglePaymentMethod() {
-    if (!canTogglePayment || busy) {
+  function selectPaymentMethod(nextPaymentMethod: InnPaymentMethod) {
+    if (busy) {
       return;
     }
 
-    setPaymentMethod((current) =>
-      current === "voucher" ? "bronze" : "voucher"
-    );
+    if (nextPaymentMethod === "voucher" && !hasVoucher) {
+      return;
+    }
+
+    setPaymentMethod(nextPaymentMethod);
+    setIsPaymentMenuOpen(false);
   }
 
   async function restAtInn() {
@@ -75,6 +73,7 @@ export function InnPanel({
     setBusy(true);
     setMessage(null);
     setError(null);
+    setIsPaymentMenuOpen(false);
 
     try {
       const result =
@@ -153,35 +152,65 @@ export function InnPanel({
 
         <div className="inn-service-summary inn-service-summary--price">
           <span>Price</span>
-          <strong>
-            {paymentMethod === "voucher"
-              ? "🎟️ 1x"
-              : `${formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze`}
-          </strong>
+          <strong>{formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze</strong>
         </div>
       </section>
 
       <div className="inn-action-panel">
-        <button
-          type="button"
-          className="inn-payment-switch"
-          disabled={busy || !canTogglePayment}
-          onClick={togglePaymentMethod}
-          title={
-            hasVoucher
-              ? "Switch payment method"
-              : "No inn voucher available"
-          }
-        >
-          <span aria-hidden="true">
-            {paymentMethod === "voucher" ? "🎟️" : "🪙"}
-          </span>
-          <strong>
-            {paymentMethod === "voucher"
-              ? `${formatNumber(voucherCount)}x`
-              : formatNumber(BASIC_INN_REST_PRICE_BRONZE)}
-          </strong>
-        </button>
+        <div className="inn-payment-menu">
+          <button
+            type="button"
+            className="inn-payment-trigger"
+            disabled={busy}
+            onClick={() => setIsPaymentMenuOpen((current) => !current)}
+            aria-expanded={isPaymentMenuOpen}
+            aria-label="Choose inn payment method"
+          >
+            <span aria-hidden="true">
+              {paymentMethod === "voucher" ? "🎟️" : "🪙"}
+            </span>
+            <strong>
+              {paymentMethod === "voucher"
+                ? `${formatNumber(voucherCount)}x`
+                : formatNumber(BASIC_INN_REST_PRICE_BRONZE)}
+            </strong>
+          </button>
+
+          {isPaymentMenuOpen ? (
+            <div className="inn-payment-dropdown" role="menu">
+              <button
+                type="button"
+                className={
+                  paymentMethod === "bronze"
+                    ? "inn-payment-option inn-payment-option--active"
+                    : "inn-payment-option"
+                }
+                onClick={() => selectPaymentMethod("bronze")}
+                role="menuitem"
+              >
+                <span aria-hidden="true">🪙</span>
+                <strong>Bronze</strong>
+                <em>{formatNumber(BASIC_INN_REST_PRICE_BRONZE)}</em>
+              </button>
+
+              <button
+                type="button"
+                className={
+                  paymentMethod === "voucher"
+                    ? "inn-payment-option inn-payment-option--active"
+                    : "inn-payment-option"
+                }
+                disabled={!hasVoucher}
+                onClick={() => selectPaymentMethod("voucher")}
+                role="menuitem"
+              >
+                <span aria-hidden="true">🎟️</span>
+                <strong>Voucher</strong>
+                <em>{hasVoucher ? `${formatNumber(voucherCount)}x` : "0x"}</em>
+              </button>
+            </div>
+          ) : null}
+        </div>
 
         <Button
           type="button"
