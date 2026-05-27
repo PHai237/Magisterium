@@ -151,6 +151,19 @@ export interface CharacterInventoryMutationResult {
   inventoryChange: InventoryOperationResult;
 }
 
+export interface CharacterInnRestResult {
+  character: CharacterSnapshot;
+
+  rest: {
+    priceBronze: number;
+    previousMoneyBronze: number;
+    nextMoneyBronze: number;
+    previousCurrentState: CurrentState;
+    nextCurrentState: CurrentState;
+    restedAt: string;
+  };
+}
+
 export type ConsumableEffectTarget = "HP" | "MP" | "Stamina" | "Fatigue";
 
 export interface ConsumableEffectApplication {

@@ -5,6 +5,7 @@ import type {
   CharacterCreationPreview,
   CharacterEquipmentMutationResult,
   CharacterSnapshot,
+  CharacterInnRestResult,
   InventoryItemStack,
   ItemId,
   OriginId
@@ -92,6 +93,14 @@ export const charactersApi = {
     return apiPost<CharacterEquipmentMutationResult>(
       `/characters/${characterId}/equipment/unequip`,
       { itemId },
+      { userId }
+    );
+  },
+
+  restAtInn(userId: string, characterId: string) {
+    return apiPost<CharacterInnRestResult>(
+      `/characters/${characterId}/inn/rest`,
+      undefined,
       { userId }
     );
   },

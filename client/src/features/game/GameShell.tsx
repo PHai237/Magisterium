@@ -10,6 +10,7 @@ import { GamePanelFrame } from "./GamePanelFrame";
 import { TownMap } from "./maps/TownMap";
 import { WorldMap } from "./maps/WorldMap";
 import "./styles/game-shell.css";
+import { InnPanel } from "../inn/InnPanel";
 
 interface GameShellProps {
   userId: string;
@@ -89,12 +90,19 @@ export function GameShell({
 
   if (activePanel === "inn") {
     return (
-      <PlaceholderPanel
-        title="The Cozy Hearth"
-        subtitle="Inn / Tavern"
-        description="Chỗ này sau sẽ nối với rest, inn voucher, hồi HP/MP/Stamina và giảm fatigue."
+      <GamePanelFrame
+        title="The Inn"
+        subtitle="Inn"
+        returnLabel="← Return to Town"
         onBack={() => setActivePanel("map")}
-      />
+        contentClassName="gameshell-panel__content"
+      >
+        <InnPanel
+          userId={userId}
+          currentCharacter={currentCharacter}
+          onCharacterUpdated={onCharacterUpdated}
+        />
+      </GamePanelFrame>
     );
   }
 

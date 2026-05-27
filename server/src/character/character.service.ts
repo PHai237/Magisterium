@@ -118,9 +118,23 @@ export interface CharacterConsumableUseResult {
   inventoryChange: InventoryOperationResult;
 }
 
+export interface CharacterInnRestResult {
+  character: CharacterSnapshot;
+
+  rest: {
+    priceBronze: number;
+    previousMoneyBronze: number;
+    nextMoneyBronze: number;
+    previousCurrentState: CurrentState;
+    nextCurrentState: CurrentState;
+    restedAt: string;
+  };
+}
+
 const BASE_EXP_REQUIRED_FOR_LEVEL_UP = 100;
 const EXP_LEVEL_GROWTH_FACTOR = 1.5;
 const MAX_CHARACTER_LEVEL = 100;
+const BASIC_INN_REST_PRICE_BRONZE = 3;
 
 const MAX_SAFE_TOTAL_EXP = 100_000_000;
 const MAX_SAFE_REWARD_EXP = 1_000_000;
@@ -621,6 +635,55 @@ export class CharacterService implements OnModuleInit {
     this.currentCharacterIdsByUserScope.clear();
 
     this.persistClearCharacterState();
+  }
+
+  restAtInn(characterId: string, userId: string): CharacterInnRestResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const character = this.characters.get(characterId);
+
+    if (!character || character.userId !== userScope) {
+      throw new NotFoundException(`Character not found: ${characterId}`);
+    }
+
+    if (character.moneyBronze < BASIC_INN_REST_PRICE_BRONZE) {
+      throw new BadRequestException(
+        `Not enough bronze to rest. Required: ${BASIC_INN_REST_PRICE_BRONZE}.`,
+      );
+    }
+
+    const snapshotBeforeRest = createCharacterSnapshot(character);
+    const restedAt = new Date().toISOString();
+
+    const nextCurrentState: CurrentState = {
+      hp: snapshotBeforeRest.derivedStats.maxHp,
+      mp: snapshotBeforeRest.derivedStats.maxMp,
+      stamina: snapshotBeforeRest.derivedStats.maxStamina,
+    };
+
+    const updatedCharacter: Character = {
+      ...character,
+      version: character.version + 1,
+      moneyBronze: character.moneyBronze - BASIC_INN_REST_PRICE_BRONZE,
+      currentState: nextCurrentState,
+      fatigue: 0,
+      lastRestAt: restedAt,
+      updatedAt: restedAt,
+    };
+
+    this.characters.set(updatedCharacter.id, updatedCharacter);
+    this.persistCharacter(updatedCharacter);
+
+    return {
+      character: createCharacterSnapshot(updatedCharacter),
+      rest: {
+        priceBronze: BASIC_INN_REST_PRICE_BRONZE,
+        previousMoneyBronze: character.moneyBronze,
+        nextMoneyBronze: updatedCharacter.moneyBronze,
+        previousCurrentState: snapshotBeforeRest.currentState,
+        nextCurrentState,
+        restedAt,
+      },
+    };
   }
 
   private buildStartingKitPreview(starterKit: StarterKitDefinition) {

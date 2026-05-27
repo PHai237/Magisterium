@@ -173,6 +173,17 @@ export class CharacterController {
     );
   }
 
+  @Post(':id/inn/rest')
+  restAtInn(
+    @Param('id') id: string,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.restAtInn(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
+  }
+
   @Get(':id')
   findById(
     @Param('id') id: string,
