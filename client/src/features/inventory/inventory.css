@@ -359,32 +359,7 @@
 }
 
 .inventory-bag-cell--filled::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 120;
-  width: max-content;
-  max-width: 15rem;
-  border: 1px solid rgba(250, 204, 21, 0.26);
-  border-radius: 0.65rem;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(250, 204, 21, 0.08), transparent 8rem),
-    rgba(11, 15, 23, 0.98);
-  color: #f8fafc;
-  padding: 0.48rem 0.62rem;
-  font-size: 0.68rem;
-  font-weight: 850;
-  line-height: 1.35;
-  text-align: left;
-  white-space: normal;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%) translateY(-50%) scale(0.96);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.38);
-  transition:
-    opacity 150ms ease,
-    transform 150ms ease;
+  display: none;
 }
 
 .inventory-bag-cell--filled:hover::after,
@@ -574,6 +549,18 @@
 
 .inventory-action-panel__actions button:disabled {
   opacity: 0.42;
+}
+
+.inventory-action-panel__actions .inventory-action-panel__button--danger {
+  border-color: rgba(251, 113, 133, 0.42);
+  background: rgba(251, 113, 133, 0.1);
+  color: #fecdd3;
+}
+
+.inventory-action-panel__actions .inventory-action-panel__button--danger:not(:disabled):hover {
+  border-color: rgba(251, 113, 133, 0.78);
+  background: rgba(251, 113, 133, 0.18);
+  color: #fff1f2;
 }
 
 .inventory-action-panel__empty {

@@ -35,7 +35,10 @@ type EquipmentSlot =
   | "feet"
   | "accessory";
 
-const ONE_NIGHT_INN_PASS_ID: ItemId = "one_night_inn_pass";
+const ONE_NIGHT_INN_PASS_ITEM_IDS = new Set<ItemId>([
+  "one_night_inn_pass",
+  "one_night_inn_voucher"
+]);
 
 interface ItemDisplayDefinition {
   id: ItemId;
@@ -227,6 +230,13 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "pass",
     description: "Redeem this at The Inn for one full overnight rest."
   },
+  one_night_inn_voucher: {
+    id: "one_night_inn_voucher",
+    name: "One-Night Inn Pass",
+    icon: "🎟️",
+    category: "pass",
+    description: "Redeem this at The Inn for one full overnight rest."
+  },
   slime_gel: {
     id: "slime_gel",
     name: "Slime Gel",
@@ -242,6 +252,25 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     description: "A crude proof of defeating a goblin."
   }
 };
+
+function buildInventoryStacks(itemIds: ItemId[]): InventoryItemStack[] {
+  const orderedItemIds: ItemId[] = [];
+  const quantityByItemId = new Map<ItemId, number>();
+
+  itemIds.forEach((itemId) => {
+    if (!quantityByItemId.has(itemId)) {
+      orderedItemIds.push(itemId);
+      quantityByItemId.set(itemId, 0);
+    }
+
+    quantityByItemId.set(itemId, (quantityByItemId.get(itemId) ?? 0) + 1);
+  });
+
+  return orderedItemIds.map((itemId) => ({
+    itemId,
+    quantity: quantityByItemId.get(itemId) ?? 0
+  }));
+}
 
 function getCurrencyBreakdown(totalBronze: number) {
   const safeTotal = Math.max(0, Math.floor(totalBronze));
@@ -272,16 +301,20 @@ function isEquipmentItem(item: ItemDisplayDefinition): boolean {
   return item.category === "equipment";
 }
 
+function isInnPassItemId(itemId: ItemId): boolean {
+  return ONE_NIGHT_INN_PASS_ITEM_IDS.has(itemId);
+}
+
 function isConsumableLike(item: ItemDisplayDefinition): boolean {
   return item.category === "consumable" || item.category === "pass";
 }
 
-function isInnPass(item: ItemDisplayDefinition): boolean {
-  return item.id === ONE_NIGHT_INN_PASS_ID;
+function canUseItemFromInventory(item: ItemDisplayDefinition): boolean {
+  return item.category === "consumable" && !isInnPassItemId(item.id);
 }
 
-function canUseItemFromInventory(item: ItemDisplayDefinition): boolean {
-  return item.category === "consumable" && !isInnPass(item);
+function isInnPass(item: ItemDisplayDefinition): boolean {
+  return isInnPassItemId(item.id);
 }
 
 function getItemCategoryLabel(item: ItemDisplayDefinition): string {
@@ -346,7 +379,12 @@ export function InventoryOverlay({
   onCharacterUpdated,
   onClose
 }: InventoryOverlayProps) {
-  const [stacks, setStacks] = useState<InventoryItemStack[]>([]);
+  const [stacks, setStacks] = useState<InventoryItemStack[]>(() =>
+    buildInventoryStacks(currentCharacter.inventoryItemIds)
+  );
+  const [equippedItemIds, setEquippedItemIds] = useState<ItemId[]>(() => [
+    ...currentCharacter.equippedItemIds
+  ]);
   const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null);
   const [filter, setFilter] = useState<InventoryFilter>("all");
   const [busyItemId, setBusyItemId] = useState<ItemId | null>(null);
@@ -360,8 +398,8 @@ export function InventoryOverlay({
   );
 
   const equippedItems = useMemo(
-    () => currentCharacter.equippedItemIds.map((itemId) => getItemDefinition(itemId)),
-    [currentCharacter.equippedItemIds]
+    () => equippedItemIds.map((itemId) => getItemDefinition(itemId)),
+    [equippedItemIds]
   );
 
   const selectedStack = useMemo(
@@ -370,6 +408,10 @@ export function InventoryOverlay({
   );
 
   const selectedItem = selectedItemId ? getItemDefinition(selectedItemId) : null;
+
+  const selectedItemIsEquipped = selectedItemId
+    ? equippedItemIds.includes(selectedItemId)
+    : false;
 
   const visibleStacks = useMemo(
     () => filterInventoryStacks(stacks, filter),
@@ -390,6 +432,38 @@ export function InventoryOverlay({
       emptyCells: Array.from({ length: emptyCount }, (_, index) => index)
     };
   }, [visibleStacks]);
+
+  useEffect(() => {
+    setStacks(buildInventoryStacks(currentCharacter.inventoryItemIds));
+  }, [currentCharacter.inventoryItemIds]);
+
+  useEffect(() => {
+    setEquippedItemIds([...currentCharacter.equippedItemIds]);
+  }, [currentCharacter.equippedItemIds]);
+
+  useEffect(() => {
+    const availableItemIds = new Set<ItemId>([
+      ...currentCharacter.inventoryItemIds,
+      ...equippedItemIds
+    ]);
+
+    setSelectedItemId((current) =>
+      current && !availableItemIds.has(current) ? null : current
+    );
+  }, [currentCharacter.inventoryItemIds, equippedItemIds]);
+
+  useEffect(() => {
+    if (!message && !error) {
+      return undefined;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setMessage(null);
+      setError(null);
+    }, 2800);
+
+    return () => window.clearTimeout(timerId);
+  }, [message, error]);
 
   useEffect(() => {
     let cancelled = false;
@@ -439,29 +513,14 @@ export function InventoryOverlay({
     };
   }, [currentCharacter.id, userId]);
 
-  async function refreshInventory() {
-    const nextStacks = await charactersApi.getInventory(
-      userId,
-      currentCharacter.id
-    );
-
-    setStacks(nextStacks);
-    setSelectedItemId((previousSelectedItemId) => {
-      if (
-        previousSelectedItemId &&
-        nextStacks.some((stack) => stack.itemId === previousSelectedItemId)
-      ) {
-        return previousSelectedItemId;
-      }
-
-      return nextStacks[0]?.itemId ?? null;
-    });
-  }
-
   async function runInventoryAction(
     itemId: ItemId,
     action: "equip" | "unequip" | "use"
   ) {
+    if (busyItemId) {
+      return;
+    }
+
     const item = getItemDefinition(itemId);
 
     if (action === "use" && !canUseItemFromInventory(item)) {
@@ -487,7 +546,10 @@ export function InventoryOverlay({
         );
 
         onCharacterUpdated(result.character);
+        setEquippedItemIds([...result.character.equippedItemIds]);
+        setStacks(buildInventoryStacks(result.character.inventoryItemIds));
         setMessage(`${item.name} equipped.`);
+        return;
       }
 
       if (action === "unequip") {
@@ -498,21 +560,26 @@ export function InventoryOverlay({
         );
 
         onCharacterUpdated(result.character);
+        setEquippedItemIds([...result.character.equippedItemIds]);
+        setStacks(buildInventoryStacks(result.character.inventoryItemIds));
         setMessage(`${item.name} unequipped.`);
+        return;
       }
 
-      if (action === "use") {
-        const result = await charactersApi.useConsumable(
-          userId,
-          currentCharacter.id,
-          itemId
-        );
+      const result = await charactersApi.useConsumable(
+        userId,
+        currentCharacter.id,
+        itemId
+      );
 
-        onCharacterUpdated(result.character);
-        setMessage(`${item.name} used. ${formatEffects(result.itemUse.effects)}`);
+      onCharacterUpdated(result.character);
+      setEquippedItemIds([...result.character.equippedItemIds]);
+      setStacks(buildInventoryStacks(result.character.inventoryItemIds));
+      setMessage(`${item.name} used. ${formatEffects(result.itemUse.effects)}`);
+
+      if (result.inventoryChange.nextQuantity <= 0) {
+        setSelectedItemId(null);
       }
-
-      await refreshInventory();
     } catch (actionError) {
       setError(
         actionError instanceof Error
@@ -529,9 +596,7 @@ export function InventoryOverlay({
       return null;
     }
 
-    return (
-      equippedItems.find((item) => item.equipmentSlot === slot) ?? null
-    );
+    return equippedItems.find((item) => item.equipmentSlot === slot) ?? null;
   }
 
   return (
@@ -587,7 +652,7 @@ export function InventoryOverlay({
                   ]
                     .filter(Boolean)
                     .join(" ")}
-                  disabled={!equippedItem}
+                  disabled={!equippedItem || busyItemId !== null}
                   onClick={() => {
                     if (equippedItem) {
                       void runInventoryAction(equippedItem.id, "unequip");
@@ -629,14 +694,12 @@ export function InventoryOverlay({
                     type="button"
                     className={[
                       "inventory-bag-cell",
-                      "inventory-bag-cell--filled",
                       selectedItemId === stack.itemId
                         ? "inventory-bag-cell--selected"
                         : ""
                     ]
                       .filter(Boolean)
                       .join(" ")}
-                    data-tooltip={`${item.name} — ${item.description}`}
                     onClick={() => setSelectedItemId(stack.itemId)}
                     aria-label={`${item.name}, quantity ${stack.quantity}`}
                   >
@@ -673,7 +736,9 @@ export function InventoryOverlay({
                         {getItemCategoryLabel(selectedItem)}
                         {selectedStack
                           ? ` · ${formatNumber(selectedStack.quantity)} owned`
-                          : ""}
+                          : selectedItemIsEquipped
+                            ? " · Equipped"
+                            : ""}
                       </small>
                     </div>
                   </div>
@@ -684,12 +749,27 @@ export function InventoryOverlay({
                     {isEquipmentItem(selectedItem) ? (
                       <button
                         type="button"
-                        disabled={busyItemId !== null || !selectedStack}
+                        className={
+                          selectedItemIsEquipped
+                            ? "inventory-action-panel__button--danger"
+                            : undefined
+                        }
+                        disabled={
+                          busyItemId !== null ||
+                          (!selectedItemIsEquipped && !selectedStack)
+                        }
                         onClick={() =>
-                          void runInventoryAction(selectedItem.id, "equip")
+                          void runInventoryAction(
+                            selectedItem.id,
+                            selectedItemIsEquipped ? "unequip" : "equip"
+                          )
                         }
                       >
-                        {busyItemId === selectedItem.id ? "Equipping..." : "Equip"}
+                        {busyItemId === selectedItem.id
+                          ? "Working..."
+                          : selectedItemIsEquipped
+                            ? "Unequip"
+                            : "Equip"}
                       </button>
                     ) : null}
 

@@ -15,7 +15,15 @@ interface InnPanelProps {
 type InnPaymentMethod = "pass" | "bronze";
 
 const BASIC_INN_REST_PRICE_BRONZE = 3;
-const ONE_NIGHT_INN_PASS_ID: ItemId = "one_night_inn_pass";
+
+const ONE_NIGHT_INN_PASS_ITEM_IDS = new Set<ItemId>([
+  "one_night_inn_pass",
+  "one_night_inn_voucher"
+]);
+
+function isInnPassItemId(itemId: ItemId): boolean {
+  return ONE_NIGHT_INN_PASS_ITEM_IDS.has(itemId);
+}
 
 export function InnPanel({
   userId,
@@ -24,8 +32,8 @@ export function InnPanel({
 }: InnPanelProps) {
   const passCount = useMemo(
     () =>
-      currentCharacter.inventoryItemIds.filter(
-        (itemId) => itemId === ONE_NIGHT_INN_PASS_ID
+      currentCharacter.inventoryItemIds.filter((itemId) =>
+        isInnPassItemId(itemId)
       ).length,
     [currentCharacter.inventoryItemIds]
   );
@@ -48,6 +56,19 @@ export function InnPanel({
       setPaymentMethod("bronze");
     }
   }, [hasPass, paymentMethod]);
+
+  useEffect(() => {
+    if (!message && !error) {
+      return undefined;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setMessage(null);
+      setError(null);
+    }, 2800);
+
+    return () => window.clearTimeout(timerId);
+  }, [message, error]);
 
   const canRest = paymentMethod === "pass" ? hasPass : canAffordBronze;
 
