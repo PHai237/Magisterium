@@ -76,34 +76,34 @@ export function InnPanel({
       </div>
 
       <section className="inn-service-box" aria-label="Rest service details">
-        <div className="inn-service-row">
-          <span aria-hidden="true">🛌</span>
+        <div className="inn-service-summary">
+          <span>Service</span>
           <strong>Overnight Rest</strong>
-          <em>Service</em>
         </div>
 
-        <div className="inn-service-row">
-          <span aria-hidden="true">❤️</span>
-          <strong>Fully restore HP</strong>
-          <em>+100%</em>
+        <div className="inn-restore-list">
+          <div className="inn-restore-row">
+            <span aria-hidden="true">❤️</span>
+            <strong>Fully restore HP</strong>
+            <em>+100%</em>
+          </div>
+
+          <div className="inn-restore-row">
+            <span aria-hidden="true">💙</span>
+            <strong>Fully restore MP</strong>
+            <em>+100%</em>
+          </div>
+
+          <div className="inn-restore-row">
+            <span aria-hidden="true">⚡</span>
+            <strong>Fully restore Stamina</strong>
+            <em>+100%</em>
+          </div>
         </div>
 
-        <div className="inn-service-row">
-          <span aria-hidden="true">💙</span>
-          <strong>Fully restore MP</strong>
-          <em>+100%</em>
-        </div>
-
-        <div className="inn-service-row">
-          <span aria-hidden="true">⚡</span>
-          <strong>Fully restore Stamina</strong>
-          <em>+100%</em>
-        </div>
-
-        <div className="inn-service-row inn-service-row--price">
-          <span aria-hidden="true">🪙</span>
-          <strong>Price</strong>
-          <em>{formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze</em>
+        <div className="inn-service-summary inn-service-summary--price">
+          <span>Price</span>
+          <strong>{formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze</strong>
         </div>
       </section>
 

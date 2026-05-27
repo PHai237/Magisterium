@@ -30,6 +30,34 @@ interface PlaceholderPanelProps {
   onBack: () => void;
 }
 
+function LocationLayout({
+  returnLabel,
+  onBack,
+  children
+}: React.PropsWithChildren<{
+  returnLabel: string;
+  onBack: () => void;
+}>) {
+  return (
+    <div className="gameshell-location-layout">
+      <div className="gameshell-location-side">
+        <Button
+          type="button"
+          variant="ghost"
+          className="gameshell-location-back"
+          onClick={onBack}
+        >
+          {returnLabel}
+        </Button>
+      </div>
+
+      <div className="gameshell-location-main">{children}</div>
+
+      <div className="gameshell-location-side" aria-hidden="true" />
+    </div>
+  );
+}
+
 function PlaceholderPanel({
   title,
   subtitle,
@@ -38,20 +66,13 @@ function PlaceholderPanel({
 }: PlaceholderPanelProps) {
   return (
     <section className="gameshell-location-stage">
-      <Button
-        type="button"
-        variant="ghost"
-        className="gameshell-location-back"
-        onClick={onBack}
-      >
-        ← Return to Town
-      </Button>
-
-      <article className="gameshell-placeholder-card">
-        <p>{subtitle}</p>
-        <h2>{title}</h2>
-        <span>{description}</span>
-      </article>
+      <LocationLayout returnLabel="← Return to Town" onBack={onBack}>
+        <article className="gameshell-placeholder-card">
+          <p>{subtitle}</p>
+          <h2>{title}</h2>
+          <span>{description}</span>
+        </article>
+      </LocationLayout>
     </section>
   );
 }
@@ -82,20 +103,16 @@ export function GameShell({
     if (activePanel === "battle") {
       return (
         <section className="gameshell-location-stage gameshell-location-stage--battle">
-          <Button
-            type="button"
-            variant="ghost"
-            className="gameshell-location-back"
-            onClick={() => setActivePanel("map")}
+          <LocationLayout
+            returnLabel="← Return to World Map"
+            onBack={() => setActivePanel("map")}
           >
-            ← Return to World Map
-          </Button>
-
-          <BattlePanel
-            userId={userId}
-            currentCharacter={currentCharacter}
-            onCharacterUpdated={onCharacterUpdated}
-          />
+            <BattlePanel
+              userId={userId}
+              currentCharacter={currentCharacter}
+              onCharacterUpdated={onCharacterUpdated}
+            />
+          </LocationLayout>
         </section>
       );
     }
@@ -103,20 +120,13 @@ export function GameShell({
     if (activePanel === "inn") {
       return (
         <section className="gameshell-location-stage">
-          <Button
-            type="button"
-            variant="ghost"
-            className="gameshell-location-back"
-            onClick={returnToTownMap}
-          >
-            ← Return to Town
-          </Button>
-
-          <InnPanel
-            userId={userId}
-            currentCharacter={currentCharacter}
-            onCharacterUpdated={onCharacterUpdated}
-          />
+          <LocationLayout returnLabel="← Return to Town" onBack={returnToTownMap}>
+            <InnPanel
+              userId={userId}
+              currentCharacter={currentCharacter}
+              onCharacterUpdated={onCharacterUpdated}
+            />
+          </LocationLayout>
         </section>
       );
     }

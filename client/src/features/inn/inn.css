@@ -1,6 +1,6 @@
 .inn-basic-card {
   position: relative;
-  width: min(100%, 26.5rem);
+  width: min(100%, 26.25rem);
   overflow: hidden;
   border: 1px solid rgba(245, 158, 11, 0.26);
   border-radius: 1rem;
@@ -11,10 +11,10 @@
   box-shadow:
     0 22px 58px rgba(0, 0, 0, 0.48),
     0 0 0 1px rgba(255, 255, 255, 0.024) inset;
-  padding: 1rem;
+  padding: 0.95rem;
   display: grid;
   justify-items: center;
-  gap: 0.72rem;
+  gap: 0.68rem;
   text-align: center;
 }
 
@@ -36,8 +36,8 @@
 
 .inn-basic-card__visual {
   position: relative;
-  width: 4.15rem;
-  height: 4.15rem;
+  width: 4rem;
+  height: 4rem;
   display: grid;
   place-items: center;
 }
@@ -53,8 +53,8 @@
 
 .inn-basic-card__sigil {
   position: relative;
-  width: 3.28rem;
-  height: 3.28rem;
+  width: 3.15rem;
+  height: 3.15rem;
   border: 1px solid rgba(245, 158, 11, 0.36);
   border-radius: 999px;
   background:
@@ -63,7 +63,7 @@
   display: grid;
   place-items: center;
   color: #facc15;
-  font-size: 1.45rem;
+  font-size: 1.38rem;
   box-shadow:
     0 0 0 5px rgba(245, 158, 11, 0.04),
     0 0 28px rgba(245, 158, 11, 0.16);
@@ -75,13 +75,13 @@
 
 .inn-basic-card__copy {
   display: grid;
-  gap: 0.24rem;
+  gap: 0.18rem;
 }
 
 .inn-basic-card__copy p {
   margin: 0;
   color: #f59e0b;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 950;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -90,7 +90,7 @@
 .inn-basic-card__copy h2 {
   margin: 0;
   color: #f8fafc;
-  font-size: 1.24rem;
+  font-size: 1.18rem;
   font-weight: 950;
   letter-spacing: -0.02em;
 }
@@ -104,57 +104,95 @@
     rgba(2, 6, 23, 0.38);
   padding: 0.56rem;
   display: grid;
-  gap: 0.4rem;
+  gap: 0.44rem;
 }
 
-.inn-service-row {
+.inn-service-summary {
   min-height: 2rem;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 0.62rem;
   background: rgba(15, 23, 42, 0.54);
-  padding: 0.42rem 0.52rem;
+  padding: 0.44rem 0.58rem;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.75rem;
   text-align: left;
 }
 
-.inn-service-row span {
-  width: 1.1rem;
-  text-align: center;
-  font-size: 0.95rem;
+.inn-service-summary span {
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.inn-service-row strong {
+.inn-service-summary strong {
+  color: #c4b5fd;
+  font-size: 0.74rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.inn-restore-list {
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 0.72rem;
+  background: rgba(15, 23, 42, 0.42);
+  padding: 0.42rem;
+  display: grid;
+  gap: 0.34rem;
+}
+
+.inn-restore-row {
+  min-height: 1.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 0.58rem;
+  background: rgba(2, 6, 23, 0.24);
+  padding: 0.38rem 0.46rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.52rem;
+  text-align: left;
+}
+
+.inn-restore-row span {
+  width: 1.05rem;
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.inn-restore-row strong {
   overflow: hidden;
   color: #e2e8f0;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.inn-service-row em {
+.inn-restore-row em {
   color: #bef264;
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-style: normal;
   font-weight: 950;
   white-space: nowrap;
 }
 
-.inn-service-row:first-child em {
-  color: #a78bfa;
-}
-
-.inn-service-row--price {
+.inn-service-summary--price {
   border-color: rgba(245, 158, 11, 0.22);
   background: rgba(245, 158, 11, 0.065);
 }
 
-.inn-service-row--price em {
+.inn-service-summary--price span {
+  color: #fbbf24;
+}
+
+.inn-service-summary--price strong {
   color: #facc15;
+  font-family: var(--mono);
 }
 
 .inn-basic-card .ui-button {
