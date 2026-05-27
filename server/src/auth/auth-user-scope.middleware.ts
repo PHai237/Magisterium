@@ -1,5 +1,4 @@
 import {
-  ForbiddenException,
   Injectable,
   NestMiddleware,
   UnauthorizedException,
@@ -7,27 +6,55 @@ import {
 
 import type { NextFunction, Request, Response } from 'express';
 
-import { USER_ID_HEADER } from '../character/character.validation';
 import { AuthService } from './auth.service';
 
-const PUBLIC_PATHS = new Set(['/health', '/api/health']);
+export const USER_ID_HEADER = 'x-user-id';
 
-const PUBLIC_PATH_PREFIXES = ['/auth', '/api/auth'];
+const PUBLIC_AUTH_PATHS = new Set([
+  '/auth/register',
+  '/auth/login',
+  '/auth/me',
+  '/auth/logout',
+  '/api/auth/register',
+  '/api/auth/login',
+  '/api/auth/me',
+  '/api/auth/logout',
+]);
+
+const PUBLIC_PATHS = new Set(['/health', '/api/health']);
 
 function readHeaderValue(
   value: string | string[] | undefined,
 ): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
 }
 
-function isPublicPath(path: string): boolean {
-  if (PUBLIC_PATHS.has(path)) {
+function normalizeRequestPath(request: Request): string {
+  const rawPath =
+    request.path ||
+    request.originalUrl?.split('?')[0] ||
+    request.url?.split('?')[0] ||
+    '/';
+
+  if (rawPath.length > 1 && rawPath.endsWith('/')) {
+    return rawPath.slice(0, -1);
+  }
+
+  return rawPath;
+}
+
+function isPublicRequest(request: Request): boolean {
+  if (request.method.toUpperCase() === 'OPTIONS') {
     return true;
   }
 
-  return PUBLIC_PATH_PREFIXES.some(
-    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
-  );
+  const path = normalizeRequestPath(request);
+
+  return PUBLIC_PATHS.has(path) || PUBLIC_AUTH_PATHS.has(path);
 }
 
 @Injectable()
@@ -35,16 +62,16 @@ export class AuthUserScopeMiddleware implements NestMiddleware {
   constructor(private readonly authService: AuthService) {}
 
   use(request: Request, _response: Response, next: NextFunction): void {
-    if (isPublicPath(request.path)) {
+    if (isPublicRequest(request)) {
       next();
       return;
     }
 
-    const authorizationHeader = readHeaderValue(request.headers.authorization);
+    const authenticatedUser = this.authService.me(
+      request.headers.authorization,
+    );
 
-    const session = this.authService.me(authorizationHeader);
-
-    if (!session) {
+    if (!authenticatedUser) {
       throw new UnauthorizedException('Authentication is required.');
     }
 
@@ -52,13 +79,15 @@ export class AuthUserScopeMiddleware implements NestMiddleware {
       request.headers[USER_ID_HEADER],
     )?.trim();
 
-    if (requestedUserId && requestedUserId !== session.id) {
-      throw new ForbiddenException(
-        'x-user-id does not match the authenticated session user.',
-      );
+    if (!requestedUserId) {
+      throw new UnauthorizedException(`${USER_ID_HEADER} header is required.`);
     }
 
-    request.headers[USER_ID_HEADER] = session.id;
+    if (requestedUserId !== authenticatedUser.id) {
+      throw new UnauthorizedException(
+        `${USER_ID_HEADER} does not match authenticated user.`,
+      );
+    }
 
     next();
   }
