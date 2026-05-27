@@ -63,17 +63,19 @@ export function InnPanel({
     <article
       className={`inn-basic-card ${restFlash ? "inn-basic-card--flash" : ""}`}
     >
-      <div className="inn-basic-card__visual">
-        <div className="inn-basic-card__glow" aria-hidden="true" />
-        <div className="inn-basic-card__sigil" aria-hidden="true">
-          🕯️
+      <header className="inn-basic-card__header">
+        <div className="inn-basic-card__visual">
+          <div className="inn-basic-card__glow" aria-hidden="true" />
+          <div className="inn-basic-card__sigil" aria-hidden="true">
+            🕯️
+          </div>
         </div>
-      </div>
 
-      <div className="inn-basic-card__copy">
-        <p>The Inn</p>
-        <h2>Rest for the night</h2>
-      </div>
+        <div className="inn-basic-card__copy">
+          <p>The Inn</p>
+          <h2>Rest for the night</h2>
+        </div>
+      </header>
 
       <section className="inn-service-box" aria-label="Rest service details">
         <div className="inn-service-summary">
