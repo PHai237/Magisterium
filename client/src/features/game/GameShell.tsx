@@ -3,7 +3,10 @@ import type { PropsWithChildren } from "react";
 
 import { MagisteriumBrand } from "../../components/brand/MagisteriumBrand";
 import { Button } from "../../components/ui/Button";
-import type { CharacterSnapshot } from "../../domain/magisterium.types";
+import type {
+  CharacterSnapshot,
+  EncounterId
+} from "../../domain/magisterium.types";
 import { BattlePanel } from "../battles/BattlePanel";
 import { InnPanel } from "../inn/InnPanel";
 import { InventoryOverlay } from "../inventory/InventoryOverlay";
@@ -29,6 +32,7 @@ interface PlaceholderPanelProps {
   subtitle: string;
   description: string;
   onBack: () => void;
+  returnLabel?: string;
 }
 
 interface LocationStageProps {
@@ -63,10 +67,11 @@ function PlaceholderPanel({
   title,
   subtitle,
   description,
-  onBack
+  onBack,
+  returnLabel = "← Return to Town"
 }: PlaceholderPanelProps) {
   return (
-    <LocationStage returnLabel="← Return to Town" onBack={onBack}>
+    <LocationStage returnLabel={returnLabel} onBack={onBack}>
       <article className="gameshell-placeholder-card">
         <p>{subtitle}</p>
         <h2>{title}</h2>
@@ -85,11 +90,19 @@ export function GameShell({
 }: GameShellProps) {
   const [mapView, setMapView] = useState<MapView>("town");
   const [activePanel, setActivePanel] = useState<ActivePanel>("map");
+  const [selectedEncounterId, setSelectedEncounterId] =
+    useState<EncounterId>("town_outskirts_slime");
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
   function openPanel(panel: ActivePanel) {
     setIsInventoryOpen(false);
     setActivePanel(panel);
+  }
+
+  function openBattle(encounterId: EncounterId) {
+    setIsInventoryOpen(false);
+    setSelectedEncounterId(encounterId);
+    setActivePanel("battle");
   }
 
   function returnToTownMap() {
@@ -98,23 +111,13 @@ export function GameShell({
     setActivePanel("map");
   }
 
-  function renderBodyContent() {
-    if (activePanel === "battle") {
-      return (
-        <LocationStage
-          returnLabel="← Return to World Map"
-          onBack={() => setActivePanel("map")}
-          className="gameshell-location-stage--battle"
-        >
-          <BattlePanel
-            userId={userId}
-            currentCharacter={currentCharacter}
-            onCharacterUpdated={onCharacterUpdated}
-          />
-        </LocationStage>
-      );
-    }
+  function returnToWorldMap() {
+    setIsInventoryOpen(false);
+    setMapView("world");
+    setActivePanel("map");
+  }
 
+  function renderBodyContent() {
     if (activePanel === "inn") {
       return (
         <LocationStage returnLabel="← Return to Town" onBack={returnToTownMap}>
@@ -169,10 +172,25 @@ export function GameShell({
               setIsInventoryOpen(false);
               setMapView("town");
             }}
-            onOpenBattle={() => openPanel("battle")}
+            onOpenTownOutskirts={() => openBattle("town_outskirts_slime")}
+            onOpenBattle={() => openBattle("forest_edge_mixed")}
           />
         )}
       </main>
+    );
+  }
+
+  if (activePanel === "battle") {
+    return (
+      <div className="gameshell-root gameshell-root--combat">
+        <BattlePanel
+          userId={userId}
+          currentCharacter={currentCharacter}
+          initialEncounterId={selectedEncounterId}
+          onExitBattle={returnToWorldMap}
+          onCharacterUpdated={onCharacterUpdated}
+        />
+      </div>
     );
   }
 

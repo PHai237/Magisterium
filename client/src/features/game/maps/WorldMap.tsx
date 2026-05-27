@@ -2,10 +2,15 @@ import { MapNode } from "./MapNode";
 
 interface WorldMapProps {
   onReturnTown: () => void;
+  onOpenTownOutskirts: () => void;
   onOpenBattle: () => void;
 }
 
-export function WorldMap({ onReturnTown, onOpenBattle }: WorldMapProps) {
+export function WorldMap({
+  onReturnTown,
+  onOpenTownOutskirts,
+  onOpenBattle
+}: WorldMapProps) {
   return (
     <>
       <MapNode
@@ -17,11 +22,20 @@ export function WorldMap({ onReturnTown, onOpenBattle }: WorldMapProps) {
       />
 
       <MapNode
+        className="gameshell-node--outskirts"
+        icon="🌾"
+        name="Town Outskirts"
+        subtitle="Lv. 1 - 2 Wilds"
+        onClick={onOpenTownOutskirts}
+      />
+
+      <MapNode
         className="gameshell-node--shadowfen"
         icon="🌲"
         name="Shadowfen"
-        subtitle="Lv. 1 - 10 Arena"
-        onClick={onOpenBattle}
+        subtitle="Lv. 3 - 10 Forest"
+        disabled
+        onClick={() => undefined}
       />
 
       <MapNode

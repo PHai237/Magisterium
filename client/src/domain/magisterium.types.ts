@@ -6,11 +6,18 @@ export type OriginId =
   | "acolyte";
 
 export type EncounterId =
-  | "slime_training"
+  | "town_outskirts_slime"
+  | "town_outskirts_boar"
+  | "town_outskirts_wolf"
+  | "town_outskirts_mixed"
   | "goblin_scout"
   | "forest_edge_mixed";
 
-export type MonsterId = "slime" | "goblin";
+export type MonsterId =
+  | "slime"
+  | "wild_boar"
+  | "wild_wolf"
+  | "goblin";
 
 export type StarterKitId = "novice_adventurer_kit";
 

@@ -52,18 +52,33 @@ export const ENCOUNTER_OPTIONS: Array<{
   description: string;
 }> = [
   {
-    id: "slime_training",
-    label: "Slime Training",
-    description: "Safe first combat flow against a single slime."
+    id: "town_outskirts_slime",
+    label: "Town Outskirts Slime",
+    description: "A real beginner encounter against a slime. Drops Slime Gel."
+  },
+  {
+    id: "town_outskirts_boar",
+    label: "Town Outskirts Boar",
+    description: "A beginner beast encounter against a wild boar. Drops Boar Meat."
+  },
+  {
+    id: "town_outskirts_wolf",
+    label: "Town Outskirts Wolf",
+    description: "A faster early encounter against a wild wolf. Drops Wolf's Skin."
+  },
+  {
+    id: "town_outskirts_mixed",
+    label: "Town Outskirts Mixed Pack",
+    description: "A small real encounter near town with multiple beginner monsters."
   },
   {
     id: "goblin_scout",
     label: "Goblin Scout",
-    description: "A sharper early encounter against a goblin."
+    description: "A sharper forest-edge encounter against a goblin scout."
   },
   {
     id: "forest_edge_mixed",
     label: "Forest Edge Mixed",
-    description: "Small mixed encounter for testing multi-monster turns."
+    description: "Small mixed encounter for testing forest-edge multi-monster turns."
   }
 ];

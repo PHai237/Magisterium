@@ -705,6 +705,23 @@
   border-color: rgba(56, 189, 248, 0.34);
 }
 
+.gameshell-node--outskirts {
+  top: 55%;
+  left: 24%;
+  width: 7.4rem;
+  min-height: 7.4rem;
+  border-radius: 999px;
+  border-color: rgba(250, 204, 21, 0.36);
+  background:
+    radial-gradient(circle at 50% 12%, rgba(250, 204, 21, 0.12), transparent 4.8rem),
+    radial-gradient(circle at 50% 88%, rgba(74, 222, 128, 0.08), transparent 4.4rem),
+    rgba(11, 15, 23, 0.91);
+}
+
+.gameshell-node--outskirts strong {
+  color: #fde68a;
+}
+
 .gameshell-node--shadowfen {
   top: 45%;
   left: 43%;
