@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "../../components/ui/Button";
-import type { CharacterSnapshot } from "../../domain/magisterium.types";
+import type { CharacterSnapshot, ItemId } from "../../domain/magisterium.types";
 import { formatNumber } from "../../lib/format";
 import { charactersApi } from "../characters/characters.api";
 import "./inn.css";
@@ -12,23 +12,63 @@ interface InnPanelProps {
   onCharacterUpdated: (character: CharacterSnapshot) => void;
 }
 
+type InnPaymentMethod = "voucher" | "bronze";
+
 const BASIC_INN_REST_PRICE_BRONZE = 3;
+const ONE_NIGHT_INN_VOUCHER_ID: ItemId = "one_night_inn_voucher";
 
 export function InnPanel({
   userId,
   currentCharacter,
   onCharacterUpdated
 }: InnPanelProps) {
+  const voucherCount = useMemo(
+    () =>
+      currentCharacter.inventoryItemIds.filter(
+        (itemId) => itemId === ONE_NIGHT_INN_VOUCHER_ID
+      ).length,
+    [currentCharacter.inventoryItemIds]
+  );
+
+  const hasVoucher = voucherCount > 0;
+  const canAffordBronze =
+    currentCharacter.moneyBronze >= BASIC_INN_REST_PRICE_BRONZE;
+
+  const [paymentMethod, setPaymentMethod] = useState<InnPaymentMethod>(
+    hasVoucher ? "voucher" : "bronze"
+  );
   const [busy, setBusy] = useState(false);
   const [restFlash, setRestFlash] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canAffordRest =
-    currentCharacter.moneyBronze >= BASIC_INN_REST_PRICE_BRONZE;
+  useEffect(() => {
+    if (paymentMethod === "voucher" && !hasVoucher) {
+      setPaymentMethod("bronze");
+      return;
+    }
+
+    if (paymentMethod === "bronze" && !canAffordBronze && hasVoucher) {
+      setPaymentMethod("voucher");
+    }
+  }, [canAffordBronze, hasVoucher, paymentMethod]);
+
+  const canTogglePayment = hasVoucher;
+  const canRest =
+    paymentMethod === "voucher" ? hasVoucher : canAffordBronze;
+
+  function togglePaymentMethod() {
+    if (!canTogglePayment || busy) {
+      return;
+    }
+
+    setPaymentMethod((current) =>
+      current === "voucher" ? "bronze" : "voucher"
+    );
+  }
 
   async function restAtInn() {
-    if (busy || !canAffordRest) {
+    if (busy || !canRest) {
       return;
     }
 
@@ -37,17 +77,25 @@ export function InnPanel({
     setError(null);
 
     try {
-      const result = await charactersApi.restAtInn(
-        userId,
-        currentCharacter.id
-      );
+      const result =
+        paymentMethod === "voucher"
+          ? await charactersApi.useConsumable(
+              userId,
+              currentCharacter.id,
+              ONE_NIGHT_INN_VOUCHER_ID
+            )
+          : await charactersApi.restAtInn(userId, currentCharacter.id);
 
       onCharacterUpdated(result.character);
 
       setRestFlash(true);
       window.setTimeout(() => setRestFlash(false), 850);
 
-      setMessage("Rest complete. You are ready for the next expedition.");
+      setMessage(
+        paymentMethod === "voucher"
+          ? "Inn voucher used. You are ready for the next expedition."
+          : "Rest complete. You are ready for the next expedition."
+      );
     } catch (restError) {
       setError(
         restError instanceof Error
@@ -105,17 +153,50 @@ export function InnPanel({
 
         <div className="inn-service-summary inn-service-summary--price">
           <span>Price</span>
-          <strong>{formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze</strong>
+          <strong>
+            {paymentMethod === "voucher"
+              ? "🎟️ 1x"
+              : `${formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze`}
+          </strong>
         </div>
       </section>
 
-      <Button
-        type="button"
-        disabled={busy || !canAffordRest}
-        onClick={() => void restAtInn()}
-      >
-        {busy ? "Resting..." : canAffordRest ? "Rest" : "Not enough bronze"}
-      </Button>
+      <div className="inn-action-panel">
+        <button
+          type="button"
+          className="inn-payment-switch"
+          disabled={busy || !canTogglePayment}
+          onClick={togglePaymentMethod}
+          title={
+            hasVoucher
+              ? "Switch payment method"
+              : "No inn voucher available"
+          }
+        >
+          <span aria-hidden="true">
+            {paymentMethod === "voucher" ? "🎟️" : "🪙"}
+          </span>
+          <strong>
+            {paymentMethod === "voucher"
+              ? `${formatNumber(voucherCount)}x`
+              : formatNumber(BASIC_INN_REST_PRICE_BRONZE)}
+          </strong>
+        </button>
+
+        <Button
+          type="button"
+          disabled={busy || !canRest}
+          onClick={() => void restAtInn()}
+        >
+          {busy
+            ? "Resting..."
+            : canRest
+              ? "Rest"
+              : paymentMethod === "voucher"
+                ? "No voucher"
+                : "Not enough bronze"}
+        </Button>
+      </div>
 
       {message ? (
         <div className="inn-basic-result inn-basic-result--success" role="status">
