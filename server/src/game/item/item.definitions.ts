@@ -377,6 +377,30 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
     tags: ['loot', 'material', 'slime'],
   },
   {
+    id: 'boar_meat',
+    name: 'Boar Meat',
+    description:
+      'A fresh cut of meat from a wild boar. Commonly used for cooking, rations, and early provisioning.',
+    category: 'material',
+    rarity: 'common',
+    stackable: true,
+    maxStackSize: 99,
+    sellPriceBronze: 2,
+    tags: ['loot', 'material', 'beast', 'boar', 'meat', 'cooking'],
+  },
+  {
+    id: 'wolf_skin',
+    name: "Wolf's Skin",
+    description:
+      'A rough pelt taken from a wild wolf. Useful for basic leatherwork and early crafting.',
+    category: 'material',
+    rarity: 'common',
+    stackable: true,
+    maxStackSize: 99,
+    sellPriceBronze: 3,
+    tags: ['loot', 'material', 'beast', 'wolf', 'skin', 'leather'],
+  },
+  {
     id: 'goblin_ear',
     name: 'Goblin Ear',
     description:

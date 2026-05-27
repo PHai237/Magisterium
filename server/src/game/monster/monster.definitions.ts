@@ -6,6 +6,8 @@ import type {
 
 export const MONSTER_IDS = [
   'slime',
+  'wild_boar',
+  'wild_wolf',
   'goblin',
 ] as const satisfies readonly MonsterId[];
 
@@ -47,7 +49,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     id: 'slime',
     name: 'Slime',
     description:
-      'A weak gelatinous monster. Slow, fragile, and commonly used by new adventurers to learn basic combat.',
+      'A weak gelatinous monster commonly found near damp paths outside town. Slow and fragile, but still a real monster with real loot.',
 
     rank: 'normal',
     level: 1,
@@ -115,20 +117,182 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'slime_gel',
-          chancePercent: 35,
+          chancePercent: 65,
           minQuantity: 1,
           maxQuantity: 2,
         },
       ],
     },
 
-    tags: ['monster', 'starter', 'beast', 'gelatinous'],
+    tags: ['monster', 'starter', 'beast', 'gelatinous', 'town-outskirts'],
+  },
+  {
+    id: 'wild_boar',
+    name: 'Wild Boar',
+    description:
+      'A territorial boar roaming the grasslands outside town. Tougher than a slime and dangerous when it charges.',
+
+    rank: 'normal',
+    level: 1,
+
+    aiTargetingMode: 'random',
+
+    baseStats: {
+      STR: 6,
+      DEX: 4,
+      CON: 7,
+      INT: 1,
+      WIS: 2,
+      LUK: 2,
+    },
+
+    derivedStatOverrides: {
+      maxHp: 38,
+      maxMp: 0,
+      maxStamina: 48,
+
+      pAtk: 10,
+      mAtk: 0,
+      healingPotency: 0,
+
+      pDef: 3,
+      mDef: 0,
+
+      actionSpeed: 10,
+      accuracy: 78,
+      evasionRate: 3,
+
+      critRate: 2,
+      critDamageBonus: 25,
+
+      fleeRate: 0,
+
+      statusResist: 1,
+      spiritualPotency: 0,
+
+      mpRegen: 0,
+      staminaRegen: 4,
+
+      secondChanceRate: 0,
+      procRate: 0,
+    },
+
+    resistances: {
+      physical: 0.05,
+      magical: 0,
+      fire: 0,
+      water: 0,
+    },
+
+    currentState: {
+      hp: 38,
+      mp: 0,
+      stamina: 48,
+    },
+
+    shield: 0,
+
+    reward: {
+      exp: 8,
+      moneyBronze: 3,
+      lootTable: [
+        {
+          itemId: 'boar_meat',
+          chancePercent: 70,
+          minQuantity: 1,
+          maxQuantity: 2,
+        },
+      ],
+    },
+
+    tags: ['monster', 'starter', 'beast', 'boar', 'town-outskirts'],
+  },
+  {
+    id: 'wild_wolf',
+    name: 'Wild Wolf',
+    description:
+      'A lean predator stalking the outer roads. Faster and more accurate than most beginner monsters.',
+
+    rank: 'normal',
+    level: 2,
+
+    aiTargetingMode: 'lowest_hp',
+
+    baseStats: {
+      STR: 7,
+      DEX: 8,
+      CON: 5,
+      INT: 1,
+      WIS: 3,
+      LUK: 3,
+    },
+
+    derivedStatOverrides: {
+      maxHp: 42,
+      maxMp: 0,
+      maxStamina: 58,
+
+      pAtk: 13,
+      mAtk: 0,
+      healingPotency: 0,
+
+      pDef: 2,
+      mDef: 1,
+
+      actionSpeed: 17,
+      accuracy: 84,
+      evasionRate: 7,
+
+      critRate: 5,
+      critDamageBonus: 35,
+
+      fleeRate: 5,
+
+      statusResist: 1,
+      spiritualPotency: 0,
+
+      mpRegen: 0,
+      staminaRegen: 5,
+
+      secondChanceRate: 0,
+      procRate: 1,
+    },
+
+    resistances: {
+      physical: 0,
+      magical: 0,
+      fire: 0,
+      water: 0,
+    },
+
+    currentState: {
+      hp: 42,
+      mp: 0,
+      stamina: 58,
+    },
+
+    shield: 0,
+
+    reward: {
+      exp: 11,
+      moneyBronze: 4,
+      lootTable: [
+        {
+          itemId: 'wolf_skin',
+          chancePercent: 55,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+      ],
+    },
+
+    tags: ['monster', 'starter', 'beast', 'wolf', 'town-outskirts'],
   },
   {
     id: 'goblin',
     name: 'Goblin',
     description:
-      'A small but aggressive humanoid monster. Faster and more dangerous than a slime, but still suitable for early combat testing.',
+      'A small but aggressive humanoid monster. Faster and more dangerous than a slime, suitable for forest-edge encounters.',
 
     rank: 'normal',
     level: 2,
@@ -209,7 +373,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       ],
     },
 
-    tags: ['monster', 'starter', 'humanoid', 'goblin'],
+    tags: ['monster', 'starter', 'humanoid', 'goblin', 'forest-edge'],
   },
 ];
 

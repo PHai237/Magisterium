@@ -5,7 +5,10 @@ import type {
 } from './encounter.types';
 
 export const ENCOUNTER_IDS = [
-  'slime_training',
+  'town_outskirts_slime',
+  'town_outskirts_boar',
+  'town_outskirts_wolf',
+  'town_outskirts_mixed',
   'goblin_scout',
   'forest_edge_mixed',
 ] as const satisfies readonly EncounterId[];
@@ -32,12 +35,12 @@ function freezeEncounterDefinition(
 
 const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
   {
-    id: 'slime_training',
-    name: 'Slime Training',
+    id: 'town_outskirts_slime',
+    name: 'Town Outskirts Slime',
     description:
-      'A safe first combat encounter against a single slime. Used to validate early battle flow and beginner balance.',
+      'A real beginner encounter against a slime outside town. Drops slime gel and validates the early combat loop without using dummy enemies.',
 
-    zoneId: 'training_ground',
+    zoneId: 'town_outskirts',
 
     rank: 'normal',
     recommendedLevel: 1,
@@ -46,17 +49,85 @@ const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
       {
         monsterId: 'slime',
         count: 1,
-        instanceIdPrefix: 'training_slime',
+        instanceIdPrefix: 'outskirts_slime',
       },
     ],
 
-    tags: ['starter', 'tutorial', 'single-monster'],
+    tags: ['starter', 'town-outskirts', 'single-monster', 'slime'],
+  },
+  {
+    id: 'town_outskirts_boar',
+    name: 'Town Outskirts Boar',
+    description:
+      'A beginner encounter against a wild boar outside town. Slightly tougher than slime and drops boar meat.',
+
+    zoneId: 'town_outskirts',
+
+    rank: 'normal',
+    recommendedLevel: 1,
+
+    monsterGroups: [
+      {
+        monsterId: 'wild_boar',
+        count: 1,
+        instanceIdPrefix: 'outskirts_boar',
+      },
+    ],
+
+    tags: ['starter', 'town-outskirts', 'single-monster', 'boar'],
+  },
+  {
+    id: 'town_outskirts_wolf',
+    name: 'Town Outskirts Wolf',
+    description:
+      'A faster beginner encounter against a wild wolf. Useful for testing evasion, accuracy, speed, and early danger pressure.',
+
+    zoneId: 'town_outskirts',
+
+    rank: 'normal',
+    recommendedLevel: 2,
+
+    monsterGroups: [
+      {
+        monsterId: 'wild_wolf',
+        count: 1,
+        instanceIdPrefix: 'outskirts_wolf',
+      },
+    ],
+
+    tags: ['starter', 'town-outskirts', 'single-monster', 'wolf'],
+  },
+  {
+    id: 'town_outskirts_mixed',
+    name: 'Town Outskirts Mixed Pack',
+    description:
+      'A small real encounter near town containing multiple beginner monsters. Used to test multi-monster turn order with real loot.',
+
+    zoneId: 'town_outskirts',
+
+    rank: 'normal',
+    recommendedLevel: 2,
+
+    monsterGroups: [
+      {
+        monsterId: 'slime',
+        count: 1,
+        instanceIdPrefix: 'outskirts_pack_slime',
+      },
+      {
+        monsterId: 'wild_boar',
+        count: 1,
+        instanceIdPrefix: 'outskirts_pack_boar',
+      },
+    ],
+
+    tags: ['starter', 'town-outskirts', 'multi-monster', 'mixed'],
   },
   {
     id: 'goblin_scout',
     name: 'Goblin Scout',
     description:
-      'A single goblin scout encounter. Faster and more dangerous than slime training, useful for testing monster initiative.',
+      'A single goblin scout encounter. Faster and more dangerous than town outskirts beasts, intended for forest-edge progression.',
 
     zoneId: 'forest_edge',
 
@@ -71,13 +142,13 @@ const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
       },
     ],
 
-    tags: ['starter', 'forest-edge', 'single-monster'],
+    tags: ['starter', 'forest-edge', 'single-monster', 'goblin'],
   },
   {
     id: 'forest_edge_mixed',
     name: 'Forest Edge Mixed Pack',
     description:
-      'A small mixed encounter containing slimes and a goblin. Used to test multi-monster turn order and target selection.',
+      'A small mixed encounter containing forest-edge enemies. Used to test multi-monster pressure after the town outskirts loop is stable.',
 
     zoneId: 'forest_edge',
 
@@ -86,9 +157,9 @@ const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
 
     monsterGroups: [
       {
-        monsterId: 'slime',
-        count: 2,
-        instanceIdPrefix: 'forest_slime',
+        monsterId: 'wild_wolf',
+        count: 1,
+        instanceIdPrefix: 'forest_wolf',
       },
       {
         monsterId: 'goblin',
@@ -97,7 +168,7 @@ const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
       },
     ],
 
-    tags: ['starter', 'forest-edge', 'multi-monster'],
+    tags: ['starter', 'forest-edge', 'multi-monster', 'mixed'],
   },
 ];
 
