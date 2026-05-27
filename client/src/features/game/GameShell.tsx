@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { PropsWithChildren } from "react";
 
 import { MagisteriumBrand } from "../../components/brand/MagisteriumBrand";
 import { Button } from "../../components/ui/Button";
@@ -30,14 +31,16 @@ interface PlaceholderPanelProps {
   onBack: () => void;
 }
 
+interface LocationLayoutProps {
+  returnLabel: string;
+  onBack: () => void;
+}
+
 function LocationLayout({
   returnLabel,
   onBack,
   children
-}: React.PropsWithChildren<{
-  returnLabel: string;
-  onBack: () => void;
-}>) {
+}: PropsWithChildren<LocationLayoutProps>) {
   return (
     <div className="gameshell-location-layout">
       <div className="gameshell-location-side">

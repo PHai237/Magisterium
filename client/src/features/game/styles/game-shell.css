@@ -758,11 +758,12 @@
 }
 
 .gameshell-location-layout {
-  width: min(100%, 68rem);
+  width: min(100%, 58rem);
   display: grid;
-  grid-template-columns: minmax(10rem, 1fr) auto minmax(10rem, 1fr);
-  align-items: start;
-  gap: 1.25rem;
+  grid-template-columns: 10.5rem auto 10.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
 }
 
 .gameshell-location-main {
@@ -774,6 +775,7 @@
   min-width: 0;
   display: flex;
   align-items: flex-start;
+  justify-content: flex-end;
 }
 
 .gameshell-location-side:last-child {
@@ -782,6 +784,7 @@
 
 .gameshell-location-back {
   white-space: nowrap;
+  margin-top: 0.15rem;
 }
 
 .gameshell-location-stage--battle .gameshell-location-layout {
@@ -963,8 +966,10 @@
   }
 
   .gameshell-location-layout {
+    width: 100%;
     grid-template-columns: 1fr;
     align-items: center;
+    gap: 0.8rem;
   }
 
   .gameshell-location-main {
@@ -973,6 +978,7 @@
 
   .gameshell-location-side {
     order: 1;
+    justify-content: flex-start;
   }
 
   .gameshell-location-side:last-child {
