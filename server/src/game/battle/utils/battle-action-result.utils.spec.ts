@@ -57,6 +57,7 @@ function createActor(
     actorType: 'character',
 
     skillIds: [],
+    inventoryItemIds: [],
 
     baseStats: DEFAULT_BASE_STATS,
     derivedStats: DEFAULT_DERIVED_STATS,

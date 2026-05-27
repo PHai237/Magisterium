@@ -23,7 +23,7 @@ type ItemDisplayCategory =
   | "equipment"
   | "consumable"
   | "material"
-  | "voucher"
+  | "pass"
   | "unknown";
 
 type EquipmentSlot =
@@ -34,6 +34,8 @@ type EquipmentSlot =
   | "hands"
   | "feet"
   | "accessory";
+
+const ONE_NIGHT_INN_PASS_ID: ItemId = "one_night_inn_pass";
 
 interface ItemDisplayDefinition {
   id: ItemId;
@@ -171,7 +173,38 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "📿",
     category: "equipment",
     equipmentSlot: "accessory",
-    description: "A humble charm carried by new adventurers."
+    description: "A modest charm carried by novice adventurers."
+  },
+  cloth_cap: {
+    id: "cloth_cap",
+    name: "Cloth Cap",
+    icon: "🎩",
+    category: "equipment",
+    equipmentSlot: "head",
+    description: "Basic headwear with minor protection."
+  },
+  patched_tunic: {
+    id: "patched_tunic",
+    name: "Patched Tunic",
+    icon: "🦺",
+    category: "equipment",
+    equipmentSlot: "body",
+    description: "A patched starter tunic."
+  },
+  worn_boots: {
+    id: "worn_boots",
+    name: "Worn Boots",
+    icon: "🥾",
+    category: "equipment",
+    equipmentSlot: "feet",
+    description: "Old boots for long roads."
+  },
+  stamina_bread: {
+    id: "stamina_bread",
+    name: "Stamina Bread",
+    icon: "🍞",
+    category: "consumable",
+    description: "Restores a small amount of stamina."
   },
   minor_hp_potion: {
     id: "minor_hp_potion",
@@ -187,58 +220,40 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "consumable",
     description: "Restores a small amount of MP."
   },
-  stamina_bread: {
-    id: "stamina_bread",
-    name: "Stamina Bread",
-    icon: "🍞",
-    category: "consumable",
-    description: "Restores stamina outside battle."
-  },
-  one_night_inn_voucher: {
-    id: "one_night_inn_voucher",
-    name: "One-night Inn Voucher",
-    icon: "🏨",
-    category: "voucher",
-    description: "Consumes one voucher to fully rest outside battle."
+  one_night_inn_pass: {
+    id: "one_night_inn_pass",
+    name: "One-Night Inn Pass",
+    icon: "🎟️",
+    category: "pass",
+    description: "Redeem this at The Inn for one full overnight rest."
   },
   slime_gel: {
     id: "slime_gel",
     name: "Slime Gel",
     icon: "🟢",
     category: "material",
-    description: "Sticky residue from a slime. Useful as low-grade material."
+    description: "Sticky residue from a slime. Mostly used as a low-grade crafting material."
   },
   goblin_ear: {
     id: "goblin_ear",
     name: "Goblin Ear",
     icon: "👂",
     category: "material",
-    description: "A crude bounty proof from a goblin."
+    description: "A crude proof of defeating a goblin."
   }
 };
 
 function getCurrencyBreakdown(totalBronze: number) {
-  const safeBronze = Math.max(0, Math.floor(totalBronze));
-  const gold = Math.floor(safeBronze / 10_000);
-  const silver = Math.floor((safeBronze % 10_000) / 100);
-  const bronze = safeBronze % 100;
+  const safeTotal = Math.max(0, Math.floor(totalBronze));
+  const gold = Math.floor(safeTotal / 10_000);
+  const silver = Math.floor((safeTotal % 10_000) / 100);
+  const bronze = safeTotal % 100;
 
   return { gold, silver, bronze };
 }
 
-function buildInventoryStacks(itemIds: readonly ItemId[]): InventoryItemStack[] {
-  const countByItemId = new Map<ItemId, number>();
-
-  itemIds.forEach((itemId) => {
-    countByItemId.set(itemId, (countByItemId.get(itemId) ?? 0) + 1);
-  });
-
-  return Array.from(countByItemId.entries())
-    .map(([itemId, quantity]) => ({
-      itemId,
-      quantity
-    }))
-    .sort((left, right) => left.itemId.localeCompare(right.itemId));
+function getInitialLetter(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || "?";
 }
 
 function getItemDefinition(itemId: ItemId): ItemDisplayDefinition {
@@ -248,74 +263,81 @@ function getItemDefinition(itemId: ItemId): ItemDisplayDefinition {
       name: compactLabel(itemId),
       icon: "◇",
       category: "unknown",
-      description: "Unknown item. Backend owns the source of truth."
+      description: "Unknown item."
     }
   );
 }
 
+function isEquipmentItem(item: ItemDisplayDefinition): boolean {
+  return item.category === "equipment";
+}
+
 function isConsumableLike(item: ItemDisplayDefinition): boolean {
-  return item.category === "consumable" || item.category === "voucher";
+  return item.category === "consumable" || item.category === "pass";
 }
 
-function matchesFilter(
-  stack: InventoryItemStack,
+function isInnPass(item: ItemDisplayDefinition): boolean {
+  return item.id === ONE_NIGHT_INN_PASS_ID;
+}
+
+function canUseItemFromInventory(item: ItemDisplayDefinition): boolean {
+  return item.category === "consumable" && !isInnPass(item);
+}
+
+function getItemCategoryLabel(item: ItemDisplayDefinition): string {
+  if (isInnPass(item)) {
+    return "Inn Pass";
+  }
+
+  return compactLabel(item.category);
+}
+
+function filterInventoryStacks(
+  stacks: InventoryItemStack[],
   filter: InventoryFilter
-): boolean {
-  const item = getItemDefinition(stack.itemId);
-
+): InventoryItemStack[] {
   if (filter === "all") {
+    return stacks;
+  }
+
+  return stacks.filter((stack) => {
+    const item = getItemDefinition(stack.itemId);
+
+    if (filter === "weapon") {
+      return item.category === "equipment" && item.equipmentSlot === "weapon";
+    }
+
+    if (filter === "armor") {
+      return (
+        item.category === "equipment" &&
+        item.equipmentSlot !== undefined &&
+        item.equipmentSlot !== "weapon"
+      );
+    }
+
+    if (filter === "consumable") {
+      return isConsumableLike(item);
+    }
+
+    if (filter === "material") {
+      return item.category === "material";
+    }
+
     return true;
-  }
-
-  if (filter === "weapon") {
-    return item.category === "equipment" && item.equipmentSlot === "weapon";
-  }
-
-  if (filter === "armor") {
-    return (
-      item.category === "equipment" &&
-      item.equipmentSlot !== undefined &&
-      item.equipmentSlot !== "weapon"
-    );
-  }
-
-  if (filter === "consumable") {
-    return isConsumableLike(item);
-  }
-
-  return item.category === "material" || item.category === "unknown";
+  });
 }
 
-function buildTooltip(stack: InventoryItemStack): string {
-  const item = getItemDefinition(stack.itemId);
-
-  return `${item.name} · ${compactLabel(item.category)} · Qty ${stack.quantity} · ${item.description}`;
-}
-
-function summarizeConsumableEffects(
-  itemName: string,
-  effects: ConsumableEffectApplication[]
-): string {
+function formatEffects(effects: ConsumableEffectApplication[]): string {
   if (effects.length === 0) {
-    return `${itemName} used.`;
+    return "No direct effect was applied.";
   }
 
-  const summary = effects
+  return effects
     .map((effect) => {
-      const amount =
-        effect.target === "Fatigue"
-          ? `-${formatNumber(effect.amountApplied, 2)}`
-          : `+${formatNumber(effect.amountApplied, 0)}`;
-
-      return `${effect.target} ${amount}`;
+      const sign = effect.amountApplied >= 0 ? "+" : "";
+      return `${effect.target} ${sign}${formatNumber(effect.amountApplied)}`;
     })
-    .join(" · ");
-
-  return `${itemName} used: ${summary}`;
-}
-
-function getInitialLetter(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
+    .join(", ");
 }
 
 export function InventoryOverlay({
@@ -324,38 +346,56 @@ export function InventoryOverlay({
   onCharacterUpdated,
   onClose
 }: InventoryOverlayProps) {
-  const [filter, setFilter] = useState<InventoryFilter>("all");
-  const [stacks, setStacks] = useState<InventoryItemStack[]>(() =>
-    buildInventoryStacks(currentCharacter.inventoryItemIds)
-  );
+  const [stacks, setStacks] = useState<InventoryItemStack[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null);
+  const [filter, setFilter] = useState<InventoryFilter>("all");
   const [busyItemId, setBusyItemId] = useState<ItemId | null>(null);
-  const [loadingInventory, setLoadingInventory] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const money = getCurrencyBreakdown(currentCharacter.moneyBronze);
+  const wallet = useMemo(
+    () => getCurrencyBreakdown(currentCharacter.moneyBronze),
+    [currentCharacter.moneyBronze]
+  );
 
-  useEffect(() => {
-    setStacks(buildInventoryStacks(currentCharacter.inventoryItemIds));
-  }, [currentCharacter.inventoryItemIds]);
+  const equippedItems = useMemo(
+    () => currentCharacter.equippedItemIds.map((itemId) => getItemDefinition(itemId)),
+    [currentCharacter.equippedItemIds]
+  );
 
-  useEffect(() => {
-    const availableItemIds = new Set([
-      ...currentCharacter.inventoryItemIds,
-      ...currentCharacter.equippedItemIds
-    ]);
+  const selectedStack = useMemo(
+    () => stacks.find((stack) => stack.itemId === selectedItemId) ?? null,
+    [selectedItemId, stacks]
+  );
 
-    setSelectedItemId((current) =>
-      current && !availableItemIds.has(current) ? null : current
-    );
-  }, [currentCharacter.inventoryItemIds, currentCharacter.equippedItemIds]);
+  const selectedItem = selectedItemId ? getItemDefinition(selectedItemId) : null;
+
+  const visibleStacks = useMemo(
+    () => filterInventoryStacks(stacks, filter),
+    [filter, stacks]
+  );
+
+  const bagCells = useMemo(() => {
+    const minimumSlots = 25;
+    const filledCells = visibleStacks.map((stack) => ({
+      stack,
+      item: getItemDefinition(stack.itemId)
+    }));
+
+    const emptyCount = Math.max(0, minimumSlots - filledCells.length);
+
+    return {
+      filledCells,
+      emptyCells: Array.from({ length: emptyCount }, (_, index) => index)
+    };
+  }, [visibleStacks]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadInventory() {
-      setLoadingInventory(true);
+      setLoading(true);
       setError(null);
 
       try {
@@ -366,6 +406,16 @@ export function InventoryOverlay({
 
         if (!cancelled) {
           setStacks(nextStacks);
+          setSelectedItemId((previousSelectedItemId) => {
+            if (
+              previousSelectedItemId &&
+              nextStacks.some((stack) => stack.itemId === previousSelectedItemId)
+            ) {
+              return previousSelectedItemId;
+            }
+
+            return nextStacks[0]?.itemId ?? null;
+          });
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -377,7 +427,7 @@ export function InventoryOverlay({
         }
       } finally {
         if (!cancelled) {
-          setLoadingInventory(false);
+          setLoading(false);
         }
       }
     }
@@ -389,46 +439,40 @@ export function InventoryOverlay({
     };
   }, [currentCharacter.id, userId]);
 
-  const equippedItemsBySlot = useMemo(() => {
-    const next = new Map<EquipmentSlot, ItemId>();
+  async function refreshInventory() {
+    const nextStacks = await charactersApi.getInventory(
+      userId,
+      currentCharacter.id
+    );
 
-    currentCharacter.equippedItemIds.forEach((itemId) => {
-      const item = getItemDefinition(itemId);
-
-      if (item.equipmentSlot) {
-        next.set(item.equipmentSlot, itemId);
+    setStacks(nextStacks);
+    setSelectedItemId((previousSelectedItemId) => {
+      if (
+        previousSelectedItemId &&
+        nextStacks.some((stack) => stack.itemId === previousSelectedItemId)
+      ) {
+        return previousSelectedItemId;
       }
+
+      return nextStacks[0]?.itemId ?? null;
     });
-
-    return next;
-  }, [currentCharacter.equippedItemIds]);
-
-  const visibleStacks = useMemo(
-    () => stacks.filter((stack) => matchesFilter(stack, filter)),
-    [filter, stacks]
-  );
-
-  const selectedStack = selectedItemId
-    ? stacks.find((stack) => stack.itemId === selectedItemId) ?? null
-    : null;
-
-  const selectedItem = selectedItemId ? getItemDefinition(selectedItemId) : null;
-  const selectedItemIsEquipped = selectedItemId
-    ? currentCharacter.equippedItemIds.includes(selectedItemId)
-    : false;
-
-  const cellCount = Math.max(25, Math.ceil(visibleStacks.length / 5) * 5);
-  const cells = Array.from({ length: cellCount }, (_, index) => visibleStacks[index]);
+  }
 
   async function runInventoryAction(
     itemId: ItemId,
     action: "equip" | "unequip" | "use"
   ) {
-    if (busyItemId) {
+    const item = getItemDefinition(itemId);
+
+    if (action === "use" && !canUseItemFromInventory(item)) {
+      setMessage(null);
+      setError(
+        isInnPass(item)
+          ? "Inn Passes can only be redeemed at The Inn."
+          : `${item.name} cannot be used from the inventory.`
+      );
       return;
     }
-
-    const item = getItemDefinition(itemId);
 
     setBusyItemId(itemId);
     setMessage(null);
@@ -443,9 +487,7 @@ export function InventoryOverlay({
         );
 
         onCharacterUpdated(result.character);
-        setStacks(buildInventoryStacks(result.character.inventoryItemIds));
         setMessage(`${item.name} equipped.`);
-        return;
       }
 
       if (action === "unequip") {
@@ -456,24 +498,21 @@ export function InventoryOverlay({
         );
 
         onCharacterUpdated(result.character);
-        setStacks(buildInventoryStacks(result.character.inventoryItemIds));
         setMessage(`${item.name} unequipped.`);
-        return;
       }
 
-      const result = await charactersApi.useConsumable(
-        userId,
-        currentCharacter.id,
-        itemId
-      );
+      if (action === "use") {
+        const result = await charactersApi.useConsumable(
+          userId,
+          currentCharacter.id,
+          itemId
+        );
 
-      onCharacterUpdated(result.character);
-      setStacks(buildInventoryStacks(result.character.inventoryItemIds));
-      setMessage(summarizeConsumableEffects(item.name, result.itemUse.effects));
-
-      if (result.inventoryChange.nextQuantity <= 0) {
-        setSelectedItemId(null);
+        onCharacterUpdated(result.character);
+        setMessage(`${item.name} used. ${formatEffects(result.itemUse.effects)}`);
       }
+
+      await refreshInventory();
     } catch (actionError) {
       setError(
         actionError instanceof Error
@@ -485,6 +524,16 @@ export function InventoryOverlay({
     }
   }
 
+  function getEquippedItemForSlot(slot?: EquipmentSlot) {
+    if (!slot) {
+      return null;
+    }
+
+    return (
+      equippedItems.find((item) => item.equipmentSlot === slot) ?? null
+    );
+  }
+
   return (
     <section className="inventory-overlay" aria-label="Inventory">
       <header className="inventory-overlay__header">
@@ -493,15 +542,13 @@ export function InventoryOverlay({
 
           <div className="inventory-wallet" aria-label="Wallet">
             <span className="inventory-wallet__coin inventory-wallet__coin--gold">
-              <strong>{formatNumber(money.gold)}</strong> Gold
+              <strong>{formatNumber(wallet.gold)}</strong> Gold
             </span>
-
             <span className="inventory-wallet__coin inventory-wallet__coin--silver">
-              <strong>{formatNumber(money.silver)}</strong> Silver
+              <strong>{formatNumber(wallet.silver)}</strong> Silver
             </span>
-
             <span className="inventory-wallet__coin inventory-wallet__coin--bronze">
-              <strong>{formatNumber(money.bronze)}</strong> Bronze
+              <strong>{formatNumber(wallet.bronze)}</strong> Bronze
             </span>
           </div>
         </div>
@@ -509,115 +556,124 @@ export function InventoryOverlay({
         <button
           type="button"
           className="inventory-overlay__close"
-          aria-label="Close inventory"
           onClick={onClose}
+          aria-label="Close inventory"
         >
           ×
         </button>
       </header>
 
       <div className="inventory-overlay__layout">
-        <aside className="inventory-paperdoll">
+        <aside className="inventory-paperdoll" aria-label="Equipment">
           <div className="inventory-paperdoll__stage">
-            {EQUIPMENT_SLOTS.map((slot) => {
-              const equippedItemId = slot.slot
-                ? equippedItemsBySlot.get(slot.slot)
-                : undefined;
-              const equippedItem = equippedItemId
-                ? getItemDefinition(equippedItemId)
-                : null;
+            <div className="inventory-character-model" aria-hidden="true">
+              <div className="inventory-character-model__avatar">
+                {getInitialLetter(currentCharacter.name)}
+              </div>
+              <span>Weaver</span>
+            </div>
+
+            {EQUIPMENT_SLOTS.map((slotView) => {
+              const equippedItem = getEquippedItemForSlot(slotView.slot);
 
               return (
                 <button
-                  key={slot.id}
+                  key={slotView.id}
                   type="button"
-                  className={`inventory-equipment-slot inventory-equipment-slot--${slot.className}${
-                    equippedItem ? " inventory-equipment-slot--filled" : ""
-                  }`}
-                  aria-label={
-                    equippedItem
-                      ? `${slot.label}: ${equippedItem.name}`
-                      : `${slot.label}: empty`
-                  }
-                  disabled={!equippedItemId}
+                  className={[
+                    "inventory-equipment-slot",
+                    `inventory-equipment-slot--${slotView.className}`,
+                    equippedItem ? "inventory-equipment-slot--filled" : ""
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  disabled={!equippedItem}
                   onClick={() => {
-                    if (equippedItemId) {
-                      setSelectedItemId(equippedItemId);
+                    if (equippedItem) {
+                      void runInventoryAction(equippedItem.id, "unequip");
                     }
                   }}
+                  title={
+                    equippedItem
+                      ? `${equippedItem.name} — click to unequip`
+                      : slotView.label
+                  }
                 >
-                  <span>{equippedItem?.icon ?? slot.icon}</span>
-                  <strong>{equippedItem?.name ?? "Empty"}</strong>
-                  <small>{slot.label}</small>
+                  <span aria-hidden="true">
+                    {equippedItem?.icon ?? slotView.icon}
+                  </span>
+                  {equippedItem ? (
+                    <strong>{equippedItem.name}</strong>
+                  ) : (
+                    <small>{slotView.label}</small>
+                  )}
                 </button>
               );
             })}
-
-            <div className="inventory-character-model">
-              <div className="inventory-character-model__avatar" aria-hidden="true">
-                {getInitialLetter(currentCharacter.name)}
-              </div>
-              <span>Avatar Preview</span>
-            </div>
           </div>
         </aside>
 
-        <main className="inventory-bag">
+        <main className="inventory-bag" aria-label="Bag">
           <div className="inventory-bag__main">
             <div className="inventory-bag-grid">
-              {cells.map((stack, index) => {
-                const item = stack ? getItemDefinition(stack.itemId) : null;
-                const isSelected =
-                  stack !== undefined && stack.itemId === selectedItemId;
+              {loading ? (
+                <div className="inventory-status inventory-status--muted">
+                  Loading inventory...
+                </div>
+              ) : null}
 
-                return (
+              {!loading &&
+                bagCells.filledCells.map(({ stack, item }) => (
                   <button
-                    key={stack ? `${stack.itemId}-${index}` : `empty-${index}`}
+                    key={stack.itemId}
                     type="button"
-                    className={`inventory-bag-cell${
-                      stack ? " inventory-bag-cell--filled" : ""
-                    }${isSelected ? " inventory-bag-cell--selected" : ""}`}
-                    aria-label={item?.name ?? "Empty slot"}
-                    aria-pressed={isSelected}
-                    data-tooltip={stack ? buildTooltip(stack) : undefined}
-                    onClick={() => {
-                      if (stack) {
-                        setSelectedItemId(stack.itemId);
-                      }
-                    }}
+                    className={[
+                      "inventory-bag-cell",
+                      "inventory-bag-cell--filled",
+                      selectedItemId === stack.itemId
+                        ? "inventory-bag-cell--selected"
+                        : ""
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    data-tooltip={`${item.name} — ${item.description}`}
+                    onClick={() => setSelectedItemId(stack.itemId)}
+                    aria-label={`${item.name}, quantity ${stack.quantity}`}
                   >
-                    {item ? (
-                      <>
-                        <span>{item.icon}</span>
-                        {stack.quantity > 1 ? (
-                          <strong className="inventory-bag-cell__quantity">
-                            ×{formatNumber(stack.quantity)}
-                          </strong>
-                        ) : null}
-                      </>
+                    <span aria-hidden="true">{item.icon}</span>
+                    {stack.quantity > 1 ? (
+                      <span className="inventory-bag-cell__quantity">
+                        {formatNumber(stack.quantity)}
+                      </span>
                     ) : null}
                   </button>
-                );
-              })}
+                ))}
+
+              {!loading &&
+                bagCells.emptyCells.map((cellIndex) => (
+                  <div
+                    key={`empty-${cellIndex}`}
+                    className="inventory-bag-cell"
+                    aria-hidden="true"
+                  />
+                ))}
             </div>
 
-            <section className="inventory-action-panel" aria-live="polite">
+            <section className="inventory-action-panel">
               {selectedItem ? (
                 <>
                   <div className="inventory-action-panel__item">
-                    <span className="inventory-action-panel__icon">
+                    <span className="inventory-action-panel__icon" aria-hidden="true">
                       {selectedItem.icon}
                     </span>
 
                     <div>
                       <strong>{selectedItem.name}</strong>
                       <small>
-                        {compactLabel(selectedItem.category)}
+                        {getItemCategoryLabel(selectedItem)}
                         {selectedStack
-                          ? ` · Qty ${formatNumber(selectedStack.quantity)}`
-                          : selectedItemIsEquipped
-                            ? " · Equipped"
-                            : ""}
+                          ? ` · ${formatNumber(selectedStack.quantity)} owned`
+                          : ""}
                       </small>
                     </div>
                   </div>
@@ -625,39 +681,19 @@ export function InventoryOverlay({
                   <p>{selectedItem.description}</p>
 
                   <div className="inventory-action-panel__actions">
-                    {selectedItem.category === "equipment" ? (
-                      <>
-                        <button
-                          type="button"
-                          disabled={
-                            busyItemId !== null ||
-                            selectedItemIsEquipped ||
-                            !selectedStack
-                          }
-                          onClick={() =>
-                            void runInventoryAction(selectedItem.id, "equip")
-                          }
-                        >
-                          {busyItemId === selectedItem.id
-                            ? "Working..."
-                            : "Equip"}
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={busyItemId !== null || !selectedItemIsEquipped}
-                          onClick={() =>
-                            void runInventoryAction(selectedItem.id, "unequip")
-                          }
-                        >
-                          {busyItemId === selectedItem.id
-                            ? "Working..."
-                            : "Unequip"}
-                        </button>
-                      </>
+                    {isEquipmentItem(selectedItem) ? (
+                      <button
+                        type="button"
+                        disabled={busyItemId !== null || !selectedStack}
+                        onClick={() =>
+                          void runInventoryAction(selectedItem.id, "equip")
+                        }
+                      >
+                        {busyItemId === selectedItem.id ? "Equipping..." : "Equip"}
+                      </button>
                     ) : null}
 
-                    {isConsumableLike(selectedItem) ? (
+                    {canUseItemFromInventory(selectedItem) ? (
                       <button
                         type="button"
                         disabled={busyItemId !== null || !selectedStack}
@@ -668,20 +704,20 @@ export function InventoryOverlay({
                         {busyItemId === selectedItem.id ? "Using..." : "Use"}
                       </button>
                     ) : null}
+
+                    {isInnPass(selectedItem) ? (
+                      <button type="button" disabled>
+                        Redeem at Inn
+                      </button>
+                    ) : null}
                   </div>
                 </>
               ) : (
                 <div className="inventory-action-panel__empty">
-                  <strong>Select an item</strong>
-                  <span>Click an item slot to inspect, equip, unequip, or use it.</span>
+                  <strong>No item selected</strong>
+                  <span>Select an item to inspect it.</span>
                 </div>
               )}
-
-              {loadingInventory ? (
-                <div className="inventory-status inventory-status--muted">
-                  Loading inventory...
-                </div>
-              ) : null}
 
               {message ? (
                 <div className="inventory-status inventory-status--success">
@@ -698,19 +734,21 @@ export function InventoryOverlay({
           </div>
 
           <nav className="inventory-type-tabs" aria-label="Inventory filters">
-            {INVENTORY_FILTERS.map((itemFilter) => (
+            {INVENTORY_FILTERS.map((inventoryFilter) => (
               <button
-                key={itemFilter.id}
+                key={inventoryFilter.id}
                 type="button"
-                className={`inventory-type-tab${
-                  filter === itemFilter.id ? " inventory-type-tab--active" : ""
-                }`}
-                aria-label={itemFilter.label}
-                aria-pressed={filter === itemFilter.id}
-                data-tooltip={itemFilter.label}
-                onClick={() => setFilter(itemFilter.id)}
+                className={
+                  filter === inventoryFilter.id
+                    ? "inventory-type-tab inventory-type-tab--active"
+                    : "inventory-type-tab"
+                }
+                data-tooltip={inventoryFilter.label}
+                aria-label={inventoryFilter.label}
+                aria-pressed={filter === inventoryFilter.id}
+                onClick={() => setFilter(inventoryFilter.id)}
               >
-                <span aria-hidden="true">{itemFilter.icon}</span>
+                <span aria-hidden="true">{inventoryFilter.icon}</span>
               </button>
             ))}
           </nav>

@@ -23,6 +23,7 @@ import type {
 const TOKEN_BYTES = 32;
 const PASSWORD_SALT_BYTES = 16;
 const PASSWORD_HASH_BYTES = 64;
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -90,6 +91,13 @@ export class AuthService implements OnModuleInit {
     const token = this.extractBearerToken(authorizationHeader);
 
     if (!token) {
+      return null;
+    }
+
+    if (this.isSessionTokenExpired(token)) {
+      this.userIdsByToken.delete(token);
+      this.deleteAuthSession(token);
+
       return null;
     }
 
@@ -161,6 +169,11 @@ export class AuthService implements OnModuleInit {
       this.userIdsByToken.clear();
 
       for (const session of sessions) {
+        if (this.isSessionTokenExpired(session.token)) {
+          this.deleteAuthSession(session.token);
+          continue;
+        }
+
         if (this.usersById.has(session.userId)) {
           this.userIdsByToken.set(session.token, session.userId);
         }
@@ -239,7 +252,30 @@ export class AuthService implements OnModuleInit {
   }
 
   private createSessionToken(): string {
-    return randomBytes(TOKEN_BYTES).toString('hex');
+    const expiresAt = Date.now() + SESSION_TTL_MS;
+    return `${randomBytes(TOKEN_BYTES).toString('hex')}.${expiresAt.toString(36)}`;
+  }
+
+  private getSessionTokenExpiry(token: string): number | undefined {
+    const [, encodedExpiresAt] = token.split('.');
+
+    if (!encodedExpiresAt) {
+      return undefined;
+    }
+
+    const expiresAt = Number.parseInt(encodedExpiresAt, 36);
+
+    return Number.isFinite(expiresAt) ? expiresAt : undefined;
+  }
+
+  private isSessionTokenExpired(token: string): boolean {
+    const expiresAt = this.getSessionTokenExpiry(token);
+
+    if (!expiresAt) {
+      return true;
+    }
+
+    return expiresAt <= Date.now();
   }
 
   private createUserId(): string {

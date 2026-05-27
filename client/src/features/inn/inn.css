@@ -281,7 +281,7 @@
   position: absolute;
   left: 0;
   bottom: calc(100% + 0.5rem);
-  z-index: 30;
+  z-index: 110;
   width: 11.8rem;
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 0.72rem;

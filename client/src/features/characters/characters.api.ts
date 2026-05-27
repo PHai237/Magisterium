@@ -4,8 +4,8 @@ import type {
   CharacterConsumableMutationResult,
   CharacterCreationPreview,
   CharacterEquipmentMutationResult,
-  CharacterSnapshot,
   CharacterInnRestResult,
+  CharacterSnapshot,
   InventoryItemStack,
   ItemId,
   OriginId
@@ -100,6 +100,14 @@ export const charactersApi = {
   restAtInn(userId: string, characterId: string) {
     return apiPost<CharacterInnRestResult>(
       `/characters/${characterId}/inn/rest`,
+      undefined,
+      { userId }
+    );
+  },
+
+  restAtInnWithPass(userId: string, characterId: string) {
+    return apiPost<CharacterInnRestResult>(
+      `/characters/${characterId}/inn/rest/pass`,
       undefined,
       { userId }
     );

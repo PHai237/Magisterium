@@ -122,7 +122,9 @@ export interface CharacterInnRestResult {
   character: CharacterSnapshot;
 
   rest: {
+    paymentMethod: 'bronze' | 'voucher';
     priceBronze: number;
+    voucherItemId?: ItemId;
     previousMoneyBronze: number;
     nextMoneyBronze: number;
     previousCurrentState: CurrentState;
@@ -135,9 +137,11 @@ const BASE_EXP_REQUIRED_FOR_LEVEL_UP = 100;
 const EXP_LEVEL_GROWTH_FACTOR = 1.5;
 const MAX_CHARACTER_LEVEL = 100;
 const BASIC_INN_REST_PRICE_BRONZE = 3;
+const ONE_NIGHT_INN_VOUCHER_ID: ItemId = 'one_night_inn_voucher';
 
 const MAX_SAFE_TOTAL_EXP = 100_000_000;
 const MAX_SAFE_REWARD_EXP = 1_000_000;
+const MAX_CHARACTERS_PER_USER = 3;
 
 @Injectable()
 export class CharacterService implements OnModuleInit {
@@ -185,6 +189,14 @@ export class CharacterService implements OnModuleInit {
   create(dto: CreateCharacterCommand): CharacterSnapshot {
     const userId = normalizeRequiredUserId(dto.userId);
     const name = normalizeCharacterName(dto.name);
+
+    if (
+      this.findCharactersByUserScope(userId).length >= MAX_CHARACTERS_PER_USER
+    ) {
+      throw new BadRequestException(
+        `A user can have at most ${MAX_CHARACTERS_PER_USER} characters.`,
+      );
+    }
 
     const character = createCharacter({
       name,
@@ -540,6 +552,7 @@ export class CharacterService implements OnModuleInit {
     this.assertKnownInventoryItem(itemId);
     this.assertInventoryHasQuantity(existingCharacter, itemId, 1);
     this.assertInventoryItemIsConsumableForContext(itemId, 'out_of_battle');
+    this.assertConsumableIsAllowedFromInventory(itemId);
 
     const snapshotBeforeUse = createCharacterSnapshot(existingCharacter);
 
@@ -676,11 +689,78 @@ export class CharacterService implements OnModuleInit {
     return {
       character: createCharacterSnapshot(updatedCharacter),
       rest: {
+        paymentMethod: 'bronze',
         priceBronze: BASIC_INN_REST_PRICE_BRONZE,
         previousMoneyBronze: character.moneyBronze,
         nextMoneyBronze: updatedCharacter.moneyBronze,
         previousCurrentState: snapshotBeforeRest.currentState,
         nextCurrentState,
+        restedAt,
+      },
+    };
+  }
+
+  restAtInnWithVoucher(
+    characterId: string,
+    userId: string,
+  ): CharacterInnRestResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const character = this.characters.get(characterId);
+
+    if (!character || character.userId !== userScope) {
+      throw new NotFoundException(`Character not found: ${characterId}`);
+    }
+
+    this.assertInventoryHasQuantity(character, ONE_NIGHT_INN_VOUCHER_ID, 1);
+
+    const snapshotBeforeRest = createCharacterSnapshot(character);
+    const restedAt = new Date().toISOString();
+
+    const sanitizedCharacterBeforeRest: Character = {
+      ...character,
+      equippedItemIds: snapshotBeforeRest.equippedItemIds,
+      currentState: snapshotBeforeRest.currentState,
+    };
+
+    const itemUseResult = applyConsumableItemEffectsToCharacter(
+      sanitizedCharacterBeforeRest,
+      snapshotBeforeRest.derivedStats,
+      ONE_NIGHT_INN_VOUCHER_ID,
+      'out_of_battle',
+    );
+
+    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+      removeItemQuantityFromInventory(
+        itemUseResult.character.inventoryItemIds,
+        ONE_NIGHT_INN_VOUCHER_ID,
+        1,
+      ),
+    );
+
+    const updatedCharacter: Character = {
+      ...itemUseResult.character,
+      version: character.version + 1,
+      inventoryItemIds: inventoryChange.inventoryItemIds,
+      lastRestAt: restedAt,
+      updatedAt: restedAt,
+    };
+
+    this.characters.set(updatedCharacter.id, updatedCharacter);
+    this.persistCharacter(updatedCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    const snapshotAfterRest = createCharacterSnapshot(updatedCharacter);
+
+    return {
+      character: snapshotAfterRest,
+      rest: {
+        paymentMethod: 'voucher',
+        priceBronze: 0,
+        voucherItemId: ONE_NIGHT_INN_VOUCHER_ID,
+        previousMoneyBronze: character.moneyBronze,
+        nextMoneyBronze: updatedCharacter.moneyBronze,
+        previousCurrentState: snapshotBeforeRest.currentState,
+        nextCurrentState: snapshotAfterRest.currentState,
         restedAt,
       },
     };
@@ -956,6 +1036,21 @@ export class CharacterService implements OnModuleInit {
   private assertKnownInventoryItem(itemId: ItemId): void {
     if (!hasItemDefinition(itemId)) {
       throw new BadRequestException(`Item definition not found: ${itemId}`);
+    }
+  }
+
+  private assertConsumableIsAllowedFromInventory(itemId: ItemId): void {
+    const itemDefinition = getItemDefinitionById(itemId);
+
+    const hasRestEffect =
+      itemDefinition.consumable?.effects.some(
+        (effect) => effect.type === 'rest',
+      ) ?? false;
+
+    if (hasRestEffect) {
+      throw new BadRequestException(
+        `Item ${itemId} can only be used through an inn service.`,
+      );
     }
   }
 

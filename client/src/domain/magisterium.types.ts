@@ -155,7 +155,9 @@ export interface CharacterInnRestResult {
   character: CharacterSnapshot;
 
   rest: {
+    paymentMethod: "bronze" | "pass";
     priceBronze: number;
+    passItemId?: ItemId;
     previousMoneyBronze: number;
     nextMoneyBronze: number;
     previousCurrentState: CurrentState;

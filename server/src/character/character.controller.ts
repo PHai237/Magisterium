@@ -184,6 +184,17 @@ export class CharacterController {
     );
   }
 
+  @Post(':id/inn/rest/voucher')
+  restAtInnWithVoucher(
+    @Param('id') id: string,
+    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
+  ) {
+    return this.characterService.restAtInnWithVoucher(
+      id,
+      this.readRequiredUserIdHeader(userIdHeader),
+    );
+  }
+
   @Get(':id')
   findById(
     @Param('id') id: string,

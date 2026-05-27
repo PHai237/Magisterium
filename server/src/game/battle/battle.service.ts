@@ -288,6 +288,34 @@ export class BattleService {
     return this.resolveAction(command);
   }
 
+  rollbackBattleRewardClaim(input: {
+    battleId: string;
+    characterId: string;
+    userId: string;
+  }): BattleState {
+    const battle = this.getBattleOrThrowForUserScope(
+      input.battleId,
+      input.userId,
+    );
+
+    if (
+      !battle.rewardClaim ||
+      battle.rewardClaim.claimedByCharacterId !== input.characterId
+    ) {
+      return battle;
+    }
+
+    const nextBattle: BattleState = {
+      ...battle,
+      rewardClaim: undefined,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.battles.set(nextBattle.battleId, nextBattle);
+
+    return nextBattle;
+  }
+
   prepareBattleRewardClaim(
     input: ClaimBattleRewardInput,
   ): PreparedBattleRewardClaimResult {

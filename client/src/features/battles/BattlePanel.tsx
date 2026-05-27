@@ -101,25 +101,30 @@ export function BattlePanel({
     }
   }, [activeActorItems, itemId]);
 
-  const loadBattles = useCallback(async () => {
-    setBusy(true);
-    setError(null);
+    const loadBattles = useCallback(async () => {
+      setBusy(true);
+      setError(null);
 
-    try {
-      const battles = await battlesApi.list(userId);
-      setData({
-        battles,
-        selectedBattle:
-          selectedBattle && battles.some((battle) => battle.battleId === selectedBattle.battleId)
-            ? battles.find((battle) => battle.battleId === selectedBattle.battleId) ?? null
-            : battles[0] ?? null
-      });
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Failed to load battles.");
-    } finally {
-      setBusy(false);
-    }
-  }, [selectedBattle, userId]);
+      try {
+        const battles = await battlesApi.list(userId);
+
+        setData((previous) => {
+          const selectedBattleId = previous.selectedBattle?.battleId;
+          const nextSelectedBattle = selectedBattleId
+            ? battles.find((battle) => battle.battleId === selectedBattleId) ?? null
+            : battles[0] ?? null;
+
+          return {
+            battles,
+            selectedBattle: nextSelectedBattle
+          };
+        });
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Failed to load battles.");
+      } finally {
+        setBusy(false);
+      }
+    }, [userId]);
 
   useEffect(() => {
     void loadBattles();

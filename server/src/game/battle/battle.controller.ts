@@ -131,22 +131,6 @@ export class BattleController {
 
     const battleCharacterActor = preparedClaim.characterActor;
 
-    const appliedReward = this.characterService.applyBattleReward(
-      character.id,
-      userId,
-      preparedClaim.reward,
-      {
-        battleStartingInventoryItemIds:
-          battleCharacterActor.battleStartInventoryItemIds,
-        battleInventoryItemIds: battleCharacterActor.inventoryItemIds,
-        battleCurrentState: {
-          hp: battleCharacterActor.hp,
-          mp: battleCharacterActor.mp,
-          stamina: battleCharacterActor.stamina,
-        },
-      },
-    );
-
     const committedClaim = this.battleService.commitBattleRewardClaim({
       battleId,
       characterId: character.id,
@@ -154,12 +138,38 @@ export class BattleController {
       reward: preparedClaim.reward,
     });
 
-    return {
-      battle: committedClaim.battle,
-      character: appliedReward.character,
-      reward: appliedReward.reward,
-      progression: appliedReward.progression,
-    };
+    try {
+      const appliedReward = this.characterService.applyBattleReward(
+        character.id,
+        userId,
+        preparedClaim.reward,
+        {
+          battleStartingInventoryItemIds:
+            battleCharacterActor.battleStartInventoryItemIds,
+          battleInventoryItemIds: battleCharacterActor.inventoryItemIds,
+          battleCurrentState: {
+            hp: battleCharacterActor.hp,
+            mp: battleCharacterActor.mp,
+            stamina: battleCharacterActor.stamina,
+          },
+        },
+      );
+
+      return {
+        battle: committedClaim.battle,
+        character: appliedReward.character,
+        reward: appliedReward.reward,
+        progression: appliedReward.progression,
+      };
+    } catch (error) {
+      this.battleService.rollbackBattleRewardClaim({
+        battleId,
+        characterId: character.id,
+        userId,
+      });
+
+      throw error;
+    }
   }
 
   @Delete(':battleId')

@@ -608,6 +608,28 @@ describe('CharacterController', () => {
     });
   });
 
+  it('should use an inn voucher through the inn endpoint', () => {
+    const created = controller.create(
+      {
+        name: 'VoucherInn',
+        originId: 'mercenary',
+      },
+      'user_1',
+    );
+
+    const result = controller.restAtInnWithVoucher(created.id, 'user_1');
+
+    expect(result.character.inventoryItemIds).not.toContain(
+      'one_night_inn_voucher',
+    );
+
+    expect(result.rest).toMatchObject({
+      paymentMethod: 'voucher',
+      priceBronze: 0,
+      voucherItemId: 'one_night_inn_voucher',
+    });
+  });
+
   it('should find a character by id within a user scope', () => {
     const created = controller.create(
       {

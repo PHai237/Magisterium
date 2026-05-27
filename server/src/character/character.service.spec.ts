@@ -848,9 +848,25 @@ describe('CharacterService', () => {
       });
     });
 
-    it('should use inn pass, fully rest, recover fatigue, and consume it', () => {
+    it('should reject using an inn voucher from the generic consumable endpoint', () => {
       const created = service.create({
         name: 'RestUser',
+        originId: 'mercenary',
+        userId: 'user_1',
+      });
+
+      expect(() =>
+        service.useConsumableItemOutOfBattle(
+          created.id,
+          'user_1',
+          'one_night_inn_voucher',
+        ),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should use an inn voucher only through the inn service', () => {
+      const created = service.create({
+        name: 'InnVoucherUser',
         originId: 'mercenary',
         userId: 'user_1',
       });
@@ -865,11 +881,7 @@ describe('CharacterService', () => {
         },
       }));
 
-      const result = service.useConsumableItemOutOfBattle(
-        created.id,
-        'user_1',
-        'one_night_inn_voucher',
-      );
+      const result = service.restAtInnWithVoucher(created.id, 'user_1');
 
       expect(result.character.currentState).toEqual({
         hp: result.character.derivedStats.maxHp,
@@ -878,20 +890,18 @@ describe('CharacterService', () => {
       });
 
       expect(result.character.fatigue).toBe(0);
+      expect(result.character.moneyBronze).toBe(created.moneyBronze);
+      expect(result.character.inventoryItemIds).not.toContain(
+        'one_night_inn_voucher',
+      );
 
-      expect(result.inventoryChange).toMatchObject({
-        itemId: 'one_night_inn_voucher',
-        previousQuantity: 1,
-        nextQuantity: 0,
-        quantityChanged: -1,
+      expect(result.rest).toMatchObject({
+        paymentMethod: 'voucher',
+        priceBronze: 0,
+        voucherItemId: 'one_night_inn_voucher',
+        previousMoneyBronze: created.moneyBronze,
+        nextMoneyBronze: created.moneyBronze,
       });
-
-      expect(result.itemUse.effects.map((effect) => effect.target)).toEqual([
-        'HP',
-        'MP',
-        'Stamina',
-        'Fatigue',
-      ]);
     });
 
     it('should reject using non-consumable item outside battle', () => {

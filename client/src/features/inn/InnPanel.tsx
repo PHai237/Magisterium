@@ -12,30 +12,30 @@ interface InnPanelProps {
   onCharacterUpdated: (character: CharacterSnapshot) => void;
 }
 
-type InnPaymentMethod = "voucher" | "bronze";
+type InnPaymentMethod = "pass" | "bronze";
 
 const BASIC_INN_REST_PRICE_BRONZE = 3;
-const ONE_NIGHT_INN_VOUCHER_ID: ItemId = "one_night_inn_voucher";
+const ONE_NIGHT_INN_PASS_ID: ItemId = "one_night_inn_pass";
 
 export function InnPanel({
   userId,
   currentCharacter,
   onCharacterUpdated
 }: InnPanelProps) {
-  const voucherCount = useMemo(
+  const passCount = useMemo(
     () =>
       currentCharacter.inventoryItemIds.filter(
-        (itemId) => itemId === ONE_NIGHT_INN_VOUCHER_ID
+        (itemId) => itemId === ONE_NIGHT_INN_PASS_ID
       ).length,
     [currentCharacter.inventoryItemIds]
   );
 
-  const hasVoucher = voucherCount > 0;
+  const hasPass = passCount > 0;
   const canAffordBronze =
     currentCharacter.moneyBronze >= BASIC_INN_REST_PRICE_BRONZE;
 
   const [paymentMethod, setPaymentMethod] = useState<InnPaymentMethod>(
-    hasVoucher ? "voucher" : "bronze"
+    hasPass ? "pass" : "bronze"
   );
   const [isPaymentMenuOpen, setIsPaymentMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -44,20 +44,19 @@ export function InnPanel({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (paymentMethod === "voucher" && !hasVoucher) {
+    if (paymentMethod === "pass" && !hasPass) {
       setPaymentMethod("bronze");
     }
-  }, [hasVoucher, paymentMethod]);
+  }, [hasPass, paymentMethod]);
 
-  const canRest =
-    paymentMethod === "voucher" ? hasVoucher : canAffordBronze;
+  const canRest = paymentMethod === "pass" ? hasPass : canAffordBronze;
 
   function selectPaymentMethod(nextPaymentMethod: InnPaymentMethod) {
     if (busy) {
       return;
     }
 
-    if (nextPaymentMethod === "voucher" && !hasVoucher) {
+    if (nextPaymentMethod === "pass" && !hasPass) {
       return;
     }
 
@@ -77,11 +76,10 @@ export function InnPanel({
 
     try {
       const result =
-        paymentMethod === "voucher"
-          ? await charactersApi.useConsumable(
+        paymentMethod === "pass"
+          ? await charactersApi.restAtInnWithPass(
               userId,
-              currentCharacter.id,
-              ONE_NIGHT_INN_VOUCHER_ID
+              currentCharacter.id
             )
           : await charactersApi.restAtInn(userId, currentCharacter.id);
 
@@ -91,8 +89,8 @@ export function InnPanel({
       window.setTimeout(() => setRestFlash(false), 850);
 
       setMessage(
-        paymentMethod === "voucher"
-          ? "Inn voucher used. You are ready for the next expedition."
+        paymentMethod === "pass"
+          ? "Inn Pass redeemed. You are ready for the next expedition."
           : "Rest complete. You are ready for the next expedition."
       );
     } catch (restError) {
@@ -167,11 +165,11 @@ export function InnPanel({
             aria-label="Choose inn payment method"
           >
             <span aria-hidden="true">
-              {paymentMethod === "voucher" ? "🎟️" : "🪙"}
+              {paymentMethod === "pass" ? "🎟️" : "🪙"}
             </span>
             <strong>
-              {paymentMethod === "voucher"
-                ? `${formatNumber(voucherCount)}x`
+              {paymentMethod === "pass"
+                ? `${formatNumber(passCount)}x`
                 : formatNumber(BASIC_INN_REST_PRICE_BRONZE)}
             </strong>
           </button>
@@ -196,17 +194,17 @@ export function InnPanel({
               <button
                 type="button"
                 className={
-                  paymentMethod === "voucher"
+                  paymentMethod === "pass"
                     ? "inn-payment-option inn-payment-option--active"
                     : "inn-payment-option"
                 }
-                disabled={!hasVoucher}
-                onClick={() => selectPaymentMethod("voucher")}
+                disabled={!hasPass}
+                onClick={() => selectPaymentMethod("pass")}
                 role="menuitem"
               >
                 <span aria-hidden="true">🎟️</span>
-                <strong>Voucher</strong>
-                <em>{hasVoucher ? `${formatNumber(voucherCount)}x` : "0x"}</em>
+                <strong>Inn Pass</strong>
+                <em>{hasPass ? `${formatNumber(passCount)}x` : "0x"}</em>
               </button>
             </div>
           ) : null}
@@ -221,8 +219,8 @@ export function InnPanel({
             ? "Resting..."
             : canRest
               ? "Rest"
-              : paymentMethod === "voucher"
-                ? "No voucher"
+              : paymentMethod === "pass"
+                ? "No Inn Pass"
                 : "Not enough bronze"}
         </Button>
       </div>

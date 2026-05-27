@@ -58,5 +58,5 @@ export const PINNED_BATTLE_EVENT_TYPES = new Set<BattleEventType>([
   'BATTLE_ENDED',
 ]);
 
-export const MAX_MANUAL_MONSTERS_PER_BATTLE = 12;
-export const MAX_AUTO_MONSTER_ACTIONS = 20;
+export const MAX_MANUAL_MONSTERS_PER_BATTLE = 6;
+export const MAX_AUTO_MONSTER_ACTIONS = 12;
