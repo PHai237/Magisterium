@@ -45,11 +45,9 @@ export function InnPanel({
       onCharacterUpdated(result.character);
 
       setRestFlash(true);
-      window.setTimeout(() => setRestFlash(false), 900);
+      window.setTimeout(() => setRestFlash(false), 850);
 
-      setMessage(
-        "You feel renewed, steady, and ready for the next expedition."
-      );
+      setMessage("Rest complete. You are ready for the next expedition.");
     } catch (restError) {
       setError(
         restError instanceof Error
@@ -75,48 +73,37 @@ export function InnPanel({
       <div className="inn-basic-card__copy">
         <p>The Inn</p>
         <h2>Rest for the night</h2>
-        <span>
-          A quiet room, warm light, and enough silence to recover before the
-          road calls again.
-        </span>
       </div>
 
       <section className="inn-service-box" aria-label="Rest service details">
-        <div className="inn-service-box__header">
-          <span>Service</span>
+        <div className="inn-service-row">
+          <span aria-hidden="true">🛌</span>
           <strong>Overnight Rest</strong>
+          <em>Service</em>
         </div>
 
-        <div className="inn-service-list">
-          <div className="inn-service-row">
-            <span aria-hidden="true">❤️</span>
-            <strong>Fully restore HP</strong>
-            <em>+100%</em>
-          </div>
-
-          <div className="inn-service-row">
-            <span aria-hidden="true">💙</span>
-            <strong>Fully restore MP</strong>
-            <em>+100%</em>
-          </div>
-
-          <div className="inn-service-row">
-            <span aria-hidden="true">⚡</span>
-            <strong>Fully restore Stamina</strong>
-            <em>+100%</em>
-          </div>
-        </div>
-      </section>
-
-      <section className="inn-payment-panel" aria-label="Rest payment">
-        <div>
-          <span>Price</span>
-          <strong>{formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze</strong>
+        <div className="inn-service-row">
+          <span aria-hidden="true">❤️</span>
+          <strong>Fully restore HP</strong>
+          <em>+100%</em>
         </div>
 
-        <div>
-          <span>Wallet</span>
-          <strong>{formatNumber(currentCharacter.moneyBronze)} Bronze</strong>
+        <div className="inn-service-row">
+          <span aria-hidden="true">💙</span>
+          <strong>Fully restore MP</strong>
+          <em>+100%</em>
+        </div>
+
+        <div className="inn-service-row">
+          <span aria-hidden="true">⚡</span>
+          <strong>Fully restore Stamina</strong>
+          <em>+100%</em>
+        </div>
+
+        <div className="inn-service-row inn-service-row--price">
+          <span aria-hidden="true">🪙</span>
+          <strong>Price</strong>
+          <em>{formatNumber(BASIC_INN_REST_PRICE_BRONZE)} Bronze</em>
         </div>
       </section>
 

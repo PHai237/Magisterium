@@ -37,26 +37,22 @@ function PlaceholderPanel({
   onBack
 }: PlaceholderPanelProps) {
   return (
-    <main className="gameshell-content">
-      <header className="gameshell-content__header">
-        <Button type="button" variant="ghost" onClick={onBack}>
-          ← Return to Town
-        </Button>
+    <section className="gameshell-location-stage">
+      <Button
+        type="button"
+        variant="ghost"
+        className="gameshell-location-back"
+        onClick={onBack}
+      >
+        ← Return to Town
+      </Button>
 
-        <div>
-          <span>{subtitle}</span>
-          <strong>{title}</strong>
-        </div>
-      </header>
-
-      <section className="gameshell-content__body gameshell-content__body--stage">
-        <article className="gameshell-placeholder-card">
-          <p>{subtitle}</p>
-          <h2>{title}</h2>
-          <span>{description}</span>
-        </article>
-      </section>
-    </main>
+      <article className="gameshell-placeholder-card">
+        <p>{subtitle}</p>
+        <h2>{title}</h2>
+        <span>{description}</span>
+      </article>
+    </section>
   );
 }
 
@@ -82,58 +78,46 @@ export function GameShell({
     setActivePanel("map");
   }
 
-  function renderWorldBody() {
+  function renderBodyContent() {
     if (activePanel === "battle") {
       return (
-        <main className="gameshell-content">
-          <header className="gameshell-content__header">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setActivePanel("map")}
-            >
-              ← Return to World Map
-            </Button>
+        <section className="gameshell-location-stage gameshell-location-stage--battle">
+          <Button
+            type="button"
+            variant="ghost"
+            className="gameshell-location-back"
+            onClick={() => setActivePanel("map")}
+          >
+            ← Return to World Map
+          </Button>
 
-            <div>
-              <span>Expedition</span>
-              <strong>Shadowfen Woods</strong>
-            </div>
-          </header>
-
-          <section className="gameshell-content__body">
-            <BattlePanel
-              userId={userId}
-              currentCharacter={currentCharacter}
-              onCharacterUpdated={onCharacterUpdated}
-            />
-          </section>
-        </main>
+          <BattlePanel
+            userId={userId}
+            currentCharacter={currentCharacter}
+            onCharacterUpdated={onCharacterUpdated}
+          />
+        </section>
       );
     }
 
     if (activePanel === "inn") {
       return (
-        <main className="gameshell-content">
-          <header className="gameshell-content__header">
-            <Button type="button" variant="ghost" onClick={returnToTownMap}>
-              ← Return to Town
-            </Button>
+        <section className="gameshell-location-stage">
+          <Button
+            type="button"
+            variant="ghost"
+            className="gameshell-location-back"
+            onClick={returnToTownMap}
+          >
+            ← Return to Town
+          </Button>
 
-            <div>
-              <span>Rest Service</span>
-              <strong>The Inn</strong>
-            </div>
-          </header>
-
-          <section className="gameshell-content__body gameshell-content__body--stage">
-            <InnPanel
-              userId={userId}
-              currentCharacter={currentCharacter}
-              onCharacterUpdated={onCharacterUpdated}
-            />
-          </section>
-        </main>
+          <InnPanel
+            userId={userId}
+            currentCharacter={currentCharacter}
+            onCharacterUpdated={onCharacterUpdated}
+          />
+        </section>
       );
     }
 
@@ -198,16 +182,18 @@ export function GameShell({
         />
       </header>
 
-      {renderWorldBody()}
+      <div className="gameshell-body-layer">
+        {renderBodyContent()}
 
-      {isInventoryOpen ? (
-        <InventoryOverlay
-          userId={userId}
-          currentCharacter={currentCharacter}
-          onCharacterUpdated={onCharacterUpdated}
-          onClose={() => setIsInventoryOpen(false)}
-        />
-      ) : null}
+        {isInventoryOpen ? (
+          <InventoryOverlay
+            userId={userId}
+            currentCharacter={currentCharacter}
+            onCharacterUpdated={onCharacterUpdated}
+            onClose={() => setIsInventoryOpen(false)}
+          />
+        ) : null}
+      </div>
 
       <GameActionBar
         isInventoryOpen={isInventoryOpen}
