@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -16,6 +21,23 @@ import { BattleModule } from './game/battle/battle.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthUserScopeMiddleware).forRoutes('*');
+    consumer.apply(AuthUserScopeMiddleware).forRoutes(
+      {
+        path: 'characters',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'characters/(.*)',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'battles',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'battles/(.*)',
+        method: RequestMethod.ALL,
+      },
+    );
   }
 }
