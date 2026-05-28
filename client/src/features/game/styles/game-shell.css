@@ -782,11 +782,6 @@
   place-items: center;
 }
 
-.gameshell-location-stage--exploration .gameshell-location-main {
-  place-items: stretch;
-  padding-top: 3.65rem;
-}
-
 .gameshell-location-back {
   position: absolute;
   top: 0.85rem;
@@ -836,7 +831,7 @@
 
 .gameshell-actionbar {
   position: relative;
-  z-index: 70;
+  z-index: 420;
   height: 58px;
   flex: 0 0 58px;
   border-top: 1px solid #22293a;
@@ -886,10 +881,10 @@
 
 .gameshell-actionbar__inventory::after {
   content: attr(data-tooltip);
-  position: absolute;
+  position: fixed;
   left: 50%;
-  bottom: calc(100% + 0.62rem);
-  z-index: 160;
+  bottom: 4.45rem;
+  z-index: 9999;
   border: 1px solid rgba(168, 85, 247, 0.36);
   border-radius: 999px;
   background: rgba(11, 15, 23, 0.98);
@@ -911,10 +906,10 @@
 
 .gameshell-actionbar__inventory::before {
   content: "";
-  position: absolute;
+  position: fixed;
   left: 50%;
-  bottom: calc(100% + 0.36rem);
-  z-index: 161;
+  bottom: 4.18rem;
+  z-index: 10000;
   width: 0.45rem;
   height: 0.45rem;
   border-right: 1px solid rgba(168, 85, 247, 0.36);

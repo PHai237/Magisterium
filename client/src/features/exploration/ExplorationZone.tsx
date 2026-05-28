@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { Button } from "../../components/ui/Button";
 import { EXPLORATION_ZONE_DEFINITIONS } from "../../domain/magisterium.constants";
 import type {
   CharacterSnapshot,
@@ -17,6 +18,12 @@ interface ExplorationZoneProps {
   zoneId: ExplorationZoneId;
   onCharacterUpdated: (character: CharacterSnapshot) => void;
   onEncounterFound: (encounterId: EncounterId) => void;
+  onReturnToWorldMap: () => void;
+}
+
+interface ExplorationJournalGroup {
+  id: string;
+  messages: string[];
 }
 
 function getLogClassName(message: string): string {
@@ -61,17 +68,20 @@ export function ExplorationZone({
   currentCharacter,
   zoneId,
   onCharacterUpdated,
-  onEncounterFound
+  onEncounterFound,
+  onReturnToWorldMap
 }: ExplorationZoneProps) {
   const zone = EXPLORATION_ZONE_DEFINITIONS[zoneId];
   const journalEndRef = useRef<HTMLDivElement | null>(null);
 
   const [isSearching, setIsSearching] = useState(false);
-  const [searchLog, setSearchLog] = useState<string[]>([]);
+  const [searchLogGroups, setSearchLogGroups] = useState<
+    ExplorationJournalGroup[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setSearchLog([]);
+    setSearchLogGroups([]);
     setError(null);
   }, [zoneId]);
 
@@ -80,16 +90,26 @@ export function ExplorationZone({
       behavior: "smooth",
       block: "end"
     });
-  }, [searchLog]);
+  }, [searchLogGroups]);
 
-  function appendLogs(messages: string[]) {
-    const cleanMessages = messages.filter((message) => message.trim().length > 0);
+  function appendLogGroup(messages: string[]) {
+    const cleanMessages = messages.filter(
+      (message) => message.trim().length > 0
+    );
 
     if (cleanMessages.length === 0) {
       return;
     }
 
-    setSearchLog((current) => [...current, ...cleanMessages].slice(-36));
+    setSearchLogGroups((current) =>
+      [
+        ...current,
+        {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          messages: cleanMessages
+        }
+      ].slice(-18)
+    );
   }
 
   async function handleSearch() {
@@ -99,7 +119,6 @@ export function ExplorationZone({
 
     setIsSearching(true);
     setError(null);
-    appendLogs(["Searching the area..."]);
 
     try {
       const result: ExplorationSearchResult = await explorationApi.search(
@@ -111,13 +130,18 @@ export function ExplorationZone({
       );
 
       onCharacterUpdated(result.character);
-      appendLogs(result.log);
+
+      const nextMessages = ["Searching the area...", ...result.log];
 
       if (result.outcomeType === "encounter" && result.encounterId) {
-        appendLogs([
+        nextMessages.push(
           `Encounter found: ${compactLabel(result.encounterId)}. Drawing weapon...`
-        ]);
+        );
+      }
 
+      appendLogGroup(nextMessages);
+
+      if (result.outcomeType === "encounter" && result.encounterId) {
         window.setTimeout(() => {
           onEncounterFound(result.encounterId as EncounterId);
         }, 850);
@@ -135,6 +159,16 @@ export function ExplorationZone({
     <section className="exploration-zone" aria-label="Exploration zone">
       <div className="exploration-layout">
         <main className="exploration-main">
+          <Button
+            type="button"
+            variant="ghost"
+            className="exploration-back-button"
+            disabled={isSearching}
+            onClick={onReturnToWorldMap}
+          >
+            ← Return to World Map
+          </Button>
+
           <div className="exploration-ambient">
             <div className="exploration-ambient__icon" aria-hidden="true">
               {zone.icon}
@@ -150,12 +184,6 @@ export function ExplorationZone({
               <span>
                 Danger: <strong>{"◆".repeat(zone.dangerLevel)}</strong>
               </span>
-
-              <span aria-hidden="true">|</span>
-
-              <span>
-                Cost: <strong>{zone.staminaCost} STA / Search</strong>
-              </span>
             </div>
           </div>
 
@@ -167,13 +195,9 @@ export function ExplorationZone({
               onClick={() => void handleSearch()}
             >
               <strong>
-                {isSearching ? "Searching the area..." : "Search Area"}
+                {isSearching ? "Searching..." : "Search Area"}
               </strong>
-              <span>
-                {isSearching
-                  ? "Scanning the zone..."
-                  : "Search for encounters, loot, or traces."}
-              </span>
+              <span>Cost: {zone.staminaCost} STA / Search</span>
             </button>
 
             {error ? <div className="exploration-error">{error}</div> : null}
@@ -187,14 +211,18 @@ export function ExplorationZone({
           </div>
 
           <div className="exploration-journal__scroll">
-            {searchLog.length > 0 ? (
-              searchLog.map((message, index) => (
-                <div
-                  key={`${message}-${index}`}
-                  className={getLogClassName(message)}
-                >
-                  {message}
-                </div>
+            {searchLogGroups.length > 0 ? (
+              searchLogGroups.map((group) => (
+                <section key={group.id} className="exploration-journal-group">
+                  {group.messages.map((message, index) => (
+                    <div
+                      key={`${group.id}-${index}`}
+                      className={getLogClassName(message)}
+                    >
+                      {message}
+                    </div>
+                  ))}
+                </section>
               ))
             ) : (
               <div className="exploration-journal-empty">

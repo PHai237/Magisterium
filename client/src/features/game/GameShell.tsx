@@ -141,19 +141,14 @@ export function GameShell({
   function renderBodyContent() {
     if (activePanel === "exploration") {
       return (
-        <LocationStage
-          returnLabel="← Return to World Map"
-          onBack={returnToWorldMap}
-          className="gameshell-location-stage--exploration"
-        >
-          <ExplorationZone
-            userId={userId}
-            currentCharacter={currentCharacter}
-            zoneId={selectedZoneId}
-            onCharacterUpdated={onCharacterUpdated}
-            onEncounterFound={openBattle}
-          />
-        </LocationStage>
+        <ExplorationZone
+          userId={userId}
+          currentCharacter={currentCharacter}
+          zoneId={selectedZoneId}
+          onCharacterUpdated={onCharacterUpdated}
+          onEncounterFound={openBattle}
+          onReturnToWorldMap={returnToWorldMap}
+        />
       );
     }
 
