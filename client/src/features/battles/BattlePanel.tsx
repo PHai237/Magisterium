@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 import type {
   BattleActionType,
@@ -293,7 +294,169 @@ function getEventTone(event: BattleEvent, playerActorId?: string): string {
   return "neutral";
 }
 
-function formatEventMessage(event: BattleEvent): string {
+const HIDDEN_BATTLE_LOG_EVENT_TYPES = new Set([
+  "ROUND_STARTED",
+  "ROUND_ENDED",
+  "TURN_STARTED",
+  "TURN_ENDED",
+  "ACTION_STARTED",
+  "ACTION_COMPLETED",
+  "HIT",
+  "CRIT",
+  "DAMAGE_CALCULATED",
+  "DAMAGE_MITIGATED",
+  "RESOURCE_SPENT",
+  "RESOURCE_RESTORED"
+]);
+
+function getActorName(
+  battle: BattleState | null,
+  actorId: string | undefined,
+  currentCharacter: CharacterSnapshot
+): string {
+  if (!actorId || !battle) {
+    return "Unknown";
+  }
+
+  const actor = battle.actors[actorId];
+
+  if (!actor) {
+    return actorId;
+  }
+
+  if (actor.actorType === "character") {
+    return currentCharacter.name;
+  }
+
+  return getMonsterDisplay(actor).label;
+}
+
+function getActorLogRole(
+  battle: BattleState | null,
+  actorId: string | undefined
+): "player" | "enemy" | "system" {
+  if (!actorId || !battle) {
+    return "system";
+  }
+
+  const actor = battle.actors[actorId];
+
+  if (!actor) {
+    return "system";
+  }
+
+  return actor.actorType === "character" ? "player" : "enemy";
+}
+
+function getVisibleBattleLogEvents(events: BattleEvent[]): BattleEvent[] {
+  return events.filter((event) => !HIDDEN_BATTLE_LOG_EVENT_TYPES.has(event.type));
+}
+
+function renderBattleLogEvent(
+  event: BattleEvent,
+  battle: BattleState | null,
+  currentCharacter: CharacterSnapshot
+): ReactNode {
+  const actorName = getActorName(battle, event.actorId, currentCharacter);
+  const targetName = getActorName(battle, event.targetId, currentCharacter);
+  const actorRole = getActorLogRole(battle, event.actorId);
+
+  if (event.type === "DAMAGE_APPLIED") {
+    const damageValue = Math.max(0, Math.floor(event.value ?? 0));
+
+    if (actorRole === "player") {
+      return (
+        <>
+          <span className="battle-log-actor battle-log-actor--player">
+            {actorName}
+          </span>
+          <span> deals </span>
+          <span className="battle-log-value battle-log-value--player">
+            {damageValue} damage
+          </span>
+          <span> to {targetName}.</span>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <span className="battle-log-actor battle-log-actor--enemy">
+          {actorName}
+        </span>
+        <span> deals </span>
+        <span className="battle-log-value battle-log-value--enemy">
+          {damageValue} damage
+        </span>
+        <span> to {targetName}.</span>
+      </>
+    );
+  }
+
+  if (event.type === "MISS") {
+    return (
+      <>
+        <span className="battle-log-actor battle-log-actor--miss">
+          {actorName}
+        </span>
+        <span> misses {targetName}.</span>
+      </>
+    );
+  }
+
+  if (event.type === "HEAL_APPLIED") {
+    return (
+      <>
+        <span className="battle-log-actor battle-log-actor--player">
+          {targetName}
+        </span>
+        <span> recovers </span>
+        <span className="battle-log-value battle-log-value--heal">
+          {Math.max(0, Math.floor(event.value ?? 0))} HP
+        </span>
+        <span>.</span>
+      </>
+    );
+  }
+
+  if (event.type === "SHIELD_DAMAGED" || event.type === "SHIELD_BROKEN") {
+    return (
+      <>
+        <span className="battle-log-actor battle-log-actor--miss">
+          {targetName}
+        </span>
+        <span>
+          {event.type === "SHIELD_BROKEN"
+            ? "'s shield breaks."
+            : "'s shield absorbs damage."}
+        </span>
+      </>
+    );
+  }
+
+  if (event.type === "ACTOR_DEFEATED") {
+    return (
+      <>
+        <span className="battle-log-actor battle-log-actor--enemy">
+          {targetName}
+        </span>
+        <span> is defeated.</span>
+      </>
+    );
+  }
+
+  if (event.type === "BATTLE_STARTED") {
+    return "Battle started.";
+  }
+
+  if (event.type === "BATTLE_ENDED") {
+    return event.message || "Battle ended.";
+  }
+
+  if (event.type === "ACTION_CANCELLED") {
+    return event.message || "Action cancelled.";
+  }
+
   return event.message || compactLabel(event.type);
 }
 
@@ -334,6 +497,7 @@ export function BattlePanel({
   onCharacterUpdated
 }: BattlePanelProps) {
   const hasStartedRef = useRef(false);
+  const battleLogScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [targetId, setTargetId] = useState("");
@@ -398,6 +562,20 @@ export function BattlePanel({
     () => groupBattleEvents(battle?.events ?? []),
     [battle]
   );
+
+  useLayoutEffect(() => {
+  const logElement = battleLogScrollRef.current;
+
+  if (!logElement) {
+    return undefined;
+  }
+
+  const frameId = window.requestAnimationFrame(() => {
+    logElement.scrollTop = logElement.scrollHeight;
+  });
+
+  return () => window.cancelAnimationFrame(frameId);
+}, [battle?.battleId, battle?.events.length]);
 
   useEffect(() => {
     if (hasStartedRef.current) {
@@ -951,44 +1129,50 @@ export function BattlePanel({
         <aside className="battle-side battle-side--log">
           <div className="battle-panel-eyebrow">Battle Log</div>
 
-          <div className="battle-log-scroll">
+          <div className="battle-log-scroll" ref={battleLogScrollRef}>
             {battleLogGroups.length > 0 ? (
-              battleLogGroups.map((group) => (
-                <section
-                  key={group.label}
-                  className={
-                    group.current
-                      ? "battle-log-turn battle-log-turn--current"
-                      : "battle-log-turn"
-                  }
-                >
-                  <div className="battle-log-turn__tag">{group.label}</div>
+              battleLogGroups.map((group) => {
+                const visibleEvents = getVisibleBattleLogEvents(group.events);
 
-                  {group.events.map((event) => (
-                    <div
-                      key={event.id}
-                      className={`battle-log-line battle-log-line--${getEventTone(
-                        event,
-                        playerActor?.actorId
-                      )}`}
-                    >
-                      {formatEventMessage(event)}
-                    </div>
-                  ))}
+                if (visibleEvents.length === 0 && !group.current) {
+                  return null;
+                }
 
-                  {group.current && !battleFinished ? (
-                    <div className="battle-log-awaiting">
-                      ● Awaiting your command...
-                    </div>
-                  ) : null}
-                </section>
-              ))
+                return (
+                  <section
+                    key={group.label}
+                    className={
+                      group.current
+                        ? "battle-log-turn battle-log-turn--current"
+                        : "battle-log-turn"
+                    }
+                  >
+                    <div className="battle-log-turn__tag">{group.label}</div>
+
+                    {visibleEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className={`battle-log-line battle-log-line--${getEventTone(
+                          event,
+                          playerActor?.actorId
+                        )}`}
+                      >
+                        {renderBattleLogEvent(event, battle, currentCharacter)}
+                      </div>
+                    ))}
+
+                    {group.current && !battleFinished ? (
+                      <div className="battle-log-awaiting">
+                        ● Awaiting your command...
+                      </div>
+                    ) : null}
+                  </section>
+                );
+              })
             ) : (
               <div className="battle-log-turn battle-log-turn--current">
                 <div className="battle-log-turn__tag">Battle</div>
-                <div className="battle-log-awaiting">
-                  ● Preparing encounter...
-                </div>
+                <div className="battle-log-awaiting">● Preparing encounter...</div>
               </div>
             )}
           </div>

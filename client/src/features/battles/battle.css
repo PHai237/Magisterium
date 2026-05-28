@@ -22,7 +22,9 @@
 
 .battle-topbar__vitals {
   min-width: 0;
+  width: 90%;
   height: 100%;
+  justify-self: center;
   padding: 0 10px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -53,7 +55,7 @@
 .battle-resource__track {
   position: relative;
   width: 100%;
-  height: 1.05rem;
+  height: 1.22rem;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.95);
@@ -74,7 +76,7 @@
   color: #f8fafc;
   display: grid;
   place-items: center;
-  font-size: 0.64rem;
+  font-size: 0.7rem;
   font-weight: 950;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.72);
   white-space: nowrap;
@@ -378,6 +380,18 @@
 .battle-enemy-health {
   width: min(80%, 24.8rem);
   margin-top: 0.25rem;
+}
+
+.battle-enemy-health .battle-resource__track {
+  height: 1.83rem;
+}
+
+.battle-enemy-health .battle-resource__value {
+  font-size: 0.76rem;
+}
+
+.battle-enemy-health .battle-resource__label {
+  font-size: 0.68rem;
 }
 
 .battle-command-panel {
@@ -727,6 +741,51 @@
 
 .battle-log-line--neutral {
   color: #94a3b8;
+}
+
+.battle-log-actor {
+  font-weight: 950;
+}
+
+.battle-log-actor--player {
+  color: #f8fafc;
+}
+
+.battle-log-actor--enemy {
+  color: #f87171;
+}
+
+.battle-log-actor--miss {
+  color: #fbbf24;
+}
+
+.battle-log-value {
+  font-weight: 950;
+}
+
+.battle-log-value--player {
+  color: #4ade80;
+}
+
+.battle-log-value--enemy {
+  color: #f87171;
+}
+
+.battle-log-value--heal {
+  color: #38bdf8;
+}
+
+.battle-log-line--damage {
+  color: #cbd5e1;
+}
+
+.battle-log-line--enemy {
+  color: #f87171;
+}
+
+.battle-log-line--cancelled,
+.battle-log-line--miss {
+  color: #fbbf24;
 }
 
 .battle-log-awaiting {
