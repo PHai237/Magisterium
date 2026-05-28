@@ -36,3 +36,4 @@ add a better pop up for deletion
 
 manage address email is typing both username and email at the same time
 
+add reputation

@@ -33,8 +33,8 @@ type ActivePanel =
   | "exploration"
   | "battle"
   | "inn"
-  | "forge"
   | "market"
+  | "forge"
   | "archive";
 
 interface PlaceholderPanelProps {
@@ -179,7 +179,7 @@ export function GameShell({
 
     if (activePanel === "market") {
       return (
-        <LocationStage returnLabel="â† Return to Town" onBack={returnToTownMap}>
+        <LocationStage returnLabel="← Return to Town" onBack={returnToTownMap}>
           <MarketPanel
             userId={userId}
             currentCharacter={currentCharacter}

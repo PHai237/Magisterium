@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 
-import type {
-  CharacterSnapshot,
-  ItemId,
-  MarketCatalog,
-  MarketCatalogItem,
-  MarketVendor
-} from "../../domain/magisterium.types";
+import { Button } from "../../components/ui/Button";
+import type { CharacterSnapshot, ItemId } from "../../domain/magisterium.types";
 import { formatNumber } from "../../lib/format";
-import { marketApi } from "./market.api";
+import {
+  type MarketCatalog,
+  type MarketCatalogItem,
+  type MarketVendor,
+  marketApi
+} from "./market.api";
 import "./market.css";
 
 interface MarketPanelProps {
@@ -17,80 +17,161 @@ interface MarketPanelProps {
   onCharacterUpdated: (character: CharacterSnapshot) => void;
 }
 
-interface MarketJournalEntry {
-  id: string;
-  tone: "neutral" | "success" | "error" | "rumor";
-  message: string;
-}
+type MarketFilter = "all" | string;
 
 const ITEM_ICONS: Record<string, string> = {
   fresh_potato: "🥔",
   plump_wheat: "🌾",
   gathered_egg: "🥚",
+  sweet_carrot: "🥕",
+  red_onion: "🧅",
+  fresh_milk: "🥛",
+  hot_chili: "🌶️",
   moon_turnip: "🌙",
   green_herb: "🌿",
-  clear_glass_vial: "⚗",
-  basic_solvent: "🧴",
+  clear_glass_vial: "🧪",
+  basic_solvent: "💧",
   cooking_salt: "🧂",
   pressed_seed_oil: "🫙",
-  slime_gel: "🟢"
+  slime_gel: "🟢",
+  boar_meat: "🥩",
+  wolf_skin: "🐺",
+  goblin_ear: "👂",
+  cracked_dagger: "🗡️"
 };
+
+const FILTER_PRIORITY = [
+  "cooking",
+  "vegetable",
+  "grain",
+  "alchemy",
+  "herb",
+  "container",
+  "seasoning",
+  "material",
+  "loot"
+];
 
 function getItemIcon(itemId: ItemId): string {
   return ITEM_ICONS[itemId] ?? "◇";
 }
 
-function getInitialVendorId(catalog: MarketCatalog | null): string | null {
-  return catalog?.vendors.find((vendor) => vendor.unlockState === "open")?.id ?? null;
+function getCurrencyBreakdown(totalBronze: number) {
+  const bronze = Math.max(0, Math.floor(totalBronze));
+  const gold = Math.floor(bronze / 10000);
+  const silver = Math.floor((bronze % 10000) / 100);
+  const remainingBronze = bronze % 100;
+
+  return { gold, silver, bronze: remainingBronze };
 }
 
-function getRestockLabel(restockAt: string, now: number): string {
-  const restockTime = new Date(restockAt).getTime();
-  const remainingMs = Math.max(0, restockTime - now);
-  const totalSeconds = Math.floor(remainingMs / 1000);
-  const days = Math.floor(totalSeconds / 86_400);
-  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
-  const minutes = Math.floor((totalSeconds % 3_600) / 60);
-  const seconds = totalSeconds % 60;
+function formatRestockTime(nextRestockAt: string): string {
+  const targetTime = new Date(nextRestockAt).getTime();
 
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m`;
+  if (!Number.isFinite(targetTime)) {
+    return "Unknown";
   }
 
-  return `${hours}h ${minutes}m ${seconds}s`;
-}
+  const diffMs = Math.max(0, targetTime - Date.now());
+  const totalMinutes = Math.ceil(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
 
-function getVendorRestockLabel(vendor: MarketVendor | undefined, now: number): string {
-  const restockTimes = vendor?.items.map((item) => item.nextRestockAt) ?? [];
-
-  if (restockTimes.length === 0) {
-    return "No scheduled stock";
+  if (hours <= 0) {
+    return `${minutes}m`;
   }
 
-  const nearestRestockAt = restockTimes.sort(
-    (left, right) => new Date(left).getTime() - new Date(right).getTime()
-  )[0];
-
-  return getRestockLabel(nearestRestockAt, now);
+  return `${hours}h ${minutes.toString().padStart(2, "0")}m`;
 }
 
-function getRarityTone(item: MarketCatalogItem): string {
-  return item.rarity === "rare"
-    ? "market-item-card--rare"
-    : item.rarity === "uncommon"
-      ? "market-item-card--uncommon"
-      : "";
+function getVendorStatusLabel(vendor: MarketVendor): string {
+  if (vendor.unlockState === "open") {
+    return "Open";
+  }
+
+  if (vendor.unlockState === "rumored") {
+    return "???";
+  }
+
+  return "Locked";
 }
 
-function createJournalEntry(
-  message: string,
-  tone: MarketJournalEntry["tone"] = "neutral"
-): MarketJournalEntry {
-  return {
-    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    tone,
-    message
-  };
+function getVendorTone(vendor: MarketVendor): string {
+  if (vendor.unlockState === "rumored") {
+    return "rumor";
+  }
+
+  if (vendor.id.includes("herb")) {
+    return "herbalist";
+  }
+
+  if (vendor.id.includes("butcher") || vendor.id.includes("meat")) {
+    return "butcher";
+  }
+
+  if (vendor.id.includes("general")) {
+    return "general";
+  }
+
+  return "farmer";
+}
+
+function getFilterLabel(filter: MarketFilter): string {
+  if (filter === "all") {
+    return "All Items";
+  }
+
+  return filter
+    .split("_")
+    .join(" ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function buildVendorFilters(vendor: MarketVendor | null): MarketFilter[] {
+  if (!vendor) {
+    return ["all"];
+  }
+
+  const itemTags = new Set(vendor.items.flatMap((item) => [...item.tags]));
+
+  const priorityFilters = FILTER_PRIORITY.filter((tag) => itemTags.has(tag));
+  const remainingFilters = Array.from(itemTags)
+    .filter(
+      (tag) =>
+        !FILTER_PRIORITY.includes(tag) &&
+        tag !== "market" &&
+        tag !== vendor.id
+    )
+    .slice(0, 4);
+
+  return ["all", ...priorityFilters, ...remainingFilters].slice(0, 6);
+}
+
+function filterVendorItems(
+  vendor: MarketVendor | null,
+  activeFilter: MarketFilter
+): MarketCatalogItem[] {
+  if (!vendor) {
+    return [];
+  }
+
+  if (activeFilter === "all") {
+    return vendor.items;
+  }
+
+  return vendor.items.filter((item) => item.tags.includes(activeFilter));
+}
+
+function getDefaultVendor(catalog: MarketCatalog | null): MarketVendor | null {
+  if (!catalog || catalog.vendors.length === 0) {
+    return null;
+  }
+
+  return (
+    catalog.vendors.find((vendor) => vendor.unlockState === "open") ??
+    catalog.vendors[0] ??
+    null
+  );
 }
 
 export function MarketPanel({
@@ -99,29 +180,35 @@ export function MarketPanel({
   onCharacterUpdated
 }: MarketPanelProps) {
   const [catalog, setCatalog] = useState<MarketCatalog | null>(null);
-  const [activeVendorId, setActiveVendorId] = useState<string | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState("");
+  const [activeFilter, setActiveFilter] = useState<MarketFilter>("all");
   const [busyItemId, setBusyItemId] = useState<ItemId | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [now, setNow] = useState(() => Date.now());
-  const [journal, setJournal] = useState<MarketJournalEntry[]>(() => [
-    createJournalEntry(
-      "Farmer Stall is open. Local supply wagons reached the plaza this morning."
-    )
-  ]);
 
-  const activeVendor = useMemo(
-    () => catalog?.vendors.find((vendor) => vendor.id === activeVendorId),
-    [activeVendorId, catalog]
+  const selectedVendor = useMemo(() => {
+    if (!catalog) {
+      return null;
+    }
+
+    return (
+      catalog.vendors.find((vendor) => vendor.id === selectedVendorId) ??
+      getDefaultVendor(catalog)
+    );
+  }, [catalog, selectedVendorId]);
+
+  const vendorFilters = useMemo(
+    () => buildVendorFilters(selectedVendor),
+    [selectedVendor]
   );
 
-  useEffect(() => {
-    const timerId = window.setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
+  const visibleItems = useMemo(
+    () => filterVendorItems(selectedVendor, activeFilter),
+    [activeFilter, selectedVendor]
+  );
 
-    return () => window.clearInterval(timerId);
-  }, []);
+  const currency = getCurrencyBreakdown(currentCharacter.moneyBronze);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,20 +218,23 @@ export function MarketPanel({
       setError(null);
 
       try {
-        const nextCatalog = await marketApi.getCatalog(userId);
+        const nextCatalog = await marketApi.getCatalog();
 
         if (cancelled) {
           return;
         }
 
         setCatalog(nextCatalog);
-        setActiveVendorId((current) => current ?? getInitialVendorId(nextCatalog));
+
+        const defaultVendor = getDefaultVendor(nextCatalog);
+        setSelectedVendorId(defaultVendor?.id ?? "");
+        setActiveFilter("all");
       } catch (loadError) {
         if (!cancelled) {
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Failed to load market."
+              : "Failed to load market catalog."
           );
         }
       } finally {
@@ -159,24 +249,49 @@ export function MarketPanel({
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, []);
 
-  function pushJournal(message: string, tone: MarketJournalEntry["tone"] = "neutral") {
-    setJournal((current) => [createJournalEntry(message, tone), ...current].slice(0, 18));
-  }
+  useEffect(() => {
+    if (!notice && !error) {
+      return undefined;
+    }
 
-  async function refreshCatalog() {
-    const nextCatalog = await marketApi.getCatalog(userId);
-    setCatalog(nextCatalog);
-    setActiveVendorId((current) => current ?? getInitialVendorId(nextCatalog));
+    const timerId = window.setTimeout(() => {
+      setNotice(null);
+      setError(null);
+    }, 2800);
+
+    return () => window.clearTimeout(timerId);
+  }, [notice, error]);
+
+  function selectVendor(vendor: MarketVendor) {
+    if (busyItemId) {
+      return;
+    }
+
+    setSelectedVendorId(vendor.id);
+    setActiveFilter("all");
+    setNotice(null);
+    setError(null);
   }
 
   async function buyItem(item: MarketCatalogItem) {
-    if (busyItemId || item.currentStock <= 0) {
+    if (!selectedVendor || busyItemId || item.currentStock <= 0) {
+      return;
+    }
+
+    if (selectedVendor.unlockState !== "open") {
+      setError("This vendor is not available yet.");
+      return;
+    }
+
+    if (currentCharacter.moneyBronze < item.buyPriceBronze) {
+      setError(`Not enough Bronze to buy ${item.name}.`);
       return;
     }
 
     setBusyItemId(item.itemId);
+    setNotice(null);
     setError(null);
 
     try {
@@ -187,146 +302,216 @@ export function MarketPanel({
       });
 
       onCharacterUpdated(result.character);
-      pushJournal(
-        `Purchased 1x ${item.name} for ${formatNumber(item.buyPriceBronze)} Bronze.`,
-        "success"
-      );
-      await refreshCatalog();
-    } catch (buyError) {
-      const message =
-        buyError instanceof Error ? buyError.message : "Purchase failed.";
 
-      setError(message);
-      pushJournal(message, "error");
+      const nextCatalog = await marketApi.getCatalog();
+      setCatalog(nextCatalog);
+
+      setNotice(`Bought 1x ${item.name} for ${item.buyPriceBronze} Bronze.`);
+    } catch (buyError) {
+      setError(
+        buyError instanceof Error ? buyError.message : "Purchase failed."
+      );
     } finally {
       setBusyItemId(null);
     }
   }
 
-  function openRumor() {
-    pushJournal(
-      "A quiet trader says the cellar market will open once free merchants and player listings arrive.",
-      "rumor"
-    );
-  }
-
   return (
-    <section className="market-panel" aria-label="Town marketplace">
-      <main className="market-main">
-        <header className="market-heading">
-          <div>
-            <p>Supply Market</p>
-            <h2>The Town Marketplace</h2>
-            <span>
-              Reliable ingredients for cooking, alchemy, and later profession work.
-            </span>
-          </div>
+    <section className="market-basic-card" aria-label="Market">
+      <header className="market-basic-card__top">
+        <div className="market-basic-card__icon" aria-hidden="true">
+          🧺
+        </div>
 
-          <button type="button" className="market-rumor-button" onClick={openRumor}>
-            <span aria-hidden="true">🕯</span>
-            Listen to Rumors
-          </button>
-        </header>
+        <div className="market-basic-card__copy">
+          <p>Market Row</p>
+          <h2>Buy supplies for the road</h2>
+        </div>
 
-        <nav className="market-stall-tabs" aria-label="Market stalls">
-          {catalog?.vendors.map((vendor) => (
-            <button
-              key={vendor.id}
-              type="button"
-              className={
-                vendor.id === activeVendorId
-                  ? "market-stall-tab market-stall-tab--active"
-                  : "market-stall-tab"
-              }
-              disabled={vendor.unlockState !== "open"}
-              onClick={() => setActiveVendorId(vendor.id)}
-            >
-              <span aria-hidden="true">{vendor.icon}</span>
-              <strong>{vendor.name}</strong>
-              <small>{vendor.role}</small>
-            </button>
-          ))}
-        </nav>
+        <div className="market-wallet" aria-label="Wallet">
+          <span className="market-wallet__gold">{formatNumber(currency.gold)} G</span>
+          <span className="market-wallet__silver">
+            {formatNumber(currency.silver)} S
+          </span>
+          <span className="market-wallet__bronze">
+            {formatNumber(currency.bronze)} B
+          </span>
+        </div>
+      </header>
 
-        <div className="market-content">
-          {loading ? <div className="market-state">Loading market stock...</div> : null}
+      <div className="market-basic-card__body">
+        <aside className="market-vendor-list" aria-label="Market vendors">
+          <div className="market-section-title">Vendors</div>
 
-          {!loading && error ? (
-            <div className="market-state market-state--error">{error}</div>
-          ) : null}
+          {loading ? (
+            <div className="market-muted-box">Loading market...</div>
+          ) : catalog && catalog.vendors.length > 0 ? (
+            <div className="market-vendor-scroll">
+              {catalog.vendors.map((vendor) => {
+                const isSelected = selectedVendor?.id === vendor.id;
+                const tone = getVendorTone(vendor);
 
-          {!loading && activeVendor ? (
+                return (
+                  <button
+                    key={vendor.id}
+                    type="button"
+                    className={[
+                      "market-vendor-card",
+                      `market-vendor-card--${tone}`,
+                      isSelected ? "market-vendor-card--active" : ""
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    disabled={Boolean(busyItemId)}
+                    onClick={() => selectVendor(vendor)}
+                  >
+                    <span className="market-vendor-card__icon" aria-hidden="true">
+                      {vendor.icon}
+                    </span>
+
+                    <span className="market-vendor-card__copy">
+                      <strong>{vendor.name}</strong>
+                      <em>{vendor.role}</em>
+                    </span>
+
+                    <span
+                      className={`market-vendor-card__status market-vendor-card__status--${vendor.unlockState}`}
+                    >
+                      {getVendorStatusLabel(vendor)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="market-muted-box">No vendors available.</div>
+          )}
+
+          <div className="market-tax-note">Global Tax Rate: 5%</div>
+        </aside>
+
+        <main className="market-trading-panel">
+          {selectedVendor ? (
             <>
-              <div className="market-vendor-summary">
-                <strong>{activeVendor.name}</strong>
-                <span>{activeVendor.description}</span>
+              <div className="market-vendor-header">
+                <div>
+                  <p>{selectedVendor.role}</p>
+                  <h3>{selectedVendor.name}</h3>
+                  <span>{selectedVendor.description}</span>
+                </div>
+
+                <div className="market-restock-pill">
+                  Next Restock
+                  <strong>
+                    {selectedVendor.items[0]
+                      ? formatRestockTime(selectedVendor.items[0].nextRestockAt)
+                      : "—"}
+                  </strong>
+                </div>
               </div>
 
-              <div className="market-item-grid">
-                {activeVendor.items.map((item) => (
-                  <article
-                    key={item.itemId}
-                    className={`market-item-card ${getRarityTone(item)}`}
+              <div className="market-filter-row" aria-label="Market filters">
+                {vendorFilters.map((filter) => (
+                  <button
+                    key={filter}
+                    type="button"
+                    className={
+                      filter === activeFilter
+                        ? "market-filter-button market-filter-button--active"
+                        : "market-filter-button"
+                    }
+                    disabled={Boolean(busyItemId)}
+                    onClick={() => setActiveFilter(filter)}
                   >
-                    <div className="market-item-card__icon" aria-hidden="true">
-                      {getItemIcon(item.itemId)}
-                    </div>
-
-                    <div className="market-item-card__copy">
-                      <strong>{item.name}</strong>
-                      <p>{item.description}</p>
-                      <span>
-                        Stock:{" "}
-                        <b className={item.currentStock <= 0 ? "market-stock-empty" : ""}>
-                          {formatNumber(item.currentStock)}
-                        </b>
-                        /{formatNumber(item.maxStock)}
-                      </span>
-                    </div>
-
-                    <div className="market-item-card__buy">
-                      <span>{formatNumber(item.buyPriceBronze)} B</span>
-                      <button
-                        type="button"
-                        disabled={busyItemId !== null || item.currentStock <= 0}
-                        onClick={() => void buyItem(item)}
-                      >
-                        {busyItemId === item.itemId ? "..." : "Buy"}
-                      </button>
-                    </div>
-                  </article>
+                    {getFilterLabel(filter)}
+                  </button>
                 ))}
               </div>
+
+              <div className="market-item-scroll">
+                {visibleItems.length > 0 ? (
+                  <div className="market-item-grid">
+                    {visibleItems.map((item) => {
+                      const isOutOfStock = item.currentStock <= 0;
+                      const cannotAfford =
+                        currentCharacter.moneyBronze < item.buyPriceBronze;
+                      const isBusy = busyItemId === item.itemId;
+
+                      return (
+                        <article key={item.itemId} className="market-item-card">
+                          <div className="market-item-card__icon" aria-hidden="true">
+                            {getItemIcon(item.itemId)}
+                          </div>
+
+                          <div className="market-item-card__copy">
+                            <div className="market-item-card__title-row">
+                              <strong>{item.name}</strong>
+                              <span>{item.buyPriceBronze} B</span>
+                            </div>
+
+                            <p>{item.description}</p>
+
+                            <div className="market-item-card__meta">
+                              <span>Stock: {formatNumber(item.currentStock)}</span>
+                              <span>{item.rarity}</span>
+                            </div>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="market-buy-button"
+                            disabled={
+                              isBusy ||
+                              Boolean(busyItemId) ||
+                              isOutOfStock ||
+                              cannotAfford ||
+                              selectedVendor.unlockState !== "open"
+                            }
+                            onClick={() => void buyItem(item)}
+                          >
+                            {isBusy
+                              ? "..."
+                              : isOutOfStock
+                                ? "Sold"
+                                : cannotAfford
+                                  ? "No ₿"
+                                  : "Buy"}
+                          </Button>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="market-empty-state">
+                    No items match this filter.
+                  </div>
+                )}
+              </div>
             </>
-          ) : null}
-        </div>
-
-        <footer className="market-restock">
-          <span>Wallet: {formatNumber(currentCharacter.moneyBronze)} Bronze</span>
-          <span>
-            Next stock rotation:{" "}
-            <strong>{getVendorRestockLabel(activeVendor, now)}</strong>
-          </span>
-        </footer>
-      </main>
-
-      <aside className="market-journal" aria-label="Market journal">
-        <header>
-          <span>Market Journal</span>
-          <i aria-hidden="true" />
-        </header>
-
-        <div className="market-journal__scroll">
-          {journal.map((entry) => (
-            <div
-              key={entry.id}
-              className={`market-journal-line market-journal-line--${entry.tone}`}
-            >
-              {entry.message}
+          ) : (
+            <div className="market-empty-state">
+              Choose a vendor to browse supplies.
             </div>
-          ))}
-        </div>
-      </aside>
+          )}
+        </main>
+      </div>
+
+      <footer className="market-basic-card__footer">
+        <span>Buy supplies before leaving town.</span>
+
+        {notice ? (
+          <strong className="market-message market-message--success">
+            {notice}
+          </strong>
+        ) : null}
+
+        {error ? (
+          <strong className="market-message market-message--error">
+            {error}
+          </strong>
+        ) : null}
+      </footer>
     </section>
   );
 }
