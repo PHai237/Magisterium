@@ -15,19 +15,19 @@
   flex: 0 0 3.5rem;
   border-bottom: 1px solid #282d3d;
   background: #1a1d24;
-  padding: 0 1.5rem;
   display: grid;
-  grid-template-columns: minmax(10rem, 1fr) minmax(24rem, 1.45fr) minmax(10rem, 1fr);
+  grid-template-columns: 24% 52% 24%;
   align-items: center;
-  gap: 1rem;
 }
 
 .battle-topbar__vitals {
   min-width: 0;
-  display: flex;
+  height: 100%;
+  padding: 0 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
-  justify-content: center;
-  gap: 1.35rem;
+  gap: 0.65rem;
 }
 
 .battle-topbar__spacer {
@@ -37,40 +37,50 @@
 .battle-resource {
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(7rem, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   font-family: var(--mono);
 }
 
-.battle-resource span {
-  font-size: 0.68rem;
+.battle-resource__label {
+  font-size: 0.66rem;
   font-weight: 950;
   letter-spacing: 0.08em;
-}
-
-.battle-resource strong {
-  color: #e5e7eb;
-  font-size: 0.68rem;
-  font-weight: 950;
   white-space: nowrap;
 }
 
 .battle-resource__track {
+  position: relative;
   width: 100%;
-  height: 0.32rem;
+  height: 1.05rem;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.95);
 }
 
 .battle-resource__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
   height: 100%;
   border-radius: inherit;
   transition: width 240ms ease;
 }
 
-.battle-resource--hp span {
+.battle-resource__value {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  color: #f8fafc;
+  display: grid;
+  place-items: center;
+  font-size: 0.64rem;
+  font-weight: 950;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.72);
+  white-space: nowrap;
+}
+
+.battle-resource--hp .battle-resource__label {
   color: #f87171;
 }
 
@@ -80,10 +90,10 @@
 }
 
 .battle-resource--hp .battle-resource__fill {
-  background: #b91c1c;
+  background: linear-gradient(90deg, #7f1d1d, #dc2626);
 }
 
-.battle-resource--mp span {
+.battle-resource--mp .battle-resource__label {
   color: #38bdf8;
 }
 
@@ -93,10 +103,10 @@
 }
 
 .battle-resource--mp .battle-resource__fill {
-  background: #2563eb;
+  background: linear-gradient(90deg, #1d4ed8, #38bdf8);
 }
 
-.battle-resource--stamina span {
+.battle-resource--stamina .battle-resource__label {
   color: #facc15;
 }
 
@@ -106,7 +116,7 @@
 }
 
 .battle-resource--stamina .battle-resource__fill {
-  background: #eab308;
+  background: linear-gradient(90deg, #ca8a04, #facc15);
 }
 
 .battle-shell {
@@ -228,6 +238,22 @@
   gap: 0.62rem;
 }
 
+.battle-enemy-effect-box {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 8;
+  width: 11.5rem;
+  border: 1px solid rgba(40, 45, 61, 0.9);
+  border-radius: 0.28rem;
+  background: rgba(20, 22, 29, 0.88);
+  padding: 0.68rem;
+  display: grid;
+  gap: 0.55rem;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(8px);
+}
+
 .battle-effect-title {
   color: #94a3b8;
   font-family: var(--mono);
@@ -243,6 +269,11 @@
   color: #64748b;
   font-size: 0.74rem;
   font-weight: 850;
+}
+
+.battle-enemy-effect-box .battle-effects-empty {
+  padding: 0.55rem;
+  font-size: 0.68rem;
 }
 
 .battle-effects-list {
@@ -273,6 +304,7 @@
 }
 
 .battle-center {
+  position: relative;
   min-width: 0;
   min-height: 0;
   background: #14161d;
@@ -344,35 +376,8 @@
 }
 
 .battle-enemy-health {
-  width: min(100%, 31rem);
+  width: min(80%, 24.8rem);
   margin-top: 0.25rem;
-}
-
-.battle-target-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.35rem;
-}
-
-.battle-target-chip {
-  border: 1px solid #3b435c;
-  border-radius: 999px;
-  background: #282d3d;
-  color: #d1d5db;
-  padding: 0.24rem 0.55rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28rem;
-  font-size: 0.62rem;
-  font-weight: 850;
-}
-
-.battle-target-chip--active,
-.battle-target-chip:hover {
-  border-color: rgba(245, 158, 11, 0.58);
-  background: rgba(245, 158, 11, 0.14);
-  color: #ffffff;
 }
 
 .battle-command-panel {
@@ -807,6 +812,12 @@
   .battle-center {
     min-height: 34rem;
   }
+
+  .battle-enemy-effect-box {
+    position: static;
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
 }
 
 @media (max-width: 760px) {
@@ -819,7 +830,7 @@
   }
 
   .battle-resource {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .battle-center,

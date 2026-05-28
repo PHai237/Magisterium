@@ -42,7 +42,6 @@ interface ItemDisplayDefinition {
 interface MonsterDisplayDefinition {
   label: string;
   icon: string;
-  element: string;
   level: number;
 }
 
@@ -109,25 +108,21 @@ const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> =
   slime: {
     label: "Slime",
     icon: "🟢",
-    element: "Water-leaning Beast",
     level: 1
   },
   wild_boar: {
     label: "Wild Boar",
     icon: "🐗",
-    element: "Physical Beast",
     level: 1
   },
   wild_wolf: {
     label: "Wild Wolf",
     icon: "🐺",
-    element: "Physical Beast",
     level: 2
   },
   goblin: {
     label: "Goblin",
     icon: "👺",
-    element: "Humanoid",
     level: 2
   }
 };
@@ -173,7 +168,6 @@ function getMonsterDisplay(
     return {
       label: "Unknown Enemy",
       icon: "◇",
-      element: "Unknown",
       level: 1
     };
   }
@@ -316,18 +310,18 @@ function ResourceBar({
 }) {
   return (
     <div className={`battle-resource battle-resource--${tone}`}>
-      <span>{label}</span>
+      <span className="battle-resource__label">{label}</span>
 
       <div className="battle-resource__track">
         <div
           className="battle-resource__fill"
           style={{ width: `${clampPercent(value, max)}%` }}
         />
-      </div>
 
-      <strong>
-        {formatNumber(value)} / {formatNumber(max)}
-      </strong>
+        <strong className="battle-resource__value">
+          {formatNumber(value)} / {formatNumber(max)}
+        </strong>
+      </div>
     </div>
   );
 }
@@ -353,7 +347,6 @@ export function BattlePanel({
     : undefined;
 
   const playerActor = getCharacterActor(battle);
-
   const liveEnemies = useMemo(() => getLiveMonsterActors(battle), [battle]);
 
   const focusedEnemy = useMemo(() => {
@@ -914,6 +907,11 @@ export function BattlePanel({
         </aside>
 
         <main className="battle-center">
+          <section className="battle-enemy-effect-box">
+            <div className="battle-effect-title">Enemy Effects</div>
+            {renderActiveEffects(focusedEnemy)}
+          </section>
+
           <div className="battlefield-focus">
             {battle ? (
               <>
@@ -925,10 +923,7 @@ export function BattlePanel({
 
                 <h2>{focusedEnemyDisplay.label}</h2>
 
-                <span>
-                  Level {focusedEnemyDisplay.level} ·{" "}
-                  {focusedEnemyDisplay.element}
-                </span>
+                <span>Level {focusedEnemyDisplay.level}</span>
 
                 {focusedEnemy ? (
                   <div className="battle-enemy-health">
@@ -938,30 +933,6 @@ export function BattlePanel({
                       max={focusedEnemy.derivedStats.maxHp}
                       tone="hp"
                     />
-                  </div>
-                ) : null}
-
-                {liveEnemies.length > 1 ? (
-                  <div className="battle-target-row">
-                    {liveEnemies.map((enemy) => {
-                      const enemyDisplay = getMonsterDisplay(enemy);
-
-                      return (
-                        <button
-                          key={enemy.actorId}
-                          type="button"
-                          className={
-                            targetId === enemy.actorId
-                              ? "battle-target-chip battle-target-chip--active"
-                              : "battle-target-chip"
-                          }
-                          onClick={() => setTargetId(enemy.actorId)}
-                        >
-                          <span aria-hidden="true">{enemyDisplay.icon}</span>
-                          {enemyDisplay.label}
-                        </button>
-                      );
-                    })}
                   </div>
                 ) : null}
               </>
