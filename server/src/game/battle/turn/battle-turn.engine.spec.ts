@@ -661,7 +661,7 @@ describe('battle turn engine', () => {
       );
     });
 
-    it('should restore turn start resources before starting the actor turn', () => {
+    it('should not restore resources when starting the actor turn', () => {
       const hero = createActor({
         actorId: 'hero',
         actorType: 'character',
@@ -705,22 +705,10 @@ describe('battle turn engine', () => {
 
       const nextState = advanceBattleToNextActor(battleState);
 
-      expect(nextState.actors.hero.mp).toBe(13);
-      expect(nextState.actors.hero.stamina).toBe(15);
-
-      expect(nextState.events).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            type: 'RESOURCE_RESTORED',
-            actorId: 'hero',
-            value: 3,
-          }),
-          expect.objectContaining({
-            type: 'RESOURCE_RESTORED',
-            actorId: 'hero',
-            value: 5,
-          }),
-        ]),
+      expect(nextState.actors.hero.mp).toBe(10);
+      expect(nextState.actors.hero.stamina).toBe(10);
+      expect(nextState.events.map((event) => event.type)).not.toContain(
+        'RESOURCE_RESTORED',
       );
     });
 

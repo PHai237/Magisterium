@@ -11,12 +11,9 @@ import {
   createSystemEvent,
 } from '../events/battle-event.factory';
 
-import { restoreTurnStartResources } from '../resources/battle-resource.application';
-
 import {
   appendEvents,
   determineBattleStatus,
-  getActorOrThrow,
   isActorAlive,
   setBattleStatus,
 } from '../utils/battle-state.utils';
@@ -216,18 +213,9 @@ export function advanceBattleToNextActor(
 
   const nextTurnNumber = battleState.turnNumber + 1;
 
-  const readyActor = getActorOrThrow(battleState, readyEntry.actorId);
-  const turnStartRestore = restoreTurnStartResources(readyActor);
-
-  const nextActors = {
-    ...battleState.actors,
-    [readyEntry.actorId]: turnStartRestore.actor,
-  };
-
   return appendEvents(
     {
       ...battleState,
-      actors: nextActors,
       status: 'in_progress',
       activeActorId: readyEntry.actorId,
       turnNumber: nextTurnNumber,
@@ -235,7 +223,6 @@ export function advanceBattleToNextActor(
       updatedAt: new Date().toISOString(),
     },
     [
-      ...turnStartRestore.events,
       createBattleEvent({
         type: 'TURN_STARTED',
         phase: 'initiation',
