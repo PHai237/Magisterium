@@ -797,8 +797,8 @@
 }
 
 .gameshell-node--market {
-  left: 18%;
-  bottom: 18%;
+  left: 35%;
+  bottom: 15%;
   border-color: rgba(250, 204, 21, 0.4);
   background:
     radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.12), transparent 4.6rem),
