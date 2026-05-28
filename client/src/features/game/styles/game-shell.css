@@ -931,6 +931,19 @@
   min-height: 0;
 }
 
+.gameshell-location-stage--market {
+  padding: 0.85rem 1rem;
+}
+
+.gameshell-location-stage--market .gameshell-location-main {
+  place-items: stretch;
+  padding-top: 3.35rem;
+}
+
+.gameshell-location-stage--market .market-basic-card {
+  min-height: 0;
+}
+
 .gameshell-placeholder-card {
   max-width: 34rem;
   border: 1px solid #22293a;

@@ -179,7 +179,11 @@ export function GameShell({
 
     if (activePanel === "market") {
       return (
-        <LocationStage returnLabel="← Return to Town" onBack={returnToTownMap}>
+        <LocationStage
+          returnLabel="← Return to Town"
+          onBack={returnToTownMap}
+          className="gameshell-location-stage--market"
+        >
           <MarketPanel
             userId={userId}
             currentCharacter={currentCharacter}

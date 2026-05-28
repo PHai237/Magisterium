@@ -22,7 +22,7 @@ export interface MarketVendorDefinition {
 }
 
 export const MARKET_ID = 'town_market';
-export const MARKET_NAME = 'Market Row';
+export const MARKET_NAME = 'Market';
 
 export const MARKET_VENDOR_DEFINITIONS = [
     {

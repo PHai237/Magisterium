@@ -51,7 +51,7 @@ export function TownMap({
       <MapNode
         className="gameshell-node--market"
         icon="🧺"
-        name="Market Row"
+        name="Market"
         subtitle="Supplies & Trade"
         onClick={onOpenMarket}
       />

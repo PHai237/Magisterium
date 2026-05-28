@@ -56,15 +56,6 @@ function getItemIcon(itemId: ItemId): string {
   return ITEM_ICONS[itemId] ?? "◇";
 }
 
-function getCurrencyBreakdown(totalBronze: number) {
-  const bronze = Math.max(0, Math.floor(totalBronze));
-  const gold = Math.floor(bronze / 10000);
-  const silver = Math.floor((bronze % 10000) / 100);
-  const remainingBronze = bronze % 100;
-
-  return { gold, silver, bronze: remainingBronze };
-}
-
 function formatRestockTime(nextRestockAt: string): string {
   const targetTime = new Date(nextRestockAt).getTime();
 
@@ -208,8 +199,6 @@ export function MarketPanel({
     [activeFilter, selectedVendor]
   );
 
-  const currency = getCurrencyBreakdown(currentCharacter.moneyBronze);
-
   useEffect(() => {
     let cancelled = false;
 
@@ -218,7 +207,7 @@ export function MarketPanel({
       setError(null);
 
       try {
-        const nextCatalog = await marketApi.getCatalog();
+        const nextCatalog = await marketApi.getCatalog(userId);
 
         if (cancelled) {
           return;
@@ -249,7 +238,7 @@ export function MarketPanel({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     if (!notice && !error) {
@@ -303,7 +292,7 @@ export function MarketPanel({
 
       onCharacterUpdated(result.character);
 
-      const nextCatalog = await marketApi.getCatalog();
+      const nextCatalog = await marketApi.getCatalog(userId);
       setCatalog(nextCatalog);
 
       setNotice(`Bought 1x ${item.name} for ${item.buyPriceBronze} Bronze.`);
@@ -319,23 +308,11 @@ export function MarketPanel({
   return (
     <section className="market-basic-card" aria-label="Market">
       <header className="market-basic-card__top">
-        <div className="market-basic-card__icon" aria-hidden="true">
-          🧺
-        </div>
-
-        <div className="market-basic-card__copy">
-          <p>Market Row</p>
-          <h2>Buy supplies for the road</h2>
-        </div>
-
-        <div className="market-wallet" aria-label="Wallet">
-          <span className="market-wallet__gold">{formatNumber(currency.gold)} G</span>
-          <span className="market-wallet__silver">
-            {formatNumber(currency.silver)} S
-          </span>
-          <span className="market-wallet__bronze">
-            {formatNumber(currency.bronze)} B
-          </span>
+        <div className="market-basic-card__identity">
+          <span>Market</span>
+          <div className="market-basic-card__icon" aria-hidden="true">
+            🧺
+          </div>
         </div>
       </header>
 
@@ -386,8 +363,6 @@ export function MarketPanel({
           ) : (
             <div className="market-muted-box">No vendors available.</div>
           )}
-
-          <div className="market-tax-note">Global Tax Rate: 5%</div>
         </aside>
 
         <main className="market-trading-panel">
@@ -497,21 +472,21 @@ export function MarketPanel({
         </main>
       </div>
 
-      <footer className="market-basic-card__footer">
-        <span>Buy supplies before leaving town.</span>
+      {notice || error ? (
+        <footer className="market-basic-card__footer">
+          {notice ? (
+            <strong className="market-message market-message--success">
+              {notice}
+            </strong>
+          ) : null}
 
-        {notice ? (
-          <strong className="market-message market-message--success">
-            {notice}
-          </strong>
-        ) : null}
-
-        {error ? (
-          <strong className="market-message market-message--error">
-            {error}
-          </strong>
-        ) : null}
-      </footer>
+          {error ? (
+            <strong className="market-message market-message--error">
+              {error}
+            </strong>
+          ) : null}
+        </footer>
+      ) : null}
     </section>
   );
 }

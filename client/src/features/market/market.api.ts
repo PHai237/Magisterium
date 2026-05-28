@@ -56,8 +56,8 @@ interface MarketTransactionPayload {
 }
 
 export const marketApi = {
-  getCatalog() {
-    return apiGet<MarketCatalog>("/market/catalog");
+  getCatalog(userId: string) {
+    return apiGet<MarketCatalog>("/market/catalog", { userId });
   },
 
   buy(userId: string, payload: MarketTransactionPayload) {
