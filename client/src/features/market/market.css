@@ -263,27 +263,6 @@
   text-transform: uppercase;
 }
 
-.market-restock-pill {
-  flex: 0 0 auto;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 0.62rem;
-  background: rgba(15, 23, 42, 0.42);
-  color: #64748b;
-  padding: 0.42rem 0.55rem;
-  display: grid;
-  justify-items: end;
-  gap: 0.08rem;
-  font-family: var(--mono);
-  font-size: 0.58rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.market-restock-pill strong {
-  color: #cbd5e1;
-  font-size: 0.68rem;
-}
-
 .market-filter-row {
   display: flex;
   flex-wrap: wrap;
@@ -327,7 +306,7 @@
 .market-item-scroll {
   min-height: 0;
   overflow-y: auto;
-  padding-right: 0.18rem;
+  padding: 0.16rem 0.18rem 0.16rem 0;
   scrollbar-width: thin;
   scrollbar-color: #334155 transparent;
 }
@@ -506,11 +485,6 @@
 
   .market-vendor-header {
     display: grid;
-  }
-
-  .market-restock-pill {
-    width: fit-content;
-    justify-items: start;
   }
 
   .market-basic-card__footer {

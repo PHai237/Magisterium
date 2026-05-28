@@ -940,6 +940,11 @@
   padding-top: 0;
 }
 
+.gameshell-location-stage--market .gameshell-location-back {
+  top: 2rem;
+  left: 2.05rem;
+}
+
 .gameshell-location-stage--market .market-basic-card {
   min-height: 0;
 }

@@ -56,25 +56,6 @@ function getItemIcon(itemId: ItemId): string {
   return ITEM_ICONS[itemId] ?? "◇";
 }
 
-function formatRestockTime(nextRestockAt: string): string {
-  const targetTime = new Date(nextRestockAt).getTime();
-
-  if (!Number.isFinite(targetTime)) {
-    return "Unknown";
-  }
-
-  const diffMs = Math.max(0, targetTime - Date.now());
-  const totalMinutes = Math.ceil(diffMs / 60000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours <= 0) {
-    return `${minutes}m`;
-  }
-
-  return `${hours}h ${minutes.toString().padStart(2, "0")}m`;
-}
-
 function getVendorStatusLabel(vendor: MarketVendor): string {
   if (vendor.unlockState === "open") {
     return "Open";
@@ -163,6 +144,22 @@ function getDefaultVendor(catalog: MarketCatalog | null): MarketVendor | null {
     catalog.vendors[0] ??
     null
   );
+}
+
+function getVendorNpcName(vendor: MarketVendor): string {
+  if (vendor.id === "farmer_stall") {
+    return "Lashop the Farmer";
+  }
+
+  if (vendor.id === "herbalist_table") {
+    return "Mirelle the Herbalist";
+  }
+
+  if (vendor.id === "general_goods") {
+    return "Borin the Provisioner";
+  }
+
+  return vendor.name;
 }
 
 export function MarketPanel({
@@ -370,16 +367,7 @@ export function MarketPanel({
             <>
               <div className="market-vendor-header">
                 <div>
-                  <h3>{selectedVendor.name}</h3>
-                </div>
-
-                <div className="market-restock-pill">
-                  Next Restock
-                  <strong>
-                    {selectedVendor.items[0]
-                      ? formatRestockTime(selectedVendor.items[0].nextRestockAt)
-                      : "—"}
-                  </strong>
+                  <h3>{getVendorNpcName(selectedVendor)}</h3>
                 </div>
               </div>
 
