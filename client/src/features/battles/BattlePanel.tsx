@@ -275,30 +275,29 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
   return groups.filter((group) => group.events.length > 0 || group.current);
 }
 
-function getEventTone(event: BattleEvent, playerActorId?: string): string {
-  if (
-    event.type.includes("DAMAGE") ||
-    event.type.includes("CRIT") ||
-    event.phase === "apply_damage" ||
-    event.phase === "damage_calculation"
-  ) {
-    return "damage";
+function getEventTone(
+  event: BattleEvent,
+  battle: BattleState | null
+): "damage" | "enemy" | "resource" | "cancelled" | "miss" | "neutral" {
+  if (event.type === "MISS") {
+    return "miss";
   }
 
-  if (
-    event.type.includes("RESOURCE") ||
-    event.type.includes("RESTORE") ||
-    event.type.includes("HEAL")
-  ) {
+  if (event.type === "DAMAGE_APPLIED") {
+    const actorRole = getActorLogRole(battle, event.actorId);
+    return actorRole === "enemy" ? "enemy" : "damage";
+  }
+
+  if (event.type === "HEAL_APPLIED") {
     return "resource";
   }
 
-  if (playerActorId && event.actorId && event.actorId !== playerActorId) {
-    return "enemy";
+  if (event.type === "ACTION_CANCELLED") {
+    return "cancelled";
   }
 
-  if (event.phase === "cancelled") {
-    return "cancelled";
+  if (event.type === "ACTOR_DEFEATED") {
+    return "enemy";
   }
 
   return "neutral";
@@ -360,6 +359,30 @@ function getActorLogRole(
   return actor.actorType === "character" ? "player" : "enemy";
 }
 
+function renderActorName(
+  battle: BattleState | null,
+  actorId: string | undefined,
+  currentCharacter: CharacterSnapshot,
+  forcedTone?: "miss"
+): ReactNode {
+  const actorName = getActorName(battle, actorId, currentCharacter);
+  const actorRole = getActorLogRole(battle, actorId);
+
+  const tone =
+    forcedTone ??
+    (actorRole === "enemy"
+      ? "enemy"
+      : actorRole === "player"
+        ? "player"
+        : "neutral");
+
+  return (
+    <span className={`battle-log-actor battle-log-actor--${tone}`}>
+      {actorName}
+    </span>
+  );
+}
+
 function getVisibleBattleLogEvents(events: BattleEvent[]): BattleEvent[] {
   return events.filter((event) => !HIDDEN_BATTLE_LOG_EVENT_TYPES.has(event.type));
 }
@@ -369,38 +392,27 @@ function renderBattleLogEvent(
   battle: BattleState | null,
   currentCharacter: CharacterSnapshot
 ): ReactNode {
-  const actorName = getActorName(battle, event.actorId, currentCharacter);
-  const targetName = getActorName(battle, event.targetId, currentCharacter);
   const actorRole = getActorLogRole(battle, event.actorId);
 
   if (event.type === "DAMAGE_APPLIED") {
     const damageValue = Math.max(0, Math.floor(event.value ?? 0));
 
-    if (actorRole === "player") {
-      return (
-        <>
-          <span className="battle-log-actor battle-log-actor--player">
-            {actorName}
-          </span>
-          <span> deals </span>
-          <span className="battle-log-value battle-log-value--player">
-            {damageValue} damage
-          </span>
-          <span> to {targetName}.</span>
-        </>
-      );
-    }
-
     return (
       <>
-        <span className="battle-log-actor battle-log-actor--enemy">
-          {actorName}
-        </span>
+        {renderActorName(battle, event.actorId, currentCharacter)}
         <span> deals </span>
-        <span className="battle-log-value battle-log-value--enemy">
+        <span
+          className={
+            actorRole === "enemy"
+              ? "battle-log-value battle-log-value--enemy"
+              : "battle-log-value battle-log-value--player"
+          }
+        >
           {damageValue} damage
         </span>
-        <span> to {targetName}.</span>
+        <span> to </span>
+        {renderActorName(battle, event.targetId, currentCharacter)}
+        <span>.</span>
       </>
     );
   }
@@ -408,10 +420,10 @@ function renderBattleLogEvent(
   if (event.type === "MISS") {
     return (
       <>
-        <span className="battle-log-actor battle-log-actor--miss">
-          {actorName}
-        </span>
-        <span> misses {targetName}.</span>
+        {renderActorName(battle, event.actorId, currentCharacter, "miss")}
+        <span> misses </span>
+        {renderActorName(battle, event.targetId, currentCharacter, "miss")}
+        <span>.</span>
       </>
     );
   }
@@ -419,9 +431,7 @@ function renderBattleLogEvent(
   if (event.type === "HEAL_APPLIED") {
     return (
       <>
-        <span className="battle-log-actor battle-log-actor--player">
-          {targetName}
-        </span>
+        {renderActorName(battle, event.targetId, currentCharacter)}
         <span> recovers </span>
         <span className="battle-log-value battle-log-value--heal">
           {Math.max(0, Math.floor(event.value ?? 0))} HP
@@ -431,38 +441,33 @@ function renderBattleLogEvent(
     );
   }
 
-  if (event.type === "SHIELD_DAMAGED" || event.type === "SHIELD_BROKEN") {
+  if (event.type === "SHIELD_DAMAGED") {
     return (
       <>
-        <span className="battle-log-actor battle-log-actor--miss">
-          {targetName}
-        </span>
-        <span>
-          {event.type === "SHIELD_BROKEN"
-            ? "'s shield breaks."
-            : "'s shield absorbs damage."}
-        </span>
+        {renderActorName(battle, event.targetId, currentCharacter)}
+        <span>'s shield absorbs damage.</span>
+      </>
+    );
+  }
+
+  if (event.type === "SHIELD_BROKEN") {
+    return (
+      <>
+        {renderActorName(battle, event.targetId, currentCharacter)}
+        <span>'s shield breaks.</span>
       </>
     );
   }
 
   if (event.type === "ACTOR_DEFEATED") {
+    const defeatedActorId = event.targetId || event.actorId;
+
     return (
       <>
-        <span className="battle-log-actor battle-log-actor--enemy">
-          {targetName}
-        </span>
+        {renderActorName(battle, defeatedActorId, currentCharacter)}
         <span> is defeated.</span>
       </>
     );
-  }
-
-  if (event.type === "BATTLE_STARTED") {
-    return "Battle started.";
-  }
-
-  if (event.type === "BATTLE_ENDED") {
-    return event.message || "Battle ended.";
   }
 
   if (event.type === "ACTION_CANCELLED") {
@@ -1169,7 +1174,7 @@ export function BattlePanel({
                         key={event.id}
                         className={`battle-log-line battle-log-line--${getEventTone(
                           event,
-                          playerActor?.actorId
+                          battle
                         )}`}
                       >
                         {renderBattleLogEvent(event, battle, currentCharacter)}
