@@ -229,40 +229,50 @@ function getTurnLabel(event: BattleEvent, fallbackIndex: number): string {
   return `Turn ${fallbackIndex}`;
 }
 
-function groupBattleEvents(events: BattleEvent[]): BattleLogGroup[] {
+function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
+  if (!battle) {
+    return [];
+  }
+
   const groups: BattleLogGroup[] = [];
   let currentGroup: BattleLogGroup | null = null;
+  let playerTurnNumber = 0;
 
-  events.forEach((event) => {
+  for (const event of battle.events) {
     if (event.type === "TURN_STARTED") {
-      currentGroup = {
-        label: getTurnLabel(event, groups.length + 1),
-        events: [],
-        current: false
-      };
+      const actor = event.actorId ? battle.actors[event.actorId] : undefined;
 
-      groups.push(currentGroup);
-      return;
+      if (actor?.actorType === "character") {
+        playerTurnNumber += 1;
+
+        currentGroup = {
+          label: `Turn ${playerTurnNumber}`,
+          events: [],
+          current: false
+        };
+
+        groups.push(currentGroup);
+      }
+
+      continue;
+    }
+
+    if (HIDDEN_BATTLE_LOG_EVENT_TYPES.has(event.type)) {
+      continue;
     }
 
     if (!currentGroup) {
-      currentGroup = {
-        label: "Battle Start",
-        events: [],
-        current: false
-      };
-
-      groups.push(currentGroup);
+      continue;
     }
 
     currentGroup.events.push(event);
-  });
+  }
 
-  if (groups.length > 0) {
+  if (groups.length > 0 && !isBattleFinished(battle)) {
     groups[groups.length - 1]!.current = true;
   }
 
-  return groups;
+  return groups.filter((group) => group.events.length > 0 || group.current);
 }
 
 function getEventTone(event: BattleEvent, playerActorId?: string): string {
@@ -295,6 +305,8 @@ function getEventTone(event: BattleEvent, playerActorId?: string): string {
 }
 
 const HIDDEN_BATTLE_LOG_EVENT_TYPES = new Set([
+  "BATTLE_STARTED",
+  "BATTLE_ENDED",
   "ROUND_STARTED",
   "ROUND_ENDED",
   "TURN_STARTED",
@@ -559,23 +571,26 @@ export function BattlePanel({
   const isPlayerTurn = activeActor?.actorType === "character";
 
   const battleLogGroups = useMemo(
-    () => groupBattleEvents(battle?.events ?? []),
+    () => groupBattleEvents(battle),
     [battle]
   );
 
   useLayoutEffect(() => {
-  const logElement = battleLogScrollRef.current;
+    const logElement = battleLogScrollRef.current;
 
-  if (!logElement) {
-    return undefined;
-  }
+    if (!logElement) {
+      return undefined;
+    }
 
-  const frameId = window.requestAnimationFrame(() => {
-    logElement.scrollTop = logElement.scrollHeight;
-  });
+    const frameId = window.requestAnimationFrame(() => {
+      logElement.scrollTo({
+        top: logElement.scrollHeight,
+        behavior: "smooth"
+      });
+    });
 
-  return () => window.cancelAnimationFrame(frameId);
-}, [battle?.battleId, battle?.events.length]);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [battle?.battleId, battle?.events.length, battleLogGroups.length]);
 
   useEffect(() => {
     if (hasStartedRef.current) {
@@ -1127,7 +1142,7 @@ export function BattlePanel({
         </main>
 
         <aside className="battle-side battle-side--log">
-          <div className="battle-panel-eyebrow">Battle Log</div>
+          <div className="battle-panel-eyebrow">Combat Chronicle</div>
 
           <div className="battle-log-scroll" ref={battleLogScrollRef}>
             {battleLogGroups.length > 0 ? (

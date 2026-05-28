@@ -29,7 +29,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
-  gap: 0.65rem;
+  gap: 1.35rem;
 }
 
 .battle-topbar__spacer {
@@ -380,6 +380,20 @@
 .battle-enemy-health {
   width: min(80%, 24.8rem);
   margin-top: 0.25rem;
+  display: grid;
+  justify-items: center;
+}
+
+.battle-enemy-health .battle-resource {
+  width: 100%;
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.battle-enemy-health .battle-resource__label {
+  justify-self: center;
+  text-align: center;
+  font-size: 0.68rem;
 }
 
 .battle-enemy-health .battle-resource__track {
@@ -388,10 +402,6 @@
 
 .battle-enemy-health .battle-resource__value {
   font-size: 0.76rem;
-}
-
-.battle-enemy-health .battle-resource__label {
-  font-size: 0.68rem;
 }
 
 .battle-command-panel {
