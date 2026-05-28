@@ -796,6 +796,19 @@
   border-color: rgba(239, 68, 68, 0.32);
 }
 
+.gameshell-node--market {
+  left: 35%;
+  bottom: 15%;
+  border-color: rgba(250, 204, 21, 0.4);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.12), transparent 4.6rem),
+    rgba(11, 15, 23, 0.9);
+}
+
+.gameshell-node--market strong {
+  color: #facc15;
+}
+
 .gameshell-node--archive {
   top: 24%;
   right: 10%;

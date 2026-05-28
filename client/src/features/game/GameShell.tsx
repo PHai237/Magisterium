@@ -12,6 +12,7 @@ import { BattlePanel } from "../battles/BattlePanel";
 import { ExplorationZone } from "../exploration/ExplorationZone";
 import { InnPanel } from "../inn/InnPanel";
 import { InventoryOverlay } from "../inventory/InventoryOverlay";
+import { MarketPanel } from "../market/MarketPanel";
 import { GameActionBar } from "./GameActionBar";
 import { GameHud } from "./GameHud";
 import { TownMap } from "./maps/TownMap";
@@ -33,6 +34,7 @@ type ActivePanel =
   | "battle"
   | "inn"
   | "forge"
+  | "market"
   | "archive";
 
 interface PlaceholderPanelProps {
@@ -175,6 +177,18 @@ export function GameShell({
       );
     }
 
+    if (activePanel === "market") {
+      return (
+        <LocationStage returnLabel="â† Return to Town" onBack={returnToTownMap}>
+          <MarketPanel
+            userId={userId}
+            currentCharacter={currentCharacter}
+            onCharacterUpdated={onCharacterUpdated}
+          />
+        </LocationStage>
+      );
+    }
+
     if (activePanel === "archive") {
       return (
         <PlaceholderPanel
@@ -195,6 +209,7 @@ export function GameShell({
             onOpenInn={() => openPanel("inn")}
             onOpenForge={() => openPanel("forge")}
             onOpenArchive={() => openPanel("archive")}
+            onOpenMarket={() => openPanel("market")}
             onOpenWorld={() => {
               setIsInventoryOpen(false);
               setMapView("world");

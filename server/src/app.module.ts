@@ -14,6 +14,7 @@ import { CharacterModule } from './character/character.module';
 import { DatabaseModule } from './database/database.module';
 import { BattleModule } from './game/battle/battle.module';
 import { ExplorationModule } from './game/exploration/exploration.module';
+import { MarketModule } from './game/market/market.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ExplorationModule } from './game/exploration/exploration.module';
     CharacterModule,
     BattleModule,
     ExplorationModule,
+    MarketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -51,6 +53,14 @@ export class AppModule implements NestModule {
       },
       {
         path: 'exploration/(.*)',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'market',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'market/(.*)',
         method: RequestMethod.ALL,
       },
     );

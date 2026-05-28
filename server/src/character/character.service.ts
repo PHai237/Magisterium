@@ -142,6 +142,21 @@ export interface CharacterInnRestResult {
   };
 }
 
+export interface CharacterMarketTransactionResult {
+  character: CharacterSnapshot;
+
+  transaction: {
+    type: 'buy' | 'sell';
+    itemId: ItemId;
+    quantity: number;
+    unitPriceBronze: number;
+    totalPriceBronze: number;
+    previousMoneyBronze: number;
+    nextMoneyBronze: number;
+    inventoryChange: InventoryOperationResult;
+  };
+}
+
 const BASE_EXP_REQUIRED_FOR_LEVEL_UP = 100;
 const EXP_LEVEL_GROWTH_FACTOR = 1.5;
 const MAX_CHARACTER_LEVEL = 100;
@@ -543,6 +558,135 @@ export class CharacterService implements OnModuleInit {
     return {
       character: createCharacterSnapshot(nextCharacter),
       inventoryChange,
+    };
+  }
+
+  buyMarketItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+    quantity: number,
+    unitPriceBronze: number,
+  ): CharacterMarketTransactionResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const normalizedQuantity =
+      this.normalizePositiveInventoryMutationQuantity(quantity);
+    const normalizedUnitPrice = this.normalizeNonNegativeBronzeAmount(
+      unitPriceBronze,
+      'Market item price',
+    );
+    const totalPriceBronze = this.calculateMarketTotalPrice(
+      normalizedUnitPrice,
+      normalizedQuantity,
+    );
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertKnownInventoryItem(itemId);
+
+    if (existingCharacter.moneyBronze < totalPriceBronze) {
+      throw new BadRequestException(
+        `Not enough bronze. Required ${totalPriceBronze}, available ${existingCharacter.moneyBronze}.`,
+      );
+    }
+
+    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+      addItemQuantityToInventory(
+        existingCharacter.inventoryItemIds,
+        itemId,
+        normalizedQuantity,
+      ),
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      moneyBronze: existingCharacter.moneyBronze - totalPriceBronze,
+      inventoryItemIds: inventoryChange.inventoryItemIds,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+      transaction: {
+        type: 'buy',
+        itemId,
+        quantity: normalizedQuantity,
+        unitPriceBronze: normalizedUnitPrice,
+        totalPriceBronze,
+        previousMoneyBronze: existingCharacter.moneyBronze,
+        nextMoneyBronze: nextCharacter.moneyBronze,
+        inventoryChange,
+      },
+    };
+  }
+
+  sellMarketItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+    quantity: number,
+    unitPriceBronze: number,
+  ): CharacterMarketTransactionResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const normalizedQuantity =
+      this.normalizePositiveInventoryMutationQuantity(quantity);
+    const normalizedUnitPrice = this.normalizeNonNegativeBronzeAmount(
+      unitPriceBronze,
+      'Market item price',
+    );
+    const totalPriceBronze = this.calculateMarketTotalPrice(
+      normalizedUnitPrice,
+      normalizedQuantity,
+    );
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertKnownInventoryItem(itemId);
+    this.assertInventoryHasQuantity(
+      existingCharacter,
+      itemId,
+      normalizedQuantity,
+    );
+
+    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+      removeItemQuantityFromInventory(
+        existingCharacter.inventoryItemIds,
+        itemId,
+        normalizedQuantity,
+      ),
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      moneyBronze: addBronze(existingCharacter.moneyBronze, totalPriceBronze),
+      inventoryItemIds: inventoryChange.inventoryItemIds,
+      equippedItemIds: existingCharacter.equippedItemIds.filter(
+        (equippedItemId) =>
+          inventoryChange.inventoryItemIds.includes(equippedItemId),
+      ),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+      transaction: {
+        type: 'sell',
+        itemId,
+        quantity: normalizedQuantity,
+        unitPriceBronze: normalizedUnitPrice,
+        totalPriceBronze,
+        previousMoneyBronze: existingCharacter.moneyBronze,
+        nextMoneyBronze: nextCharacter.moneyBronze,
+        inventoryChange,
+      },
     };
   }
 
@@ -1189,6 +1333,40 @@ export class CharacterService implements OnModuleInit {
     }
 
     return normalizedQuantity;
+  }
+
+  private normalizeNonNegativeBronzeAmount(
+    amount: number,
+    label: string,
+  ): number {
+    if (!Number.isFinite(amount)) {
+      throw new BadRequestException(`${label} must be a finite number.`);
+    }
+
+    const normalizedAmount = Math.floor(amount);
+
+    if (!Number.isSafeInteger(normalizedAmount)) {
+      throw new BadRequestException(`${label} must be a safe integer.`);
+    }
+
+    if (normalizedAmount < 0) {
+      throw new BadRequestException(`${label} must not be negative.`);
+    }
+
+    return normalizedAmount;
+  }
+
+  private calculateMarketTotalPrice(
+    unitPriceBronze: number,
+    quantity: number,
+  ): number {
+    const totalPriceBronze = unitPriceBronze * quantity;
+
+    if (!Number.isSafeInteger(totalPriceBronze)) {
+      throw new BadRequestException('Market total price must be a safe integer.');
+    }
+
+    return totalPriceBronze;
   }
 
   private assertInventoryHasQuantity(

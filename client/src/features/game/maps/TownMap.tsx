@@ -4,6 +4,7 @@ interface TownMapProps {
   onOpenInn: () => void;
   onOpenForge: () => void;
   onOpenArchive: () => void;
+  onOpenMarket: () => void;
   onOpenWorld: () => void;
 }
 
@@ -11,6 +12,7 @@ export function TownMap({
   onOpenInn,
   onOpenForge,
   onOpenArchive,
+  onOpenMarket,
   onOpenWorld
 }: TownMapProps) {
   return (
@@ -44,6 +46,14 @@ export function TownMap({
         name="Iron & Ember"
         subtitle="Forge & Armory"
         onClick={onOpenForge}
+      />
+
+      <MapNode
+        className="gameshell-node--market"
+        icon="⚖"
+        name="Market Row"
+        subtitle="Buy & Sell"
+        onClick={onOpenMarket}
       />
 
       <MapNode

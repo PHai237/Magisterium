@@ -237,6 +237,69 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "pass",
     description: "Redeem this at The Inn for one full overnight rest."
   },
+  fresh_potato: {
+    id: "fresh_potato",
+    name: "Fresh Potato",
+    icon: "🥔",
+    category: "material",
+    description: "A sturdy farm potato. A basic starch for early cooking recipes."
+  },
+  plump_wheat: {
+    id: "plump_wheat",
+    name: "Plump Wheat",
+    icon: "🌾",
+    category: "material",
+    description: "Clean bundled wheat for bread and travel rations."
+  },
+  gathered_egg: {
+    id: "gathered_egg",
+    name: "Gathered Egg",
+    icon: "🥚",
+    category: "material",
+    description: "A fresh egg gathered from local farms."
+  },
+  moon_turnip: {
+    id: "moon_turnip",
+    name: "Moon Turnip",
+    icon: "🌙",
+    category: "material",
+    description: "A rare pale turnip harvested under moonlight."
+  },
+  green_herb: {
+    id: "green_herb",
+    name: "Green Herb",
+    icon: "🌿",
+    category: "material",
+    description: "A common medicinal herb used in simple alchemy."
+  },
+  clear_glass_vial: {
+    id: "clear_glass_vial",
+    name: "Clear Glass Vial",
+    icon: "⚗",
+    category: "material",
+    description: "A clean vial for bottling weak potions and extracts."
+  },
+  basic_solvent: {
+    id: "basic_solvent",
+    name: "Basic Solvent",
+    icon: "🧴",
+    category: "material",
+    description: "A low-grade alchemical solvent for drawing out active properties."
+  },
+  cooking_salt: {
+    id: "cooking_salt",
+    name: "Cooking Salt",
+    icon: "🧂",
+    category: "material",
+    description: "Plain cooking salt required for many basic meals."
+  },
+  pressed_seed_oil: {
+    id: "pressed_seed_oil",
+    name: "Pressed Seed Oil",
+    icon: "🫙",
+    category: "material",
+    description: "A small flask of cooking oil pressed from local seed crops."
+  },
   slime_gel: {
     id: "slime_gel",
     name: "Slime Gel",

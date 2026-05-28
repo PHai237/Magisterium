@@ -182,6 +182,52 @@ export interface CharacterInventoryMutationResult {
   inventoryChange: InventoryOperationResult;
 }
 
+export interface MarketCatalogItem {
+  itemId: ItemId;
+  name: string;
+  description: string;
+  category: string;
+  rarity: string;
+  buyPriceBronze: number;
+  sellPriceBronze: number;
+  maxStock: number;
+  currentStock: number;
+  restockCadence: "daily" | "two_day" | "weekly";
+  nextRestockAt: string;
+  tags: string[];
+}
+
+export interface MarketVendor {
+  id: string;
+  name: string;
+  icon: string;
+  role: string;
+  description: string;
+  unlockState: "open" | "locked" | "rumored";
+  items: MarketCatalogItem[];
+}
+
+export interface MarketCatalog {
+  id: string;
+  name: string;
+  generatedAt: string;
+  vendors: MarketVendor[];
+}
+
+export interface MarketTransactionResult {
+  character: CharacterSnapshot;
+  transaction: {
+    type: "buy" | "sell";
+    itemId: ItemId;
+    quantity: number;
+    unitPriceBronze: number;
+    totalPriceBronze: number;
+    previousMoneyBronze: number;
+    nextMoneyBronze: number;
+    inventoryChange: InventoryOperationResult;
+  };
+}
+
 export interface CharacterInnRestResult {
   character: CharacterSnapshot;
 
