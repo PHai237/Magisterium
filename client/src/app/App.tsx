@@ -108,7 +108,7 @@ export function App() {
   return (
     <main className="phase5-root">
       <header className="phase5-topbar phase5-topbar--gate">
-        <MagisteriumBrand />
+        <MagisteriumBrand compact />
 
         {user ? (
           <div className="phase5-topbar__actions">
