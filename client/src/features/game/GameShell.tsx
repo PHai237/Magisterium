@@ -5,9 +5,11 @@ import { MagisteriumBrand } from "../../components/brand/MagisteriumBrand";
 import { Button } from "../../components/ui/Button";
 import type {
   CharacterSnapshot,
-  EncounterId
+  EncounterId,
+  ExplorationZoneId
 } from "../../domain/magisterium.types";
 import { BattlePanel } from "../battles/BattlePanel";
+import { ExplorationZone } from "../exploration/ExplorationZone";
 import { InnPanel } from "../inn/InnPanel";
 import { InventoryOverlay } from "../inventory/InventoryOverlay";
 import { GameActionBar } from "./GameActionBar";
@@ -25,7 +27,13 @@ interface GameShellProps {
 }
 
 type MapView = "town" | "world";
-type ActivePanel = "map" | "battle" | "inn" | "forge" | "archive";
+type ActivePanel =
+  | "map"
+  | "exploration"
+  | "battle"
+  | "inn"
+  | "forge"
+  | "archive";
 
 interface PlaceholderPanelProps {
   title: string;
@@ -90,6 +98,8 @@ export function GameShell({
 }: GameShellProps) {
   const [mapView, setMapView] = useState<MapView>("town");
   const [activePanel, setActivePanel] = useState<ActivePanel>("map");
+  const [selectedZoneId, setSelectedZoneId] =
+    useState<ExplorationZoneId>("town_outskirts");
   const [selectedEncounterId, setSelectedEncounterId] =
     useState<EncounterId>("town_outskirts_slime");
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
@@ -97,6 +107,12 @@ export function GameShell({
   function openPanel(panel: ActivePanel) {
     setIsInventoryOpen(false);
     setActivePanel(panel);
+  }
+
+  function openExploration(zoneId: ExplorationZoneId) {
+    setIsInventoryOpen(false);
+    setSelectedZoneId(zoneId);
+    setActivePanel("exploration");
   }
 
   function openBattle(encounterId: EncounterId) {
@@ -115,6 +131,11 @@ export function GameShell({
     setIsInventoryOpen(false);
     setMapView("world");
     setActivePanel("map");
+  }
+
+  function returnToExploration() {
+    setIsInventoryOpen(false);
+    setActivePanel("exploration");
   }
 
   function renderBodyContent() {
@@ -172,11 +193,26 @@ export function GameShell({
               setIsInventoryOpen(false);
               setMapView("town");
             }}
-            onOpenTownOutskirts={() => openBattle("town_outskirts_slime")}
-            onOpenBattle={() => openBattle("forest_edge_mixed")}
+            onOpenTownOutskirts={() => openExploration("town_outskirts")}
+            onOpenForestEdge={() => openExploration("forest_edge")}
           />
         )}
       </main>
+    );
+  }
+
+  if (activePanel === "exploration") {
+    return (
+      <div className="gameshell-root gameshell-root--exploration">
+        <ExplorationZone
+          userId={userId}
+          currentCharacter={currentCharacter}
+          zoneId={selectedZoneId}
+          onCharacterUpdated={onCharacterUpdated}
+          onEncounterFound={openBattle}
+          onReturnToWorldMap={returnToWorldMap}
+        />
+      </div>
     );
   }
 
@@ -187,7 +223,7 @@ export function GameShell({
           userId={userId}
           currentCharacter={currentCharacter}
           initialEncounterId={selectedEncounterId}
-          onExitBattle={returnToWorldMap}
+          onExitBattle={returnToExploration}
           onCharacterUpdated={onCharacterUpdated}
         />
       </div>

@@ -13,9 +13,16 @@ import { AuthModule } from './auth/auth.module';
 import { CharacterModule } from './character/character.module';
 import { DatabaseModule } from './database/database.module';
 import { BattleModule } from './game/battle/battle.module';
+import { ExplorationModule } from './game/exploration/exploration.module';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, CharacterModule, BattleModule],
+  imports: [
+    DatabaseModule,
+    AuthModule,
+    CharacterModule,
+    BattleModule,
+    ExplorationModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
@@ -36,6 +43,14 @@ export class AppModule implements NestModule {
       },
       {
         path: 'battles/(.*)',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'exploration',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'exploration/(.*)',
         method: RequestMethod.ALL,
       },
     );

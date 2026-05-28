@@ -1,4 +1,8 @@
-import type { EncounterId, OriginId } from "./magisterium.types";
+import type {
+  EncounterId,
+  ExplorationZoneId,
+  OriginId
+} from "./magisterium.types";
 
 export const STAT_KEYS = ["STR", "DEX", "CON", "INT", "WIS", "LUK"] as const;
 
@@ -82,3 +86,48 @@ export const ENCOUNTER_OPTIONS: Array<{
     description: "Small mixed encounter for testing forest-edge multi-monster turns."
   }
 ];
+
+export interface ExplorationZoneClientDefinition {
+  id: ExplorationZoneId;
+  name: string;
+  subtitle: string;
+  description: string;
+  icon: string;
+  dangerLevel: number;
+  staminaCost: number;
+  entryLog: string[];
+}
+
+export const EXPLORATION_ZONE_DEFINITIONS: Record<
+  ExplorationZoneId,
+  ExplorationZoneClientDefinition
+> = {
+  town_outskirts: {
+    id: "town_outskirts",
+    name: "Town Outskirts",
+    subtitle: "Lv. 1 - 2 Wildlands",
+    description:
+      "Slimes, wild boars, and wild wolves roam the grasslands outside the stronghold.",
+    icon: "🌾",
+    dangerLevel: 1,
+    staminaCost: 5,
+    entryLog: [
+      "You step beyond the stronghold road into the open town outskirts.",
+      "The grass shifts under the wind. Something may be watching from nearby."
+    ]
+  },
+  forest_edge: {
+    id: "forest_edge",
+    name: "Forest Edge",
+    subtitle: "Lv. 2 - 4 Border Woods",
+    description:
+      "The first line of the forest beyond the safe roads. Wolves and goblin scouts are more common here.",
+    icon: "🌲",
+    dangerLevel: 2,
+    staminaCost: 7,
+    entryLog: [
+      "You approach the forest edge. The canopy muffles the road behind you.",
+      "Broken branches and claw marks suggest this area is no longer safe."
+    ]
+  }
+};

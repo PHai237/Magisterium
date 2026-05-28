@@ -105,6 +105,15 @@ export interface ApplyBattleRewardOptions {
   battleCurrentState?: CurrentState;
 }
 
+export interface ApplyExplorationSearchResultOptions {
+  staminaCost: number;
+  moneyBronze?: number;
+  items?: Array<{
+    itemId: ItemId;
+    quantity: number;
+  }>;
+}
+
 export interface CharacterConsumableUseResult {
   character: CharacterSnapshot;
 
@@ -345,6 +354,72 @@ export class CharacterService implements OnModuleInit {
       reward,
       progression: progressionResult,
     };
+  }
+
+  applyExplorationSearchResult(
+    characterId: string,
+    userId: string,
+    options: ApplyExplorationSearchResultOptions,
+  ): CharacterSnapshot {
+    const userScope = normalizeRequiredUserId(userId);
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+
+    const staminaCost = this.normalizeNonNegativeExplorationStaminaCost(
+      options.staminaCost,
+    );
+
+    const snapshotBeforeSearch = createCharacterSnapshot(existingCharacter);
+
+    if (snapshotBeforeSearch.currentState.stamina < staminaCost) {
+      throw new BadRequestException(
+        `Not enough stamina to search. Required ${staminaCost}, available ${snapshotBeforeSearch.currentState.stamina}.`,
+      );
+    }
+
+    const itemRewards = options.items ?? [];
+
+    for (const itemReward of itemRewards) {
+      this.assertKnownInventoryItem(itemReward.itemId);
+      this.normalizePositiveInventoryMutationQuantity(itemReward.quantity);
+    }
+
+    const nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(
+      () => addItemStacksToInventory(existingCharacter.inventoryItemIds, itemRewards),
+    );
+
+    const moneyBronze = options.moneyBronze ?? 0;
+
+    if (!Number.isFinite(moneyBronze) || !Number.isSafeInteger(Math.floor(moneyBronze))) {
+      throw new BadRequestException('Exploration bronze reward must be a safe integer.');
+    }
+
+    if (moneyBronze < 0) {
+      throw new BadRequestException('Exploration bronze reward must not be negative.');
+    }
+
+    const nextCurrentState: CurrentState = {
+      ...snapshotBeforeSearch.currentState,
+      stamina: snapshotBeforeSearch.currentState.stamina - staminaCost,
+    };
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      moneyBronze: addBronze(existingCharacter.moneyBronze, Math.floor(moneyBronze)),
+      inventoryItemIds: nextInventoryItemIds,
+      equippedItemIds: existingCharacter.equippedItemIds.filter(
+        (equippedItemId) => nextInventoryItemIds.includes(equippedItemId),
+      ),
+      currentState: nextCurrentState,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return createCharacterSnapshot(nextCharacter);
   }
 
   getInventoryStacks(
@@ -957,6 +1032,32 @@ export class CharacterService implements OnModuleInit {
     }
 
     return nextInventoryItemIds;
+  }
+
+  private normalizeNonNegativeExplorationStaminaCost(
+    staminaCost: number,
+  ): number {
+    if (!Number.isFinite(staminaCost)) {
+      throw new BadRequestException(
+        'Exploration stamina cost must be a finite number.',
+      );
+    }
+
+    const normalizedStaminaCost = Math.floor(staminaCost);
+
+    if (!Number.isSafeInteger(normalizedStaminaCost)) {
+      throw new BadRequestException(
+        'Exploration stamina cost must be a safe integer.',
+      );
+    }
+
+    if (normalizedStaminaCost < 0) {
+      throw new BadRequestException(
+        'Exploration stamina cost must not be negative.',
+      );
+    }
+
+    return normalizedStaminaCost;
   }
 
   private assertSafeExperienceInteger(value: number, label: string): number {

@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { ENCOUNTER_OPTIONS } from "../../domain/magisterium.constants";
 import type {
   BattleActionType,
   BattleActorState,
@@ -19,7 +18,7 @@ import "./battle.css";
 interface BattlePanelProps {
   userId: string;
   currentCharacter: CharacterSnapshot;
-  initialEncounterId?: EncounterId;
+  initialEncounterId: EncounterId;
   onExitBattle: () => void;
   onCharacterUpdated?: (character: CharacterSnapshot) => void;
 }
@@ -38,51 +37,54 @@ interface SkillDisplayDefinition {
 interface ItemDisplayDefinition {
   label: string;
   icon: string;
-  description: string;
 }
 
 interface MonsterDisplayDefinition {
   label: string;
   icon: string;
   element: string;
-  subtitle: string;
+  level: number;
 }
 
-const DEFAULT_ENCOUNTER_ID: EncounterId = "town_outskirts_slime";
+interface BattleLogGroup {
+  label: string;
+  events: BattleEvent[];
+  current: boolean;
+}
 
 const SKILL_DISPLAY_DEFINITIONS: Record<string, SkillDisplayDefinition> = {
   spark: {
-    label: "Spark",
+    label: "Magic Spark",
     icon: "🔥",
-    cost: "5 MP",
+    cost: "Costs 5 MP",
     group: "magic",
     needsEnemyTarget: true
   },
   heavy_strike: {
     label: "Heavy Strike",
     icon: "💥",
-    cost: "12 STA",
+    cost: "Costs 12 Stamina",
     group: "attack",
     needsEnemyTarget: true
   },
   steady_strike: {
     label: "Steady Strike",
     icon: "⚔️",
-    cost: "8 STA",
+    cost: "Costs 8 Stamina",
     group: "attack",
     needsEnemyTarget: true
   },
   quick_stab: {
     label: "Quick Stab",
     icon: "🗡️",
-    cost: "6 STA",
+    cost: "Costs 6 Stamina",
     group: "attack",
     needsEnemyTarget: true
   },
   minor_heal: {
     label: "Minor Heal",
     icon: "✦",
-    cost: "8 MP",
+    cost: "Costs 8 MP",
     group: "magic",
     needsEnemyTarget: false
   }
@@ -91,18 +93,15 @@ const SKILL_DISPLAY_DEFINITIONS: Record<string, SkillDisplayDefinition> = {
 const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
   minor_hp_potion: {
     label: "Minor HP Potion",
-    icon: "🧪",
-    description: "Restore HP during battle."
+    icon: "🧪"
   },
   minor_mp_potion: {
     label: "Minor MP Potion",
-    icon: "🔷",
-    description: "Restore MP during battle."
+    icon: "🔷"
   },
   stamina_bread: {
     label: "Stamina Bread",
-    icon: "🍞",
-    description: "Restore stamina during battle."
+    icon: "🍞"
   }
 };
 
@@ -111,25 +110,25 @@ const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> =
     label: "Slime",
     icon: "🟢",
     element: "Water-leaning Beast",
-    subtitle: "Soft-bodied starter monster"
+    level: 1
   },
   wild_boar: {
     label: "Wild Boar",
     icon: "🐗",
     element: "Physical Beast",
-    subtitle: "Tougher than a slime"
+    level: 1
   },
   wild_wolf: {
     label: "Wild Wolf",
     icon: "🐺",
     element: "Physical Beast",
-    subtitle: "Fast early predator"
+    level: 2
   },
   goblin: {
     label: "Goblin",
     icon: "👺",
     element: "Humanoid",
-    subtitle: "Forest-edge threat"
+    level: 2
   }
 };
 
@@ -139,21 +138,6 @@ function clampPercent(value: number, max: number): number {
   }
 
   return Math.max(0, Math.min(100, (value / max) * 100));
-}
-
-function getEncounterOption(encounterId: EncounterId) {
-  return (
-    ENCOUNTER_OPTIONS.find((encounter) => encounter.id === encounterId) ??
-    ENCOUNTER_OPTIONS[0]
-  );
-}
-
-function getLiveActors(battle: BattleState | null): BattleActorState[] {
-  if (!battle) {
-    return [];
-  }
-
-  return Object.values(battle.actors).filter((actor) => actor.hp > 0);
 }
 
 function getCharacterActor(battle: BattleState | null): BattleActorState | null {
@@ -182,32 +166,15 @@ function getLiveMonsterActors(battle: BattleState | null): BattleActorState[] {
   return getMonsterActors(battle).filter((actor) => actor.hp > 0);
 }
 
-function getActorDisplayName(
-  actor: BattleActorState | null | undefined,
-  currentCharacter: CharacterSnapshot
-): string {
-  if (!actor) {
-    return "Unknown";
-  }
-
-  if (actor.actorType === "character") {
-    return currentCharacter.name;
-  }
-
-  if (actor.monsterId) {
-    return MONSTER_DISPLAY_DEFINITIONS[actor.monsterId]?.label ?? actor.actorId;
-  }
-
-  return actor.actorId;
-}
-
-function getMonsterDisplay(actor: BattleActorState | null | undefined) {
+function getMonsterDisplay(
+  actor: BattleActorState | null | undefined
+): MonsterDisplayDefinition {
   if (!actor?.monsterId) {
     return {
-      label: actor?.actorId ?? "No Enemy",
+      label: "Unknown Enemy",
       icon: "◇",
       element: "Unknown",
-      subtitle: "No monster data"
+      level: 1
     };
   }
 
@@ -230,8 +197,7 @@ function getItemDisplay(itemId: ItemId): ItemDisplayDefinition {
   return (
     ITEM_DISPLAY_DEFINITIONS[itemId] ?? {
       label: compactLabel(itemId),
-      icon: "◇",
-      description: "This item cannot be used from the current battle drawer."
+      icon: "◇"
     }
   );
 }
@@ -241,11 +207,12 @@ function getItemQuantity(actor: BattleActorState | null, itemId: ItemId): number
     return 0;
   }
 
-  return actor.inventoryItemIds.filter((currentItemId) => currentItemId === itemId)
-    .length;
+  return actor.inventoryItemIds.filter(
+    (currentItemId) => currentItemId === itemId
+  ).length;
 }
 
-function isBattleTerminal(battle: BattleState | null): boolean {
+function isBattleFinished(battle: BattleState | null): boolean {
   return (
     battle?.status === "victory" ||
     battle?.status === "defeat" ||
@@ -257,12 +224,83 @@ function shouldShowClaimReward(battle: BattleState | null): boolean {
   return battle?.status === "victory" && !battle.rewardClaim;
 }
 
-function formatEventLabel(event: BattleEvent): string {
-  return compactLabel(event.type);
+function getTurnLabel(event: BattleEvent, fallbackIndex: number): string {
+  const messageTurn = event.message?.match(/Turn\s+\d+/i)?.[0];
+
+  if (messageTurn) {
+    return messageTurn;
+  }
+
+  return `Turn ${fallbackIndex}`;
+}
+
+function groupBattleEvents(events: BattleEvent[]): BattleLogGroup[] {
+  const groups: BattleLogGroup[] = [];
+  let currentGroup: BattleLogGroup | null = null;
+
+  events.forEach((event) => {
+    if (event.type === "TURN_STARTED") {
+      currentGroup = {
+        label: getTurnLabel(event, groups.length + 1),
+        events: [],
+        current: false
+      };
+
+      groups.push(currentGroup);
+      return;
+    }
+
+    if (!currentGroup) {
+      currentGroup = {
+        label: "Battle Start",
+        events: [],
+        current: false
+      };
+
+      groups.push(currentGroup);
+    }
+
+    currentGroup.events.push(event);
+  });
+
+  if (groups.length > 0) {
+    groups[groups.length - 1]!.current = true;
+  }
+
+  return groups;
+}
+
+function getEventTone(event: BattleEvent, playerActorId?: string): string {
+  if (
+    event.type.includes("DAMAGE") ||
+    event.type.includes("CRIT") ||
+    event.phase === "apply_damage" ||
+    event.phase === "damage_calculation"
+  ) {
+    return "damage";
+  }
+
+  if (
+    event.type.includes("RESOURCE") ||
+    event.type.includes("RESTORE") ||
+    event.type.includes("HEAL")
+  ) {
+    return "resource";
+  }
+
+  if (playerActorId && event.actorId && event.actorId !== playerActorId) {
+    return "enemy";
+  }
+
+  if (event.phase === "cancelled") {
+    return "cancelled";
+  }
+
+  return "neutral";
 }
 
 function formatEventMessage(event: BattleEvent): string {
-  return event.message || "No message.";
+  return event.message || compactLabel(event.type);
 }
 
 function ResourceBar({
@@ -278,12 +316,7 @@ function ResourceBar({
 }) {
   return (
     <div className={`battle-resource battle-resource--${tone}`}>
-      <div className="battle-resource__top">
-        <span>{label}</span>
-        <strong>
-          {formatNumber(value)} / {formatNumber(max)}
-        </strong>
-      </div>
+      <span>{label}</span>
 
       <div className="battle-resource__track">
         <div
@@ -291,6 +324,10 @@ function ResourceBar({
           style={{ width: `${clampPercent(value, max)}%` }}
         />
       </div>
+
+      <strong>
+        {formatNumber(value)} / {formatNumber(max)}
+      </strong>
     </div>
   );
 }
@@ -298,45 +335,41 @@ function ResourceBar({
 export function BattlePanel({
   userId,
   currentCharacter,
-  initialEncounterId = DEFAULT_ENCOUNTER_ID,
+  initialEncounterId,
   onExitBattle,
   onCharacterUpdated
 }: BattlePanelProps) {
-  const [encounterId, setEncounterId] =
-    useState<EncounterId>(initialEncounterId);
-  const [selectedBattle, setSelectedBattle] = useState<BattleState | null>(null);
+  const hasStartedRef = useRef(false);
+
+  const [battle, setBattle] = useState<BattleState | null>(null);
   const [targetId, setTargetId] = useState("");
   const [activeDrawer, setActiveDrawer] = useState<DrawerType>("MAIN");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const encounter = getEncounterOption(encounterId);
-
-  const activeActor = selectedBattle?.activeActorId
-    ? selectedBattle.actors[selectedBattle.activeActorId]
+  const activeActor = battle?.activeActorId
+    ? battle.actors[battle.activeActorId]
     : undefined;
 
-  const playerActor = getCharacterActor(selectedBattle);
-  const liveEnemies = useMemo(
-    () => getLiveMonsterActors(selectedBattle),
-    [selectedBattle]
-  );
+  const playerActor = getCharacterActor(battle);
 
-  const enemyTargets = useMemo(() => liveEnemies, [liveEnemies]);
+  const liveEnemies = useMemo(() => getLiveMonsterActors(battle), [battle]);
 
   const focusedEnemy = useMemo(() => {
-    if (!selectedBattle) {
+    if (!battle) {
       return null;
     }
 
     return (
-      enemyTargets.find((actor) => actor.actorId === targetId) ??
-      enemyTargets[0] ??
-      getMonsterActors(selectedBattle)[0] ??
+      liveEnemies.find((actor) => actor.actorId === targetId) ??
+      liveEnemies[0] ??
+      getMonsterActors(battle)[0] ??
       null
     );
-  }, [enemyTargets, selectedBattle, targetId]);
+  }, [battle, liveEnemies, targetId]);
+
+  const focusedEnemyDisplay = getMonsterDisplay(focusedEnemy);
 
   const skillIds = useMemo(
     () => uniqueValues(playerActor?.skillIds ?? []),
@@ -365,25 +398,75 @@ export function BattlePanel({
     [playerActor]
   );
 
+  const battleFinished = isBattleFinished(battle);
   const isPlayerTurn = activeActor?.actorType === "character";
-  const battleFinished = isBattleTerminal(selectedBattle);
-  const focusedEnemyDisplay = getMonsterDisplay(focusedEnemy);
+
+  const battleLogGroups = useMemo(
+    () => groupBattleEvents(battle?.events ?? []),
+    [battle]
+  );
 
   useEffect(() => {
-    if (!selectedBattle) {
-      setEncounterId(initialEncounterId);
+    if (hasStartedRef.current) {
+      return undefined;
     }
-  }, [initialEncounterId, selectedBattle]);
+
+    hasStartedRef.current = true;
+
+    let cancelled = false;
+
+    async function createBattle() {
+      setBusy(true);
+      setNotice(null);
+      setError(null);
+
+      try {
+        const createdBattle = await battlesApi.create(userId, {
+          characterId: currentCharacter.id,
+          encounterId: initialEncounterId,
+          autoStart: true,
+          autoResolveMonsterTurns: true
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        setBattle(createdBattle);
+        setTargetId(getLiveMonsterActors(createdBattle)[0]?.actorId ?? "");
+      } catch (createError) {
+        if (cancelled) {
+          return;
+        }
+
+        setError(
+          createError instanceof Error
+            ? createError.message
+            : "Failed to start battle."
+        );
+      } finally {
+        if (!cancelled) {
+          setBusy(false);
+        }
+      }
+    }
+
+    void createBattle();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentCharacter.id, initialEncounterId, userId]);
 
   useEffect(() => {
-    const targetStillAvailable = enemyTargets.some(
+    const targetStillAvailable = liveEnemies.some(
       (actor) => actor.actorId === targetId
     );
 
     if (!targetStillAvailable) {
-      setTargetId(enemyTargets[0]?.actorId ?? "");
+      setTargetId(liveEnemies[0]?.actorId ?? "");
     }
-  }, [enemyTargets, targetId]);
+  }, [liveEnemies, targetId]);
 
   useEffect(() => {
     if (!notice && !error) {
@@ -393,42 +476,10 @@ export function BattlePanel({
     const timerId = window.setTimeout(() => {
       setNotice(null);
       setError(null);
-    }, 3200);
+    }, 3000);
 
     return () => window.clearTimeout(timerId);
   }, [notice, error]);
-
-  async function createBattle(nextEncounterId = encounterId) {
-    if (busy) {
-      return;
-    }
-
-    setBusy(true);
-    setNotice(null);
-    setError(null);
-    setActiveDrawer("MAIN");
-
-    try {
-      const battle = await battlesApi.create(userId, {
-        characterId: currentCharacter.id,
-        encounterId: nextEncounterId,
-        autoStart: true,
-        autoResolveMonsterTurns: true
-      });
-
-      setSelectedBattle(battle);
-      setTargetId(getLiveMonsterActors(battle)[0]?.actorId ?? "");
-      setNotice(`${getEncounterOption(nextEncounterId)?.label ?? "Battle"} started.`);
-    } catch (createError) {
-      setError(
-        createError instanceof Error
-          ? createError.message
-          : "Failed to start battle."
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function runAction(
     actionType: BattleActionType,
@@ -438,7 +489,7 @@ export function BattlePanel({
       targetRequired?: boolean;
     } = {}
   ) {
-    if (!selectedBattle || !activeActor || busy || battleFinished) {
+    if (!battle || !activeActor || busy || battleFinished) {
       return;
     }
 
@@ -457,20 +508,16 @@ export function BattlePanel({
     setError(null);
 
     try {
-      const result = await battlesApi.resolveAction(
-        userId,
-        selectedBattle.battleId,
-        {
-          actorId: activeActor.actorId,
-          actionType,
-          targetIds: options.targetRequired && targetId ? [targetId] : [],
-          skillId: options.skillId,
-          itemId: options.itemId,
-          autoResolveMonsterTurns: true
-        }
-      );
+      const result = await battlesApi.resolveAction(userId, battle.battleId, {
+        actorId: activeActor.actorId,
+        actionType,
+        targetIds: options.targetRequired && targetId ? [targetId] : [],
+        skillId: options.skillId,
+        itemId: options.itemId,
+        autoResolveMonsterTurns: true
+      });
 
-      setSelectedBattle(result.battleState);
+      setBattle(result.battleState);
       setActiveDrawer("MAIN");
     } catch (actionError) {
       setError(
@@ -482,7 +529,7 @@ export function BattlePanel({
   }
 
   async function claimReward() {
-    if (!selectedBattle || busy || selectedBattle.status !== "victory") {
+    if (!battle || busy || battle.status !== "victory") {
       return;
     }
 
@@ -493,11 +540,11 @@ export function BattlePanel({
     try {
       const result = await battlesApi.claimReward(
         userId,
-        selectedBattle.battleId,
+        battle.battleId,
         currentCharacter
       );
 
-      setSelectedBattle(result.battle);
+      setBattle(result.battle);
       onCharacterUpdated?.(result.character);
 
       const rewardItems = result.reward.items
@@ -520,78 +567,17 @@ export function BattlePanel({
     }
   }
 
-  function resetBattle() {
-    setSelectedBattle(null);
-    setTargetId("");
-    setActiveDrawer("MAIN");
-    setNotice(null);
-    setError(null);
-  }
-
-  function renderPrepScreen() {
-    return (
-      <main className="battle-prep">
-        <section className="battle-prep__hero">
-          <p>Town Outskirts</p>
-          <h2>Choose an encounter</h2>
-          <span>
-            Slimes, wild boars, and wild wolves roam the grasslands outside the
-            stronghold. These are real encounters with real drops.
-          </span>
-        </section>
-
-        <section className="battle-encounter-list">
-          {ENCOUNTER_OPTIONS.filter((option) =>
-            option.id.startsWith("town_outskirts")
-          ).map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              className={
-                encounterId === option.id
-                  ? "battle-encounter-card battle-encounter-card--active"
-                  : "battle-encounter-card"
-              }
-              onClick={() => setEncounterId(option.id)}
-              disabled={busy}
-            >
-              <strong>{option.label}</strong>
-              <span>{option.description}</span>
-            </button>
-          ))}
-        </section>
-
-        <section className="battle-prep__launch">
-          <div>
-            <p>Selected</p>
-            <strong>{encounter?.label}</strong>
-            <span>{encounter?.description}</span>
-          </div>
-
-          <button
-            type="button"
-            className="battle-primary-button"
-            disabled={busy}
-            onClick={() => void createBattle()}
-          >
-            {busy ? "Starting..." : "Start Battle"}
-          </button>
-        </section>
-      </main>
-    );
-  }
-
   function renderActiveEffects(actor: BattleActorState | null) {
     if (!actor || actor.activeStatusEffects.length === 0) {
       return (
-        <div className="battle-empty-effect">
+        <div className="battle-effects-empty">
           <span>No active effects</span>
         </div>
       );
     }
 
     return (
-      <div className="battle-effect-list">
+      <div className="battle-effects-list">
         {actor.activeStatusEffects.map((_effect, index) => (
           <div key={index} className="battle-effect-chip">
             <span>✦ Active Effect</span>
@@ -603,82 +589,58 @@ export function BattlePanel({
   }
 
   function renderCommandPanel() {
-    if (!selectedBattle) {
-      return null;
+    if (!battle) {
+      return (
+        <div className="battle-loading-card">
+          {busy ? "Entering encounter..." : "Preparing battle..."}
+        </div>
+      );
     }
 
     if (battleFinished) {
       return (
-        <section className="battle-command-panel">
-          <div className="battle-command-panel__top">
-            <span>Battle Result</span>
-          </div>
+        <div className="battle-result-card">
+          <strong>{compactLabel(battle.status)}</strong>
 
-          <div className={`battle-result-card battle-result-card--${selectedBattle.status}`}>
-            <strong>{compactLabel(selectedBattle.status)}</strong>
+          {battle.status === "victory" ? (
+            <span>The encounter has been cleared.</span>
+          ) : (
+            <span>The battle has ended.</span>
+          )}
 
-            {selectedBattle.status === "victory" ? (
-              <span>
-                The encounter has been cleared. Claim your reward before leaving.
-              </span>
-            ) : (
-              <span>The battle has ended.</span>
-            )}
-
-            <div className="battle-result-card__actions">
-              {shouldShowClaimReward(selectedBattle) ? (
-                <button
-                  type="button"
-                  className="battle-primary-button"
-                  disabled={busy}
-                  onClick={() => void claimReward()}
-                >
-                  {busy ? "Claiming..." : "Claim Reward"}
-                </button>
-              ) : null}
-
+          <div className="battle-result-actions">
+            {shouldShowClaimReward(battle) ? (
               <button
                 type="button"
-                className="battle-secondary-button"
+                className="battle-primary-button"
                 disabled={busy}
-                onClick={resetBattle}
+                onClick={() => void claimReward()}
               >
-                New Encounter
+                {busy ? "Claiming..." : "Claim Reward"}
               </button>
+            ) : null}
 
-              <button
-                type="button"
-                className="battle-secondary-button"
-                disabled={busy}
-                onClick={onExitBattle}
-              >
-                Return to World Map
-              </button>
-            </div>
+            <button
+              type="button"
+              className="battle-secondary-button"
+              disabled={busy}
+              onClick={onExitBattle}
+            >
+              Return to Exploration
+            </button>
           </div>
-        </section>
+        </div>
       );
     }
 
     if (!activeActor || !isPlayerTurn) {
-      return (
-        <section className="battle-command-panel">
-          <div className="battle-command-panel__top">
-            <span>Control Panel</span>
-          </div>
-
-          <div className="battle-waiting-card">
-            <strong>Awaiting turn state</strong>
-            <span>Enemy turns are being resolved by the backend.</span>
-          </div>
-        </section>
-      );
+      return <div className="battle-loading-card">Enemy turn is resolving...</div>;
     }
 
     return (
-      <section className="battle-command-panel">
-        <div className="battle-command-panel__top">
-          <span>Control Panel</span>
+      <>
+        <div className="battle-command-top">
+          <div>Control Panel</div>
 
           {activeDrawer !== "MAIN" ? (
             <button
@@ -692,105 +654,106 @@ export function BattlePanel({
         </div>
 
         {activeDrawer === "MAIN" ? (
-          <div className="battle-command-grid battle-command-grid--main">
+          <div className="battle-main-actions">
             <button
               type="button"
-              className="battle-command-button battle-command-button--attack"
+              className="battle-main-action battle-main-action--attack"
               disabled={busy}
               onClick={() => setActiveDrawer("ATTACK")}
             >
-              <strong>⚔️ Attack</strong>
-              <span>Basic & physical skills</span>
+              <strong>⚔️ ATTACK</strong>
+              <span>Basic & Physical Skills</span>
             </button>
 
             <button
               type="button"
-              className="battle-command-button battle-command-button--magic"
+              className="battle-main-action battle-main-action--magic"
               disabled={busy}
               onClick={() => setActiveDrawer("MAGIC")}
             >
-              <strong>🔮 Magic</strong>
-              <span>Spells & support skills</span>
+              <strong>🔮 MAGIC</strong>
+              <span>Falna & Spell Skills</span>
             </button>
 
             <button
               type="button"
-              className="battle-command-button battle-command-button--item"
+              className="battle-main-action battle-main-action--item"
               disabled={busy}
               onClick={() => setActiveDrawer("ITEM")}
             >
-              <strong>🧪 Items</strong>
-              <span>Consumables & options</span>
+              <strong>🧪 ITEMS & OTHERS</strong>
+              <span>Consumables & Flee</span>
             </button>
           </div>
         ) : null}
 
         {activeDrawer === "ATTACK" ? (
-          <div className="battle-command-grid">
+          <div className="battle-drawer-grid">
             <button
               type="button"
-              className="battle-skill-button"
+              className="battle-drawer-button"
               disabled={busy || !targetId}
               onClick={() =>
                 void runAction("basic_attack", { targetRequired: true })
               }
             >
-              <strong>⚔️ Basic Strike</strong>
-              <span>No cost</span>
+              ⚔️ Basic Strike
             </button>
 
-            {attackSkillIds.map((currentSkillId) => {
-              const skill = getSkillDisplay(currentSkillId);
+            {attackSkillIds.map((skillId) => {
+              const skill = getSkillDisplay(skillId);
 
               return (
                 <button
-                  key={currentSkillId}
+                  key={skillId}
                   type="button"
-                  className="battle-skill-button"
+                  className="battle-drawer-button"
                   disabled={busy || (skill.needsEnemyTarget && !targetId)}
                   onClick={() =>
                     void runAction("use_skill", {
-                      skillId: currentSkillId,
+                      skillId,
                       targetRequired: skill.needsEnemyTarget
                     })
                   }
                 >
-                  <strong>
+                  <span>
                     {skill.icon} {skill.label}
-                  </strong>
-                  <span>{skill.cost}</span>
+                  </span>
+                  <em>{skill.cost}</em>
                 </button>
               );
             })}
 
             {attackSkillIds.length === 0 ? (
-              <div className="battle-drawer-empty">No physical skill equipped.</div>
+              <div className="battle-drawer-empty">
+                No physical skill equipped.
+              </div>
             ) : null}
           </div>
         ) : null}
 
         {activeDrawer === "MAGIC" ? (
-          <div className="battle-command-grid">
-            {magicSkillIds.map((currentSkillId) => {
-              const skill = getSkillDisplay(currentSkillId);
+          <div className="battle-drawer-grid">
+            {magicSkillIds.map((skillId) => {
+              const skill = getSkillDisplay(skillId);
 
               return (
                 <button
-                  key={currentSkillId}
+                  key={skillId}
                   type="button"
-                  className="battle-skill-button battle-skill-button--magic"
+                  className="battle-drawer-button battle-drawer-button--magic"
                   disabled={busy || (skill.needsEnemyTarget && !targetId)}
                   onClick={() =>
                     void runAction("use_skill", {
-                      skillId: currentSkillId,
+                      skillId,
                       targetRequired: skill.needsEnemyTarget
                     })
                   }
                 >
-                  <strong>
+                  <span>
                     {skill.icon} {skill.label}
-                  </strong>
-                  <span>{skill.cost}</span>
+                  </span>
+                  <em>{skill.cost}</em>
                 </button>
               );
             })}
@@ -802,40 +765,38 @@ export function BattlePanel({
         ) : null}
 
         {activeDrawer === "ITEM" ? (
-          <div className="battle-command-grid">
-            {usableBattleItems.map((currentItemId) => {
-              const item = getItemDisplay(currentItemId);
-              const quantity = getItemQuantity(playerActor, currentItemId);
+          <div className="battle-drawer-grid">
+            {usableBattleItems.map((itemId) => {
+              const item = getItemDisplay(itemId);
+              const quantity = getItemQuantity(playerActor, itemId);
 
               return (
                 <button
-                  key={currentItemId}
+                  key={itemId}
                   type="button"
-                  className="battle-skill-button battle-skill-button--item"
+                  className="battle-drawer-button battle-drawer-button--item"
                   disabled={busy || quantity <= 0}
-                  title={item.description}
                   onClick={() =>
                     void runAction("use_item", {
-                      itemId: currentItemId,
+                      itemId,
                       targetRequired: false
                     })
                   }
                 >
-                  <strong>
+                  <span>
                     {item.icon} {item.label}
-                  </strong>
-                  <span>x{formatNumber(quantity)}</span>
+                  </span>
+                  <em>x{formatNumber(quantity)}</em>
                 </button>
               );
             })}
 
             <button
               type="button"
-              className="battle-skill-button battle-skill-button--danger"
+              className="battle-drawer-button battle-drawer-button--danger battle-drawer-button--wide"
               disabled
             >
-              <strong>🏃 Flee</strong>
-              <span>Not available yet</span>
+              🏃 Flee From Battle
             </button>
 
             {usableBattleItems.length === 0 ? (
@@ -843,18 +804,52 @@ export function BattlePanel({
             ) : null}
           </div>
         ) : null}
-      </section>
+      </>
     );
   }
 
-  function renderBattleScreen() {
-    const player = playerActor;
-    const enemy = focusedEnemy;
-    const enemyDisplay = focusedEnemyDisplay;
+  return (
+    <section className="battle-panel">
+      <header className="battle-topbar">
+        <div className="battle-topbar__spacer" />
 
-    return (
-      <main className="battle-arena-layout">
-        <aside className="battle-side-panel battle-side-panel--character">
+        <div className="battle-topbar__vitals">
+          <ResourceBar
+            label="HP"
+            value={playerActor?.hp ?? currentCharacter.currentState.hp}
+            max={
+              playerActor?.derivedStats.maxHp ??
+              currentCharacter.derivedStats.maxHp
+            }
+            tone="hp"
+          />
+
+          <ResourceBar
+            label="MP"
+            value={playerActor?.mp ?? currentCharacter.currentState.mp}
+            max={
+              playerActor?.derivedStats.maxMp ??
+              currentCharacter.derivedStats.maxMp
+            }
+            tone="mp"
+          />
+
+          <ResourceBar
+            label="STA"
+            value={playerActor?.stamina ?? currentCharacter.currentState.stamina}
+            max={
+              playerActor?.derivedStats.maxStamina ??
+              currentCharacter.derivedStats.maxStamina
+            }
+            tone="stamina"
+          />
+        </div>
+
+        <div className="battle-topbar__spacer" />
+      </header>
+
+      <div className="battle-shell">
+        <aside className="battle-side battle-side--character">
           <div className="battle-panel-eyebrow">Character Status</div>
 
           <section className="battle-character-card">
@@ -872,29 +867,38 @@ export function BattlePanel({
               <div>
                 <span>P.ATK</span>
                 <strong>
-                  {formatNumber(player?.derivedStats.pAtk ?? currentCharacter.derivedStats.pAtk)}
+                  {formatNumber(
+                    playerActor?.derivedStats.pAtk ??
+                      currentCharacter.derivedStats.pAtk
+                  )}
                 </strong>
               </div>
+
               <div>
                 <span>M.ATK</span>
                 <strong>
-                  {formatNumber(player?.derivedStats.mAtk ?? currentCharacter.derivedStats.mAtk)}
+                  {formatNumber(
+                    playerActor?.derivedStats.mAtk ??
+                      currentCharacter.derivedStats.mAtk
+                  )}
                 </strong>
               </div>
+
               <div>
-                <span>A.SPD</span>
+                <span>A.SPEED</span>
                 <strong>
                   {formatNumber(
-                    player?.derivedStats.actionSpeed ??
+                    playerActor?.derivedStats.actionSpeed ??
                       currentCharacter.derivedStats.actionSpeed
                   )}
                 </strong>
               </div>
+
               <div>
                 <span>CRIT</span>
                 <strong>
                   {formatNumber(
-                    player?.derivedStats.critRate ??
+                    playerActor?.derivedStats.critRate ??
                       currentCharacter.derivedStats.critRate
                   )}
                   %
@@ -904,148 +908,120 @@ export function BattlePanel({
           </section>
 
           <section className="battle-effect-box">
-            <div className="battle-effect-box__title">Active Effects</div>
-            {renderActiveEffects(player)}
+            <div className="battle-effect-title">Active Effects</div>
+            {renderActiveEffects(playerActor)}
           </section>
         </aside>
 
-        <section className="battlefield-panel">
+        <main className="battle-center">
           <div className="battlefield-focus">
-            <div className="battlefield-encounter-label">Encounter</div>
+            {battle ? (
+              <>
+                <div className="battlefield-label">Encounter</div>
 
-            <div className="battle-enemy-sigil" aria-hidden="true">
-              {enemyDisplay.icon}
-            </div>
+                <div className="battle-enemy-orb" aria-hidden="true">
+                  {focusedEnemyDisplay.icon}
+                </div>
 
-            <h2>{enemyDisplay.label}</h2>
-            <span>
-              {enemy
-                ? `Level ${enemy.baseStats.CON > 6 ? 2 : 1} · ${enemyDisplay.element}`
-                : "No active enemy"}
-            </span>
+                <h2>{focusedEnemyDisplay.label}</h2>
 
-            {enemy ? (
-              <div className="battle-enemy-health">
-                <ResourceBar
-                  label="Enemy HP"
-                  value={enemy.hp}
-                  max={enemy.derivedStats.maxHp}
-                  tone="hp"
-                />
+                <span>
+                  Level {focusedEnemyDisplay.level} ·{" "}
+                  {focusedEnemyDisplay.element}
+                </span>
+
+                {focusedEnemy ? (
+                  <div className="battle-enemy-health">
+                    <ResourceBar
+                      label="Enemy HP"
+                      value={focusedEnemy.hp}
+                      max={focusedEnemy.derivedStats.maxHp}
+                      tone="hp"
+                    />
+                  </div>
+                ) : null}
+
+                {liveEnemies.length > 1 ? (
+                  <div className="battle-target-row">
+                    {liveEnemies.map((enemy) => {
+                      const enemyDisplay = getMonsterDisplay(enemy);
+
+                      return (
+                        <button
+                          key={enemy.actorId}
+                          type="button"
+                          className={
+                            targetId === enemy.actorId
+                              ? "battle-target-chip battle-target-chip--active"
+                              : "battle-target-chip"
+                          }
+                          onClick={() => setTargetId(enemy.actorId)}
+                        >
+                          <span aria-hidden="true">{enemyDisplay.icon}</span>
+                          {enemyDisplay.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="battlefield-loading">
+                <div className="battlefield-label">Encounter</div>
+                <h2>Entering Battle</h2>
+                <span>Preparing monster data...</span>
               </div>
-            ) : null}
-
-            {enemyTargets.length > 1 ? (
-              <div className="battle-target-row">
-                {enemyTargets.map((actor) => {
-                  const display = getMonsterDisplay(actor);
-
-                  return (
-                    <button
-                      key={actor.actorId}
-                      type="button"
-                      className={
-                        targetId === actor.actorId
-                          ? "battle-target-chip battle-target-chip--active"
-                          : "battle-target-chip"
-                      }
-                      onClick={() => setTargetId(actor.actorId)}
-                    >
-                      <span aria-hidden="true">{display.icon}</span>
-                      {display.label}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
+            )}
           </div>
 
-          {renderCommandPanel()}
-        </section>
+          <section className="battle-command-panel">{renderCommandPanel()}</section>
+        </main>
 
-        <aside className="battle-side-panel battle-side-panel--log">
+        <aside className="battle-side battle-side--log">
           <div className="battle-panel-eyebrow">Battle Log</div>
 
-          <ol className="battle-log-list">
-            {selectedBattle?.events.length ? (
-              selectedBattle.events
-                .slice()
-                .reverse()
-                .slice(0, 24)
-                .map((event) => (
-                  <li key={event.id} className={`battle-log-event battle-log-event--${event.phase}`}>
-                    <span>{formatEventLabel(event)}</span>
-                    <p>{formatEventMessage(event)}</p>
-                  </li>
-                ))
+          <div className="battle-log-scroll">
+            {battleLogGroups.length > 0 ? (
+              battleLogGroups.map((group) => (
+                <section
+                  key={group.label}
+                  className={
+                    group.current
+                      ? "battle-log-turn battle-log-turn--current"
+                      : "battle-log-turn"
+                  }
+                >
+                  <div className="battle-log-turn__tag">{group.label}</div>
+
+                  {group.events.map((event) => (
+                    <div
+                      key={event.id}
+                      className={`battle-log-line battle-log-line--${getEventTone(
+                        event,
+                        playerActor?.actorId
+                      )}`}
+                    >
+                      {formatEventMessage(event)}
+                    </div>
+                  ))}
+
+                  {group.current && !battleFinished ? (
+                    <div className="battle-log-awaiting">
+                      ● Awaiting your command...
+                    </div>
+                  ) : null}
+                </section>
+              ))
             ) : (
-              <li className="battle-log-empty">
-                Battle events will appear here.
-              </li>
+              <div className="battle-log-turn battle-log-turn--current">
+                <div className="battle-log-turn__tag">Battle</div>
+                <div className="battle-log-awaiting">
+                  ● Preparing encounter...
+                </div>
+              </div>
             )}
-          </ol>
-        </aside>
-      </main>
-    );
-  }
-
-  return (
-    <section className="battle-panel">
-      <header className="battle-header">
-        <div className="battle-header__left">
-          <button
-            type="button"
-            className="battle-exit-button"
-            onClick={onExitBattle}
-            disabled={busy}
-          >
-            ← World Map
-          </button>
-
-          <div className="battle-header__identity">
-            <strong>{currentCharacter.name}</strong>
-            <span>
-              Lv. {currentCharacter.progression.level} ·{" "}
-              {compactLabel(currentCharacter.originId)}
-            </span>
           </div>
-        </div>
-
-        <div className="battle-header__vitals">
-          <ResourceBar
-            label="HP"
-            value={playerActor?.hp ?? currentCharacter.currentState.hp}
-            max={currentCharacter.derivedStats.maxHp}
-            tone="hp"
-          />
-          <ResourceBar
-            label="MP"
-            value={playerActor?.mp ?? currentCharacter.currentState.mp}
-            max={currentCharacter.derivedStats.maxMp}
-            tone="mp"
-          />
-          <ResourceBar
-            label="STA"
-            value={playerActor?.stamina ?? currentCharacter.currentState.stamina}
-            max={currentCharacter.derivedStats.maxStamina}
-            tone="stamina"
-          />
-        </div>
-
-        <div className="battle-header__state">
-          <span>{selectedBattle ? compactLabel(selectedBattle.status) : "Ready"}</span>
-          {selectedBattle ? (
-            <strong>
-              R{selectedBattle.roundNumber} · T{selectedBattle.turnNumber}
-            </strong>
-          ) : (
-            <strong>{encounter?.label}</strong>
-          )}
-        </div>
-      </header>
-
-      <div className="battle-body">
-        {selectedBattle ? renderBattleScreen() : renderPrepScreen()}
+        </aside>
       </div>
 
       {notice ? (

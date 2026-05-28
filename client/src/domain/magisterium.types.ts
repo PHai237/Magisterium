@@ -19,6 +19,14 @@ export type MonsterId =
   | "wild_wolf"
   | "goblin";
 
+export type ExplorationZoneId = "town_outskirts" | "forest_edge";
+
+export type ExplorationSearchOutcomeType =
+  | "encounter"
+  | "bronze"
+  | "item"
+  | "nothing";
+
 export type StarterKitId = "novice_adventurer_kit";
 
 export type StatKey = "STR" | "DEX" | "CON" | "INT" | "WIS" | "LUK";
@@ -138,6 +146,22 @@ export interface CharacterSnapshot {
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;
+}
+
+export interface ExplorationSearchResult {
+  zoneId: ExplorationZoneId;
+  zoneName: string;
+  outcomeType: ExplorationSearchOutcomeType;
+  message: string;
+  log: string[];
+  staminaCost: number;
+  character: CharacterSnapshot;
+  encounterId?: EncounterId;
+  bronzeFound?: number;
+  itemFound?: {
+    itemId: ItemId;
+    quantity: number;
+  };
 }
 
 export interface InventoryItemStack {
