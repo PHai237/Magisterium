@@ -73,6 +73,7 @@ export function ExplorationZone({
 }: ExplorationZoneProps) {
   const zone = EXPLORATION_ZONE_DEFINITIONS[zoneId];
   const journalScrollRef = useRef<HTMLDivElement | null>(null);
+  const searchLockRef = useRef(false);
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchLogGroups, setSearchLogGroups] = useState<
@@ -81,6 +82,8 @@ export function ExplorationZone({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    searchLockRef.current = false;
+    setIsSearching(false);
     setSearchLogGroups([]);
     setError(null);
   }, [zoneId]);
@@ -120,12 +123,14 @@ export function ExplorationZone({
   }
 
   async function handleSearch() {
-    if (isSearching) {
+    if (searchLockRef.current) {
       return;
     }
 
+    searchLockRef.current = true;
     setIsSearching(true);
     setError(null);
+    let shouldStayLocked = false;
 
     try {
       const result: ExplorationSearchResult = await explorationApi.search(
@@ -149,6 +154,7 @@ export function ExplorationZone({
       appendLogGroup(nextMessages);
 
       if (result.outcomeType === "encounter" && result.encounterId) {
+        shouldStayLocked = true;
         window.setTimeout(() => {
           onEncounterFound(result.encounterId as EncounterId);
         }, 850);
@@ -158,7 +164,10 @@ export function ExplorationZone({
         searchError instanceof Error ? searchError.message : "Search failed."
       );
     } finally {
-      setIsSearching(false);
+      if (!shouldStayLocked) {
+        searchLockRef.current = false;
+        setIsSearching(false);
+      }
     }
   }
 
