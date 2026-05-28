@@ -226,19 +226,18 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
 
   const groups: BattleLogGroup[] = [];
   let currentGroup: BattleLogGroup | null = null;
-  let visibleTurnNumber = 0;
+  let fallbackRoundNumber = 1;
 
   for (const event of battle.events) {
     if (event.type === "TURN_STARTED") {
-      visibleTurnNumber += 1;
-
       currentGroup = {
-        label: getTurnGroupLabel(battle, event, visibleTurnNumber),
+        label: getTurnGroupLabel(battle, event, fallbackRoundNumber),
         events: [],
         current: false
       };
 
       groups.push(currentGroup);
+      fallbackRoundNumber = getEventRoundNumber(event, fallbackRoundNumber);
 
       continue;
     }
@@ -264,7 +263,7 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
 function getTurnGroupLabel(
   battle: BattleState,
   event: BattleEvent,
-  fallbackIndex: number
+  fallbackRoundNumber: number
 ): string {
   const actor = event.actorId ? battle.actors[event.actorId] : undefined;
   const actorName =
@@ -273,10 +272,22 @@ function getTurnGroupLabel(
       : actor?.actorType === "monster"
         ? getMonsterDisplay(actor).label
         : undefined;
+  const roundNumber = getEventRoundNumber(event, fallbackRoundNumber);
 
   return actorName
-    ? `Turn ${fallbackIndex} - ${actorName}`
-    : `Turn ${fallbackIndex}`;
+    ? `Turn ${roundNumber} - ${actorName}`
+    : `Turn ${roundNumber}`;
+}
+
+function getEventRoundNumber(
+  event: BattleEvent,
+  fallbackRoundNumber: number
+): number {
+  const roundNumber = event.metadata?.roundNumber;
+
+  return typeof roundNumber === "number" && Number.isFinite(roundNumber)
+    ? Math.max(1, Math.floor(roundNumber))
+    : fallbackRoundNumber;
 }
 
 function getEventTone(

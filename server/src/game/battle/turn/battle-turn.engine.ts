@@ -185,10 +185,26 @@ export function advanceBattleToNextActor(
     );
   }
 
-  const advancedTurnOrder = advanceTurnGaugeUntilReady(livingTurnOrder);
+  const hasWaitingActorThisRound = livingTurnOrder.some(
+    (entry) => !entry.hasActedThisRound,
+  );
+  const turnOrderEligibleToAct = hasWaitingActorThisRound
+    ? livingTurnOrder.filter((entry) => !entry.hasActedThisRound)
+    : livingTurnOrder;
+
+  const advancedEligibleTurnOrder = advanceTurnGaugeUntilReady(
+    turnOrderEligibleToAct,
+  );
+  const advancedTurnOrder = livingTurnOrder.map((entry) => {
+    const advancedEntry = advancedEligibleTurnOrder.find(
+      (candidate) => candidate.actorId === entry.actorId,
+    );
+
+    return advancedEntry ?? entry;
+  });
 
   const readyEntry = findNextReadyLivingEntry(
-    advancedTurnOrder,
+    advancedEligibleTurnOrder,
     battleState.actors,
   );
 
