@@ -69,6 +69,7 @@ export function restoreTurnStartResources(actor: BattleActorState): {
   }
 
   const wasExhausted = actor.isExhausted;
+  const canRestoreStamina = actor.actorType === 'character';
 
   const currentMp = getCurrentResource(actor, 'MP');
   const currentStamina = getCurrentResource(actor, 'Stamina');
@@ -81,10 +82,12 @@ export function restoreTurnStartResources(actor: BattleActorState): {
     currentMp + normalizeResourceRegen(actor.derivedStats.mpRegen),
   );
 
-  const nextStamina = Math.min(
-    maxStamina,
-    currentStamina + normalizeResourceRegen(actor.derivedStats.staminaRegen),
-  );
+  const nextStamina = canRestoreStamina
+    ? Math.min(
+        maxStamina,
+        currentStamina + normalizeResourceRegen(actor.derivedStats.staminaRegen),
+      )
+    : currentStamina;
 
   const restoredMp = nextMp - currentMp;
   const restoredStamina = nextStamina - currentStamina;
@@ -131,7 +134,7 @@ export function restoreTurnStartResources(actor: BattleActorState): {
     );
   }
 
-  if (wasExhausted && !restoredActor.isExhausted) {
+  if (canRestoreStamina && wasExhausted && !restoredActor.isExhausted) {
     events.push(
       createBattleEvent({
         type: 'RECOVERED_FROM_EXHAUSTION',

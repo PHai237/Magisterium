@@ -431,6 +431,37 @@ describe('battle resource application', () => {
       expect(result.events).toEqual([]);
     });
 
+    it('should not restore stamina for monster actors', () => {
+      const actor = createActor({
+        actorId: 'wild_wolf',
+        actorType: 'monster',
+        mp: 10,
+        stamina: 20,
+        derivedStats: {
+          ...DEFAULT_DERIVED_STATS,
+          mpRegen: 3,
+          staminaRegen: 7,
+        },
+      });
+
+      const result = restoreTurnStartResources(actor);
+
+      expect(result.actor.mp).toBe(13);
+      expect(result.actor.stamina).toBe(20);
+      expect(result.events).toEqual([
+        expect.objectContaining({
+          type: 'RESOURCE_RESTORED',
+          actorId: 'wild_wolf',
+          value: 3,
+          metadata: {
+            resourceType: 'MP',
+            currentValue: 13,
+            maxValue: 50,
+          },
+        }),
+      ]);
+    });
+
     it('should normalize invalid regen values to zero', () => {
       const actor = createActor({
         mp: 10,

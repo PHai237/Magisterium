@@ -461,10 +461,11 @@ function renderBattleLogEvent(
       typeof event.metadata?.resourceType === "string"
         ? event.metadata.resourceType
         : "resource";
+    const targetActorId = event.targetId ?? event.actorId;
 
     return (
       <>
-        {renderActorName(battle, event.targetId, currentCharacter)}
+        {renderActorName(battle, targetActorId, currentCharacter)}
         <span> recovers </span>
         <span className="battle-log-value battle-log-value--heal">
           {restoredValue} {resourceType}
