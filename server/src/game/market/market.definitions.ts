@@ -138,14 +138,4 @@ export const MARKET_VENDOR_DEFINITIONS = [
         },
       ],
     },
-    {
-      id: 'black_market_rumor',
-      name: 'Black Market',
-      icon: '🕯',
-      role: 'Rumored Player Trade',
-      description:
-        'A locked social trade space reserved for future player listings, chat, and rare goods.',
-      unlockState: 'rumored',
-      stock: [],
-    },
   ] as const satisfies readonly MarketVendorDefinition[];

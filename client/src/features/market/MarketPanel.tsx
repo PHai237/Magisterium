@@ -370,9 +370,7 @@ export function MarketPanel({
             <>
               <div className="market-vendor-header">
                 <div>
-                  <p>{selectedVendor.role}</p>
                   <h3>{selectedVendor.name}</h3>
-                  <span>{selectedVendor.description}</span>
                 </div>
 
                 <div className="market-restock-pill">

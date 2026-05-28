@@ -937,7 +937,7 @@
 
 .gameshell-location-stage--market .gameshell-location-main {
   place-items: stretch;
-  padding-top: 3.35rem;
+  padding-top: 0;
 }
 
 .gameshell-location-stage--market .market-basic-card {

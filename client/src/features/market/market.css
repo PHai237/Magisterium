@@ -20,6 +20,7 @@
 }
 
 .market-basic-card__top {
+  min-height: 3rem;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -98,7 +99,7 @@
   display: grid;
   align-content: start;
   gap: 0.42rem;
-  padding-right: 0.14rem;
+  padding: 0.16rem 0.14rem 0.16rem 0;
   scrollbar-width: thin;
   scrollbar-color: #334155 transparent;
 }
@@ -241,7 +242,7 @@
   padding: 0.78rem;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 0.66rem;
+  gap: 0.58rem;
 }
 
 .market-vendor-header {
@@ -253,31 +254,13 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.13);
 }
 
-.market-vendor-header p {
-  margin: 0;
-  color: #10b981;
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  font-weight: 950;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .market-vendor-header h3 {
-  margin: 0.18rem 0 0;
+  margin: 0;
   color: #f8fafc;
   font-size: 1.05rem;
   font-weight: 950;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.market-vendor-header span {
-  display: block;
-  margin-top: 0.22rem;
-  color: #94a3b8;
-  font-size: 0.72rem;
-  line-height: 1.35;
 }
 
 .market-restock-pill {
