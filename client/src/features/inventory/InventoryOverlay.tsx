@@ -244,6 +244,20 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "material",
     description: "Sticky residue from a slime. Mostly used as a low-grade crafting material."
   },
+  boar_meat: {
+    id: "boar_meat",
+    name: "Boar Meat",
+    icon: "🥩",
+    category: "material",
+    description: "A fresh cut of meat from a wild boar. Useful for cooking and early rations."
+  },
+  wolf_skin: {
+    id: "wolf_skin",
+    name: "Wolf's Skin",
+    icon: "🧵",
+    category: "material",
+    description: "A rough pelt taken from a wild wolf. Useful for basic leatherwork."
+  },
   goblin_ear: {
     id: "goblin_ear",
     name: "Goblin Ear",

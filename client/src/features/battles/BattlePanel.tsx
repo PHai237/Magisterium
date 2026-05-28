@@ -325,12 +325,13 @@ const HIDDEN_BATTLE_LOG_EVENT_TYPES = new Set([
   "TURN_ENDED",
   "ACTION_STARTED",
   "ACTION_COMPLETED",
+  "ITEM_USED",
   "HIT",
   "CRIT",
   "DAMAGE_CALCULATED",
   "DAMAGE_MITIGATED",
   "RESOURCE_SPENT",
-  "RESOURCE_RESTORED"
+  "ITEM_CONSUMED"
 ]);
 
 function getActorName(
@@ -448,6 +449,25 @@ function renderBattleLogEvent(
         <span> recovers </span>
         <span className="battle-log-value battle-log-value--heal">
           {Math.max(0, Math.floor(event.value ?? 0))} HP
+        </span>
+        <span>.</span>
+      </>
+    );
+  }
+
+  if (event.type === "RESOURCE_RESTORED") {
+    const restoredValue = Math.max(0, Math.floor(event.value ?? 0));
+    const resourceType =
+      typeof event.metadata?.resourceType === "string"
+        ? event.metadata.resourceType
+        : "resource";
+
+    return (
+      <>
+        {renderActorName(battle, event.targetId, currentCharacter)}
+        <span> recovers </span>
+        <span className="battle-log-value battle-log-value--heal">
+          {restoredValue} {resourceType}
         </span>
         <span>.</span>
       </>

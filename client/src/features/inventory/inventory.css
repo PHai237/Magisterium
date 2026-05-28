@@ -181,8 +181,8 @@
 
 .inventory-equipment-slot {
   position: absolute;
-  width: 4.15rem;
-  height: 3.85rem;
+  width: 4.8rem;
+  height: 4.4rem;
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 0.78rem;
   background:
@@ -233,7 +233,7 @@
 
 .inventory-equipment-slot strong {
   display: block;
-  max-width: 3.45rem;
+  max-width: 4.05rem;
   overflow: hidden;
   color: #e2e8f0;
   font-size: 0.55rem;
@@ -252,22 +252,22 @@
 
 .inventory-equipment-slot--slot-hand {
   top: 25%;
-  left: 5.5%;
+  left: 3.5%;
 }
 
 .inventory-equipment-slot--slot-offhand {
   top: 25%;
-  right: 5.5%;
+  right: 3.5%;
 }
 
 .inventory-equipment-slot--slot-armor {
   bottom: 25%;
-  left: 5.5%;
+  left: 3.5%;
 }
 
 .inventory-equipment-slot--slot-legging {
   bottom: 25%;
-  right: 5.5%;
+  right: 3.5%;
 }
 
 .inventory-equipment-slot--slot-boots {
@@ -302,27 +302,29 @@
   gap: 0.55rem;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 0.1rem 0.25rem 0.2rem 0;
+  padding: 0.1rem 0.42rem 0.2rem 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(226, 232, 240, 0.18) rgba(2, 6, 23, 0.24);
+  scrollbar-color: rgba(168, 85, 247, 0.55) rgba(15, 23, 42, 0.58);
 }
 
 .inventory-bag-grid::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .inventory-bag-grid::-webkit-scrollbar-track {
-  background: rgba(2, 6, 23, 0.24);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(15, 23, 42, 0.58);
   border-radius: 999px;
 }
 
 .inventory-bag-grid::-webkit-scrollbar-thumb {
-  background: rgba(226, 232, 240, 0.18);
+  border: 2px solid rgba(15, 23, 42, 0.82);
+  background: linear-gradient(180deg, #a855f7, #f59e0b);
   border-radius: 999px;
 }
 
 .inventory-bag-grid::-webkit-scrollbar-thumb:hover {
-  background: rgba(226, 232, 240, 0.28);
+  background: linear-gradient(180deg, #c084fc, #fbbf24);
 }
 
 .inventory-bag-cell {
