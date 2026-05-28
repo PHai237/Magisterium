@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Button } from "../../components/ui/Button";
 import { EXPLORATION_ZONE_DEFINITIONS } from "../../domain/magisterium.constants";
@@ -72,7 +72,7 @@ export function ExplorationZone({
   onReturnToWorldMap
 }: ExplorationZoneProps) {
   const zone = EXPLORATION_ZONE_DEFINITIONS[zoneId];
-  const journalEndRef = useRef<HTMLDivElement | null>(null);
+  const journalScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchLogGroups, setSearchLogGroups] = useState<
@@ -85,11 +85,18 @@ export function ExplorationZone({
     setError(null);
   }, [zoneId]);
 
-  useEffect(() => {
-    journalEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end"
+  useLayoutEffect(() => {
+    const journalElement = journalScrollRef.current;
+
+    if (!journalElement) {
+      return undefined;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      journalElement.scrollTop = journalElement.scrollHeight;
     });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, [searchLogGroups]);
 
   function appendLogGroup(messages: string[]) {
@@ -166,7 +173,7 @@ export function ExplorationZone({
             disabled={isSearching}
             onClick={onReturnToWorldMap}
           >
-            ← Return to World Map
+            ← Return to World
           </Button>
 
           <div className="exploration-ambient">
@@ -210,7 +217,7 @@ export function ExplorationZone({
             <i aria-hidden="true" />
           </div>
 
-          <div className="exploration-journal__scroll">
+          <div className="exploration-journal__scroll" ref={journalScrollRef}>
             {searchLogGroups.length > 0 ? (
               searchLogGroups.map((group) => (
                 <section key={group.id} className="exploration-journal-group">
@@ -230,7 +237,6 @@ export function ExplorationZone({
               </div>
             )}
 
-            <div ref={journalEndRef} />
           </div>
         </aside>
       </div>
