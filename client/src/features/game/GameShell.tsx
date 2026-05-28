@@ -139,6 +139,24 @@ export function GameShell({
   }
 
   function renderBodyContent() {
+    if (activePanel === "exploration") {
+      return (
+        <LocationStage
+          returnLabel="← Return to World Map"
+          onBack={returnToWorldMap}
+          className="gameshell-location-stage--exploration"
+        >
+          <ExplorationZone
+            userId={userId}
+            currentCharacter={currentCharacter}
+            zoneId={selectedZoneId}
+            onCharacterUpdated={onCharacterUpdated}
+            onEncounterFound={openBattle}
+          />
+        </LocationStage>
+      );
+    }
+
     if (activePanel === "inn") {
       return (
         <LocationStage returnLabel="← Return to Town" onBack={returnToTownMap}>
@@ -198,21 +216,6 @@ export function GameShell({
           />
         )}
       </main>
-    );
-  }
-
-  if (activePanel === "exploration") {
-    return (
-      <div className="gameshell-root gameshell-root--exploration">
-        <ExplorationZone
-          userId={userId}
-          currentCharacter={currentCharacter}
-          zoneId={selectedZoneId}
-          onCharacterUpdated={onCharacterUpdated}
-          onEncounterFound={openBattle}
-          onReturnToWorldMap={returnToWorldMap}
-        />
-      </div>
     );
   }
 

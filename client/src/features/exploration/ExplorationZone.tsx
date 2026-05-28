@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { EXPLORATION_ZONE_DEFINITIONS } from "../../domain/magisterium.constants";
 import type {
@@ -7,7 +7,7 @@ import type {
   ExplorationSearchResult,
   ExplorationZoneId
 } from "../../domain/magisterium.types";
-import { compactLabel, formatNumber } from "../../lib/format";
+import { compactLabel } from "../../lib/format";
 import { explorationApi } from "./exploration.api";
 import "./exploration.css";
 
@@ -17,67 +17,39 @@ interface ExplorationZoneProps {
   zoneId: ExplorationZoneId;
   onCharacterUpdated: (character: CharacterSnapshot) => void;
   onEncounterFound: (encounterId: EncounterId) => void;
-  onReturnToWorldMap: () => void;
-}
-
-function clampPercent(value: number, max: number): number {
-  if (max <= 0) {
-    return 0;
-  }
-
-  return Math.max(0, Math.min(100, (value / max) * 100));
-}
-
-function getCurrencyBreakdown(totalBronze: number) {
-  const safeTotal = Math.max(0, Math.floor(totalBronze));
-  const gold = Math.floor(safeTotal / 10_000);
-  const silver = Math.floor((safeTotal % 10_000) / 100);
-  const bronze = safeTotal % 100;
-
-  return { gold, silver, bronze };
-}
-
-function ResourcePill({
-  label,
-  value,
-  max,
-  tone
-}: {
-  label: string;
-  value: number;
-  max: number;
-  tone: "hp" | "mp" | "stamina";
-}) {
-  return (
-    <div className={`exploration-resource exploration-resource--${tone}`}>
-      <span>{label}</span>
-      <div className="exploration-resource__track">
-        <div
-          className="exploration-resource__fill"
-          style={{ width: `${clampPercent(value, max)}%` }}
-        />
-      </div>
-      <strong>
-        {formatNumber(value)} / {formatNumber(max)}
-      </strong>
-    </div>
-  );
 }
 
 function getLogClassName(message: string): string {
-  if (message.includes("hostile") || message.includes("Warning")) {
+  if (
+    message.includes("hostile") ||
+    message.includes("Encounter") ||
+    message.includes("Drawing weapon") ||
+    message.includes("Warning")
+  ) {
     return "exploration-journal-line exploration-journal-line--danger";
   }
 
-  if (message.includes("Bronze") || message.includes("Found")) {
+  if (
+    message.includes("Bronze") ||
+    message.includes("Found") ||
+    message.includes("coin")
+  ) {
     return "exploration-journal-line exploration-journal-line--reward";
   }
 
-  if (message.includes("Recovered") || message.includes("material")) {
+  if (
+    message.includes("Recovered") ||
+    message.includes("material") ||
+    message.includes("item")
+  ) {
     return "exploration-journal-line exploration-journal-line--item";
   }
 
-  if (message.includes("Searching") || message.includes("Stamina")) {
+  if (
+    message.includes("Searching") ||
+    message.includes("Stamina") ||
+    message.includes("Nothing")
+  ) {
     return "exploration-journal-line exploration-journal-line--muted";
   }
 
@@ -89,32 +61,35 @@ export function ExplorationZone({
   currentCharacter,
   zoneId,
   onCharacterUpdated,
-  onEncounterFound,
-  onReturnToWorldMap
+  onEncounterFound
 }: ExplorationZoneProps) {
   const zone = EXPLORATION_ZONE_DEFINITIONS[zoneId];
-  const wallet = useMemo(
-    () => getCurrencyBreakdown(currentCharacter.moneyBronze),
-    [currentCharacter.moneyBronze]
-  );
+  const journalEndRef = useRef<HTMLDivElement | null>(null);
 
   const [isSearching, setIsSearching] = useState(false);
-  const [searchLog, setSearchLog] = useState<string[]>(() => [
-    ...zone.entryLog,
-    "System: Ready to search. Keep enough stamina before pushing deeper."
-  ]);
+  const [searchLog, setSearchLog] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setSearchLog([
-      ...zone.entryLog,
-      "System: Ready to search. Keep enough stamina before pushing deeper."
-    ]);
+    setSearchLog([]);
     setError(null);
-  }, [zone]);
+  }, [zoneId]);
 
-  function prependLogs(messages: string[]) {
-    setSearchLog((current) => [...messages, ...current].slice(0, 36));
+  useEffect(() => {
+    journalEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end"
+    });
+  }, [searchLog]);
+
+  function appendLogs(messages: string[]) {
+    const cleanMessages = messages.filter((message) => message.trim().length > 0);
+
+    if (cleanMessages.length === 0) {
+      return;
+    }
+
+    setSearchLog((current) => [...current, ...cleanMessages].slice(-36));
   }
 
   async function handleSearch() {
@@ -124,7 +99,7 @@ export function ExplorationZone({
 
     setIsSearching(true);
     setError(null);
-    prependLogs(["Searching the area..."]);
+    appendLogs(["Searching the area..."]);
 
     try {
       const result: ExplorationSearchResult = await explorationApi.search(
@@ -136,10 +111,10 @@ export function ExplorationZone({
       );
 
       onCharacterUpdated(result.character);
-      prependLogs(result.log);
+      appendLogs(result.log);
 
       if (result.outcomeType === "encounter" && result.encounterId) {
-        prependLogs([
+        appendLogs([
           `Encounter found: ${compactLabel(result.encounterId)}. Drawing weapon...`
         ]);
 
@@ -158,75 +133,26 @@ export function ExplorationZone({
 
   return (
     <section className="exploration-zone" aria-label="Exploration zone">
-      <header className="exploration-topbar">
-        <div className="exploration-topbar__identity">
-          <strong>{currentCharacter.name}</strong>
-          <span>Lv. {currentCharacter.progression.level}</span>
-          <em>Origin: {compactLabel(currentCharacter.originId)}</em>
-        </div>
-
-        <div className="exploration-topbar__vitals">
-          <ResourcePill
-            label="HP"
-            value={currentCharacter.currentState.hp}
-            max={currentCharacter.derivedStats.maxHp}
-            tone="hp"
-          />
-          <ResourcePill
-            label="MP"
-            value={currentCharacter.currentState.mp}
-            max={currentCharacter.derivedStats.maxMp}
-            tone="mp"
-          />
-          <ResourcePill
-            label="STA"
-            value={currentCharacter.currentState.stamina}
-            max={currentCharacter.derivedStats.maxStamina}
-            tone="stamina"
-          />
-        </div>
-
-        <div className="exploration-wallet" aria-label="Wallet">
-          <span className="exploration-wallet__gold">
-            {formatNumber(wallet.gold)} <small>G</small>
-          </span>
-          <span className="exploration-wallet__silver">
-            {formatNumber(wallet.silver)} <small>S</small>
-          </span>
-          <span className="exploration-wallet__bronze">
-            {formatNumber(wallet.bronze)} <small>B</small>
-          </span>
-        </div>
-      </header>
-
       <div className="exploration-layout">
         <main className="exploration-main">
-          <div className="exploration-main__nav">
-            <button
-              type="button"
-              className="exploration-back-button"
-              disabled={isSearching}
-              onClick={onReturnToWorldMap}
-            >
-              ← Back to World Map
-            </button>
-          </div>
-
           <div className="exploration-ambient">
             <div className="exploration-ambient__icon" aria-hidden="true">
               {zone.icon}
             </div>
+
             <div className="exploration-ambient__eyebrow">
               Exploration Area
             </div>
+
             <h2>{zone.name}</h2>
-            <p>{zone.description}</p>
 
             <div className="exploration-zone-meta">
               <span>
                 Danger: <strong>{"◆".repeat(zone.dangerLevel)}</strong>
               </span>
+
               <span aria-hidden="true">|</span>
+
               <span>
                 Cost: <strong>{zone.staminaCost} STA / Search</strong>
               </span>
@@ -245,8 +171,8 @@ export function ExplorationZone({
               </strong>
               <span>
                 {isSearching
-                  ? "Listening for movement and hidden traces."
-                  : "Server rolls for encounter, loot, or silence."}
+                  ? "Scanning the zone..."
+                  : "Search for encounters, loot, or traces."}
               </span>
             </button>
 
@@ -261,11 +187,22 @@ export function ExplorationZone({
           </div>
 
           <div className="exploration-journal__scroll">
-            {searchLog.map((message, index) => (
-              <div key={`${message}-${index}`} className={getLogClassName(message)}>
-                {message}
+            {searchLog.length > 0 ? (
+              searchLog.map((message, index) => (
+                <div
+                  key={`${message}-${index}`}
+                  className={getLogClassName(message)}
+                >
+                  {message}
+                </div>
+              ))
+            ) : (
+              <div className="exploration-journal-empty">
+                Search results will appear here.
               </div>
-            ))}
+            )}
+
+            <div ref={journalEndRef} />
           </div>
         </aside>
       </div>

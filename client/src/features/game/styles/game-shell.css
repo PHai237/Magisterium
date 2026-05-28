@@ -782,6 +782,11 @@
   place-items: center;
 }
 
+.gameshell-location-stage--exploration .gameshell-location-main {
+  place-items: stretch;
+  padding-top: 3.65rem;
+}
+
 .gameshell-location-back {
   position: absolute;
   top: 0.85rem;

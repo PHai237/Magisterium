@@ -386,17 +386,28 @@ export class CharacterService implements OnModuleInit {
     }
 
     const nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(
-      () => addItemStacksToInventory(existingCharacter.inventoryItemIds, itemRewards),
+      () =>
+        addItemStacksToInventory(
+          existingCharacter.inventoryItemIds,
+          itemRewards,
+        ),
     );
 
     const moneyBronze = options.moneyBronze ?? 0;
 
-    if (!Number.isFinite(moneyBronze) || !Number.isSafeInteger(Math.floor(moneyBronze))) {
-      throw new BadRequestException('Exploration bronze reward must be a safe integer.');
+    if (
+      !Number.isFinite(moneyBronze) ||
+      !Number.isSafeInteger(Math.floor(moneyBronze))
+    ) {
+      throw new BadRequestException(
+        'Exploration bronze reward must be a safe integer.',
+      );
     }
 
     if (moneyBronze < 0) {
-      throw new BadRequestException('Exploration bronze reward must not be negative.');
+      throw new BadRequestException(
+        'Exploration bronze reward must not be negative.',
+      );
     }
 
     const nextCurrentState: CurrentState = {
@@ -406,7 +417,10 @@ export class CharacterService implements OnModuleInit {
 
     const nextCharacter: Character = {
       ...existingCharacter,
-      moneyBronze: addBronze(existingCharacter.moneyBronze, Math.floor(moneyBronze)),
+      moneyBronze: addBronze(
+        existingCharacter.moneyBronze,
+        Math.floor(moneyBronze),
+      ),
       inventoryItemIds: nextInventoryItemIds,
       equippedItemIds: existingCharacter.equippedItemIds.filter(
         (equippedItemId) => nextInventoryItemIds.includes(equippedItemId),
