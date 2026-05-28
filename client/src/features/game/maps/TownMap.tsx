@@ -19,8 +19,13 @@ export function TownMap({
         Residential Quarter
       </div>
 
-      <div className="gameshell-district gameshell-district--plaza">
-        Grand Plaza
+      <div className="gameshell-plaza" aria-hidden="true">
+        <div className="gameshell-plaza__tiles">
+          {Array.from({ length: 28 }, (_, index) => (
+            <span key={index} />
+          ))}
+        </div>
+        <div className="gameshell-plaza__label">Grand Plaza</div>
       </div>
 
       <div className="gameshell-river" />
