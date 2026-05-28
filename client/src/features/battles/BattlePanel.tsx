@@ -219,16 +219,6 @@ function shouldShowClaimReward(battle: BattleState | null): boolean {
   return battle?.status === "victory" && !battle.rewardClaim;
 }
 
-function getTurnLabel(event: BattleEvent, fallbackIndex: number): string {
-  const messageTurn = event.message?.match(/Turn\s+\d+/i)?.[0];
-
-  if (messageTurn) {
-    return messageTurn;
-  }
-
-  return `Turn ${fallbackIndex}`;
-}
-
 function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
   if (!battle) {
     return [];
@@ -236,23 +226,19 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
 
   const groups: BattleLogGroup[] = [];
   let currentGroup: BattleLogGroup | null = null;
-  let playerTurnNumber = 0;
+  let visibleTurnNumber = 0;
 
   for (const event of battle.events) {
     if (event.type === "TURN_STARTED") {
-      const actor = event.actorId ? battle.actors[event.actorId] : undefined;
+      visibleTurnNumber += 1;
 
-      if (actor?.actorType === "character") {
-        playerTurnNumber += 1;
+      currentGroup = {
+        label: getTurnGroupLabel(battle, event, visibleTurnNumber),
+        events: [],
+        current: false
+      };
 
-        currentGroup = {
-          label: `Turn ${playerTurnNumber}`,
-          events: [],
-          current: false
-        };
-
-        groups.push(currentGroup);
-      }
+      groups.push(currentGroup);
 
       continue;
     }
@@ -273,6 +259,24 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
   }
 
   return groups.filter((group) => group.events.length > 0 || group.current);
+}
+
+function getTurnGroupLabel(
+  battle: BattleState,
+  event: BattleEvent,
+  fallbackIndex: number
+): string {
+  const actor = event.actorId ? battle.actors[event.actorId] : undefined;
+  const actorName =
+    actor?.actorType === "character"
+      ? "You"
+      : actor?.actorType === "monster"
+        ? getMonsterDisplay(actor).label
+        : undefined;
+
+  return actorName
+    ? `Turn ${fallbackIndex} - ${actorName}`
+    : `Turn ${fallbackIndex}`;
 }
 
 function getEventTone(
