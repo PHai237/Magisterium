@@ -77,10 +77,7 @@ export class ExplorationService {
     ).outcomeType;
 
     const reward: ExplorationRewardInput = {};
-    const log: string[] = [
-      `Searching ${zone.name}...`,
-      `-${zone.staminaCost} Stamina spent surveying the area.`,
-    ];
+    const log: string[] = [];
 
     let message = 'The area is quiet. Nothing responds to your search.';
     let encounterId: EncounterId | undefined;

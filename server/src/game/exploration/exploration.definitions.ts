@@ -61,50 +61,52 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
     encounterPool: [
       {
         encounterId: 'town_outskirts_slime',
-        weight: 38,
+        weight: 50,
       },
       {
         encounterId: 'town_outskirts_boar',
-        weight: 30,
+        weight: 25,
       },
       {
         encounterId: 'town_outskirts_wolf',
-        weight: 22,
-      },
-      {
-        encounterId: 'town_outskirts_mixed',
-        weight: 10,
+        weight: 25,
       },
     ],
     itemPool: [
       {
-        itemId: 'slime_gel',
+        itemId: 'stamina_bread',
         minQuantity: 1,
         maxQuantity: 1,
-        weight: 100,
+        weight: 50,
+      },
+      {
+        itemId: 'minor_hp_potion',
+        minQuantity: 1,
+        maxQuantity: 1,
+        weight: 50,
       },
     ],
     outcomeWeights: [
       {
         outcomeType: 'encounter',
-        weight: 45,
+        weight: 40,
       },
       {
         outcomeType: 'bronze',
-        weight: 25,
-      },
-      {
-        outcomeType: 'nothing',
-        weight: 20,
+        weight: 15,
       },
       {
         outcomeType: 'item',
-        weight: 10,
+        weight: 5,
+      },
+      {
+        outcomeType: 'nothing',
+        weight: 40,
       },
     ],
     bronzeReward: {
-      min: 3,
-      max: 9,
+      min: 1,
+      max: 3,
     },
     entryLog: [
       'You step beyond the stronghold road into the open town outskirts.',
@@ -132,33 +134,39 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
     ],
     itemPool: [
       {
-        itemId: 'wolf_skin',
+        itemId: 'stamina_bread',
         minQuantity: 1,
         maxQuantity: 1,
-        weight: 100,
+        weight: 50,
+      },
+      {
+        itemId: 'minor_hp_potion',
+        minQuantity: 1,
+        maxQuantity: 1,
+        weight: 50,
       },
     ],
     outcomeWeights: [
       {
         outcomeType: 'encounter',
-        weight: 55,
+        weight: 40,
       },
       {
         outcomeType: 'bronze',
         weight: 15,
       },
       {
-        outcomeType: 'nothing',
-        weight: 20,
+        outcomeType: 'item',
+        weight: 5,
       },
       {
-        outcomeType: 'item',
-        weight: 10,
+        outcomeType: 'nothing',
+        weight: 40,
       },
     ],
     bronzeReward: {
-      min: 4,
-      max: 12,
+      min: 1,
+      max: 3,
     },
     entryLog: [
       'You approach the forest edge. The canopy muffles the sound of the road behind you.',
