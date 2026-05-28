@@ -276,16 +276,14 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
 }
 
 function getEventTone(
-  event: BattleEvent,
-  battle: BattleState | null
+  event: BattleEvent
 ): "damage" | "enemy" | "resource" | "cancelled" | "miss" | "neutral" {
   if (event.type === "MISS") {
     return "miss";
   }
 
   if (event.type === "DAMAGE_APPLIED") {
-    const actorRole = getActorLogRole(battle, event.actorId);
-    return actorRole === "enemy" ? "enemy" : "damage";
+    return "damage";
   }
 
   if (event.type === "HEAL_APPLIED") {
@@ -1173,8 +1171,7 @@ export function BattlePanel({
                       <div
                         key={event.id}
                         className={`battle-log-line battle-log-line--${getEventTone(
-                          event,
-                          battle
+                          event
                         )}`}
                       >
                         {renderBattleLogEvent(event, battle, currentCharacter)}
