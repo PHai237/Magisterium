@@ -1293,8 +1293,8 @@
   }
 
   .battle-shell {
-    width: 100%;
-    max-width: 100%;
+    width: 100vw;
+    max-width: 100vw;
     flex: 1 1 auto;
     min-height: 0;
     grid-template-columns: minmax(0, 1fr);
@@ -1310,7 +1310,8 @@
   }
 
   .battle-center {
-    width: 100%;
+    width: 100vw;
+    max-width: 100vw;
     min-width: 0;
     min-height: 0;
     overflow-x: clip;
@@ -1351,7 +1352,7 @@
   }
 
   .battlefield-focus {
-    min-height: clamp(12.5rem, 34vh, 16rem);
+    min-height: clamp(10.25rem, 27vh, 13rem);
     border: 1px solid rgba(40, 45, 61, 0.54);
     border-radius: 0.92rem;
     background:
@@ -1361,9 +1362,9 @@
         transparent 9rem
       ),
       rgba(15, 23, 42, 0.18);
-    padding: 1rem 0.8rem;
+    padding: 0.76rem 0.7rem;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.36rem;
   }
 
   .battlefield-label {
@@ -1372,18 +1373,18 @@
   }
 
   .battle-enemy-orb {
-    width: 4rem;
-    height: 4rem;
-    font-size: 1.72rem;
+    width: 3.35rem;
+    height: 3.35rem;
+    font-size: 1.46rem;
     box-shadow:
-      0 0 0 6px rgba(59, 67, 92, 0.14),
-      0 0 34px rgba(0, 0, 0, 0.32);
+      0 0 0 5px rgba(59, 67, 92, 0.14),
+      0 0 28px rgba(0, 0, 0, 0.3);
   }
 
   .battlefield-focus h2,
   .battlefield-loading h2 {
     max-width: 100%;
-    font-size: clamp(1.35rem, 8vw, 2.1rem);
+    font-size: clamp(1.22rem, 7.2vw, 1.9rem);
     line-height: 1;
     letter-spacing: 0.16em;
     word-break: break-word;
@@ -1395,8 +1396,8 @@
   }
 
   .battle-enemy-health {
-    width: min(100%, 22rem);
-    margin-top: 0.3rem;
+    width: min(80%, 17.6rem);
+    margin-top: 0.18rem;
   }
 
   .battle-enemy-health .battle-resource__label {
@@ -1404,11 +1405,11 @@
   }
 
   .battle-enemy-health .battle-resource__track {
-    height: 1.45rem;
+    height: 1.18rem;
   }
 
   .battle-enemy-health .battle-resource__value {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
   }
 
   .battle-target-strip {
@@ -1473,17 +1474,17 @@
 
   .battle-mobile-log-body {
     border-top: 1px solid rgba(59, 67, 92, 0.58);
-    padding: 0.62rem 0.68rem 0.68rem;
+    padding: 0.5rem 0.62rem 0.54rem;
     display: grid;
-    gap: 0.38rem;
+    gap: 0.28rem;
   }
 
   .battle-mobile-log-line {
     color: #cbd5e1;
     font-family: var(--mono);
-    font-size: 0.66rem;
+    font-size: 0.62rem;
     font-weight: 820;
-    line-height: 1.42;
+    line-height: 1.34;
   }
 
   .battle-mobile-log-line .battle-log-value {
@@ -1507,7 +1508,7 @@
     border-top: 1px solid rgba(40, 45, 61, 0.94);
     background:
       linear-gradient(180deg, rgba(17, 20, 27, 0.92), #11141b 32%), #11141b;
-    padding: 0.72rem 0.78rem calc(0.78rem + env(safe-area-inset-bottom));
+    padding: 0.58rem 0.78rem calc(0.62rem + env(safe-area-inset-bottom));
     box-shadow: 0 -16px 34px rgba(0, 0, 0, 0.26);
   }
 
@@ -1523,23 +1524,25 @@
   .battle-main-actions {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.42rem;
+    gap: 0.36rem;
   }
 
   .battle-main-action {
-    min-height: 4.35rem;
+    min-width: 0;
+    min-height: 3.35rem;
     border-radius: 0.72rem;
-    padding: 0.48rem 0.34rem;
-    gap: 0.14rem;
+    padding: 0.36rem 0.28rem;
+    gap: 0.1rem;
+    font-size: 0.68rem;
   }
 
   .battle-main-action strong {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     line-height: 1.15;
   }
 
   .battle-main-action span {
-    font-size: 0.52rem;
+    font-size: 0.48rem;
     line-height: 1.15;
   }
 
@@ -1551,12 +1554,26 @@
 
   .battle-drawer-button {
     min-width: 0;
-    min-height: 2.82rem;
+    min-height: 2.38rem;
     border-radius: 0.62rem;
-    padding: 0.5rem 0.62rem;
+    padding: 0.42rem 0.56rem;
     justify-content: space-between;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     text-align: left;
+  }
+
+  .gameshell-root--combat .battle-shell,
+  .gameshell-root--combat .battle-center {
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+  }
+
+  @supports (width: 100dvw) {
+    .gameshell-root--combat .battle-shell,
+    .gameshell-root--combat .battle-center {
+      inline-size: 100dvw;
+      max-inline-size: 100dvw;
+    }
   }
 
   .battle-drawer-button span,
