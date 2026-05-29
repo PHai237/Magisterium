@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PropsWithChildren } from "react";
 
 import { MagisteriumBrand } from "../../components/brand/MagisteriumBrand";
@@ -106,6 +106,34 @@ export function GameShell({
     useState<EncounterId>("town_outskirts_slime");
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
+  const mapViewportRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (activePanel !== "map") {
+      return undefined;
+    }
+
+    const viewport = mapViewportRef.current;
+
+    if (!viewport || window.innerWidth > 760) {
+      return undefined;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      viewport.scrollLeft = Math.max(
+        0,
+        (viewport.scrollWidth - viewport.clientWidth) / 2
+      );
+
+      viewport.scrollTop = Math.max(
+        0,
+        (viewport.scrollHeight - viewport.clientHeight) / 2
+      );
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activePanel, mapView]);
+
   function openPanel(panel: ActivePanel) {
     setIsInventoryOpen(false);
     setActivePanel(panel);
@@ -205,30 +233,36 @@ export function GameShell({
     }
 
     return (
-      <main className="gameshell-map">
-        <div className="gameshell-map__grid" />
+      <main
+        className="gameshell-map-viewport"
+        ref={mapViewportRef}
+        aria-label={mapView === "town" ? "Town map" : "World map"}
+      >
+        <section className={`gameshell-map gameshell-map--${mapView}`}>
+          <div className="gameshell-map__grid" />
 
-        {mapView === "town" ? (
-          <TownMap
-            onOpenInn={() => openPanel("inn")}
-            onOpenForge={() => openPanel("forge")}
-            onOpenArchive={() => openPanel("archive")}
-            onOpenMarket={() => openPanel("market")}
-            onOpenWorld={() => {
-              setIsInventoryOpen(false);
-              setMapView("world");
-            }}
-          />
-        ) : (
-          <WorldMap
-            onReturnTown={() => {
-              setIsInventoryOpen(false);
-              setMapView("town");
-            }}
-            onOpenTownOutskirts={() => openExploration("town_outskirts")}
-            onOpenForestEdge={() => openExploration("forest_edge")}
-          />
-        )}
+          {mapView === "town" ? (
+            <TownMap
+              onOpenInn={() => openPanel("inn")}
+              onOpenForge={() => openPanel("forge")}
+              onOpenArchive={() => openPanel("archive")}
+              onOpenMarket={() => openPanel("market")}
+              onOpenWorld={() => {
+                setIsInventoryOpen(false);
+                setMapView("world");
+              }}
+            />
+          ) : (
+            <WorldMap
+              onReturnTown={() => {
+                setIsInventoryOpen(false);
+                setMapView("town");
+              }}
+              onOpenTownOutskirts={() => openExploration("town_outskirts")}
+              onOpenForestEdge={() => openExploration("forest_edge")}
+            />
+          )}
+        </section>
       </main>
     );
   }
