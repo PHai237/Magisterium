@@ -797,11 +797,29 @@
     grid-template-columns: 1fr;
   }
 
-  .origin-controls,
   .character-create-actions,
   .character-confirm-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .origin-controls {
+    display: grid;
+    grid-template-columns: minmax(4.4rem, 1fr) auto minmax(4.4rem, 1fr);
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .origin-controls .ui-button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 0.5rem;
+  }
+
+  .origin-controls span {
+    justify-self: center;
+    text-align: center;
+    font-size: 0.68rem;
   }
 
   .character-confirm-overlay {

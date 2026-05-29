@@ -119,7 +119,15 @@ export function App() {
               aria-label="Logout"
               data-tooltip="Logout"
             >
-              <span aria-hidden="true">⏻</span>
+              <svg
+                aria-hidden="true"
+                className="phase5-logout-icon"
+                viewBox="0 0 24 24"
+                focusable="false"
+              >
+                <path d="M12 3v9" />
+                <path d="M7.1 6.8a7 7 0 1 0 9.8 0" />
+              </svg>
             </button>
           </div>
         ) : null}
