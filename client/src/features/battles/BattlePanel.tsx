@@ -14,6 +14,7 @@ import type {
 } from "../../domain/magisterium.types";
 import { compactLabel, formatNumber, uniqueValues } from "../../lib/format";
 import { battlesApi } from "./battles.api";
+import { MobileBattleLog } from "./MobileBattleLog";
 import "./battle.css";
 
 interface BattlePanelProps {
@@ -1477,41 +1478,15 @@ export function BattlePanel({
           </div>
 
           {battle ? (
-            <details className="battle-mobile-log-card" open>
-              <summary>
-                <span>Combat Log</span>
-                <strong>{latestMobileBattleLogGroup?.label ?? "Battle"}</strong>
-              </summary>
-
-              <div className="battle-mobile-log-body">
-                {latestMobileBattleLogGroup ? (
-                  getVisibleBattleLogEvents(
-                    latestMobileBattleLogGroup.events,
-                  ).length > 0 ? (
-                    getVisibleBattleLogEvents(
-                      latestMobileBattleLogGroup.events,
-                    ).map((event) => (
-                      <div
-                        key={event.id}
-                        className={`battle-mobile-log-line battle-log-line--${getEventTone(
-                          event,
-                        )}`}
-                      >
-                        {renderBattleLogEvent(event, battle, currentCharacter)}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="battle-mobile-log-awaiting">
-                      Awaiting your command...
-                    </div>
-                  )
-                ) : (
-                  <div className="battle-mobile-log-awaiting">
-                    Preparing encounter...
-                  </div>
-                )}
-              </div>
-            </details>
+            <MobileBattleLog
+              battle={battle}
+              battleFinished={battleFinished}
+              currentCharacter={currentCharacter}
+              getEventTone={getEventTone}
+              getVisibleBattleLogEvents={getVisibleBattleLogEvents}
+              group={latestMobileBattleLogGroup}
+              renderBattleLogEvent={renderBattleLogEvent}
+            />
           ) : null}
 
           <section className="battle-command-panel">

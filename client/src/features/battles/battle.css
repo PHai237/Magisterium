@@ -1004,6 +1004,8 @@
 
 @media (max-width: 760px), (orientation: portrait) and (max-width: 1180px) {
   .battle-panel {
+    width: 100%;
+    max-width: 100%;
     height: 100%;
     min-height: 0;
     overflow: hidden;
@@ -1262,6 +1264,7 @@
 
   .gameshell-location-stage--battle .gameshell-location-main {
     width: 100%;
+    max-width: 100%;
     min-width: 0;
     align-items: stretch;
     justify-content: stretch;
@@ -1269,12 +1272,14 @@
 
   .gameshell-location-stage--battle .battle-panel {
     width: 100%;
+    max-width: 100%;
     min-width: 0;
     flex: 1 1 auto;
   }
 
   .battle-shell {
     width: 100%;
+    max-width: 100%;
     flex: 1 1 auto;
     min-height: 0;
     grid-template-columns: minmax(0, 1fr);
@@ -1295,7 +1300,7 @@
     overflow: visible;
     padding: 0.78rem 0.78rem 0;
     display: grid;
-    grid-template-rows: auto minmax(15rem, 1fr) auto auto;
+    grid-template-rows: auto auto auto auto;
     justify-items: stretch;
     align-items: stretch;
     gap: 0.72rem;
@@ -1329,7 +1334,7 @@
   }
 
   .battlefield-focus {
-    min-height: 15rem;
+    min-height: clamp(12.5rem, 34vh, 16rem);
     border: 1px solid rgba(40, 45, 61, 0.54);
     border-radius: 0.92rem;
     background:
@@ -1478,9 +1483,9 @@
     position: sticky;
     bottom: 0;
     z-index: 12;
-    width: calc(100% + 1.56rem);
+    width: 100%;
     max-width: none;
-    margin: 0 -0.78rem;
+    margin: 0;
     border-top: 1px solid rgba(40, 45, 61, 0.94);
     background:
       linear-gradient(180deg, rgba(17, 20, 27, 0.92), #11141b 32%), #11141b;
@@ -1522,17 +1527,24 @@
 
   .battle-drawer-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.44rem;
   }
 
   .battle-drawer-button {
+    min-width: 0;
     min-height: 2.82rem;
     border-radius: 0.62rem;
     padding: 0.5rem 0.62rem;
     justify-content: space-between;
     font-size: 0.72rem;
     text-align: left;
+  }
+
+  .battle-drawer-button span,
+  .battle-drawer-button em {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .battle-drawer-button--wide {
