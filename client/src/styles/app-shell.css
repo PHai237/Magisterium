@@ -238,3 +238,30 @@
     display: none;
   }
 }
+
+@media (hover: none) and (pointer: coarse) and (min-width: 761px) and (max-width: 1180px) {
+  .phase5-topbar {
+    min-height: 72px;
+    padding:
+      max(0.8rem, env(safe-area-inset-top))
+      1.15rem
+      0.8rem;
+  }
+
+  .phase5-topbar .magisterium-brand h1 {
+    font-size: 1.22rem;
+    letter-spacing: 0.34em;
+  }
+
+  .phase5-logout-button--icon {
+    width: 2.8rem;
+    height: 2.8rem;
+    min-height: 2.8rem;
+  }
+
+  .phase5-workspace {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
