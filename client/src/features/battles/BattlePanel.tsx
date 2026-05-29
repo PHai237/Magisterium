@@ -927,18 +927,24 @@ export function BattlePanel({
     }
 
     if (battleFinished) {
+      const canClaimReward = shouldShowClaimReward(battle);
+
       return (
-        <div className="battle-result-card">
+        <div
+          className={
+            canClaimReward
+              ? "battle-result-card"
+              : "battle-result-card battle-result-card--return-only"
+          }
+        >
           <strong>{compactLabel(battle.status)}</strong>
 
-          {battle.status === "victory" ? (
-            <span>The encounter has been cleared.</span>
-          ) : (
+          {battle.status === "victory" ? null : (
             <span>The battle has ended.</span>
           )}
 
           <div className="battle-result-actions">
-            {shouldShowClaimReward(battle) ? (
+            {canClaimReward ? (
               <button
                 type="button"
                 className="battle-primary-button"
@@ -955,7 +961,7 @@ export function BattlePanel({
               disabled={busy}
               onClick={onExitBattle}
             >
-              Return to Exploration
+              Return
             </button>
           </div>
         </div>

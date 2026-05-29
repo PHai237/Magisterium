@@ -630,6 +630,12 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
+  align-items: stretch;
+}
+
+.battle-result-card--return-only .battle-result-actions {
+  grid-template-columns: minmax(8.5rem, 14rem);
+  justify-content: center;
 }
 
 .battle-primary-button,
@@ -639,6 +645,10 @@
   padding: 0.45rem 0.7rem;
   font-size: 0.75rem;
   font-weight: 950;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition:
     opacity 150ms ease,
     filter 150ms ease,
@@ -1590,7 +1600,11 @@
 
   .battle-result-actions {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .battle-result-card--return-only .battle-result-actions {
+    grid-template-columns: minmax(8.5rem, 13rem);
   }
 
   .battle-toast {
