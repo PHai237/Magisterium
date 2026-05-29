@@ -266,6 +266,56 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
   return groups.filter((group) => group.events.length > 0 || group.current);
 }
 
+function groupBattleEventsByRound(battle: BattleState | null): BattleLogGroup[] {
+  if (!battle) {
+    return [];
+  }
+
+  const groups: BattleLogGroup[] = [];
+  let currentGroup: BattleLogGroup | null = null;
+  let currentRoundNumber = 1;
+
+  function ensureRoundGroup(roundNumber: number): BattleLogGroup {
+    const safeRoundNumber = Math.max(1, Math.floor(roundNumber));
+
+    if (!currentGroup || currentGroup.label !== `Turn ${safeRoundNumber}`) {
+      currentGroup = {
+        label: `Turn ${safeRoundNumber}`,
+        events: [],
+        current: false,
+      };
+
+      groups.push(currentGroup);
+    }
+
+    return currentGroup;
+  }
+
+  for (const event of battle.events) {
+    if (event.type === "TURN_STARTED") {
+      currentRoundNumber = getEventRoundNumber(event, currentRoundNumber);
+      ensureRoundGroup(currentRoundNumber);
+      continue;
+    }
+
+    if (HIDDEN_BATTLE_LOG_EVENT_TYPES.has(event.type)) {
+      continue;
+    }
+
+    ensureRoundGroup(currentRoundNumber).events.push(event);
+  }
+
+  const latestGroupWithEvents = [...groups]
+    .reverse()
+    .find((group) => group.events.length > 0);
+
+  if (latestGroupWithEvents && !isBattleFinished(battle)) {
+    latestGroupWithEvents.current = true;
+  }
+
+  return groups.filter((group) => group.events.length > 0 || group.current);
+}
+
 function getTurnGroupLabel(
   battle: BattleState,
   event: BattleEvent,
@@ -644,23 +694,28 @@ export function BattlePanel({
 
   const battleLogGroups = useMemo(() => groupBattleEvents(battle), [battle]);
 
-  const latestBattleLogEvent = useMemo(() => {
+  const mobileBattleLogGroups = useMemo(
+    () => groupBattleEventsByRound(battle),
+    [battle],
+  );
+
+  const latestMobileBattleLogGroup = useMemo(() => {
     for (
-      let groupIndex = battleLogGroups.length - 1;
+      let groupIndex = mobileBattleLogGroups.length - 1;
       groupIndex >= 0;
       groupIndex -= 1
     ) {
       const visibleEvents = getVisibleBattleLogEvents(
-        battleLogGroups[groupIndex]!.events,
+        mobileBattleLogGroups[groupIndex]!.events,
       );
 
-      if (visibleEvents.length > 0) {
-        return visibleEvents[visibleEvents.length - 1]!;
+      if (visibleEvents.length > 0 || mobileBattleLogGroups[groupIndex]!.current) {
+        return mobileBattleLogGroups[groupIndex]!;
       }
     }
 
     return null;
-  }, [battleLogGroups]);
+  }, [mobileBattleLogGroups]);
 
   useLayoutEffect(() => {
     const logElement = battleLogScrollRef.current;
@@ -1421,20 +1476,42 @@ export function BattlePanel({
             )}
           </div>
 
-          {battle && latestBattleLogEvent ? (
-            <section
-              className="battle-mobile-log-preview"
-              aria-label="Latest combat log"
-            >
-              <span>Latest</span>
-              <p>
-                {renderBattleLogEvent(
-                  latestBattleLogEvent,
-                  battle,
-                  currentCharacter,
+          {battle ? (
+            <details className="battle-mobile-log-card" open>
+              <summary>
+                <span>Combat Log</span>
+                <strong>{latestMobileBattleLogGroup?.label ?? "Battle"}</strong>
+              </summary>
+
+              <div className="battle-mobile-log-body">
+                {latestMobileBattleLogGroup ? (
+                  getVisibleBattleLogEvents(
+                    latestMobileBattleLogGroup.events,
+                  ).length > 0 ? (
+                    getVisibleBattleLogEvents(
+                      latestMobileBattleLogGroup.events,
+                    ).map((event) => (
+                      <div
+                        key={event.id}
+                        className={`battle-mobile-log-line battle-log-line--${getEventTone(
+                          event,
+                        )}`}
+                      >
+                        {renderBattleLogEvent(event, battle, currentCharacter)}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="battle-mobile-log-awaiting">
+                      Awaiting your command...
+                    </div>
+                  )
+                ) : (
+                  <div className="battle-mobile-log-awaiting">
+                    Preparing encounter...
+                  </div>
                 )}
-              </p>
-            </section>
+              </div>
+            </details>
           ) : null}
 
           <section className="battle-command-panel">

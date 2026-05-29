@@ -814,7 +814,7 @@
 
 .battle-mobile-hud,
 .battle-mobile-enemy-effects,
-.battle-mobile-log-preview {
+.battle-mobile-log-card {
   display: none;
 }
 
@@ -1260,10 +1260,24 @@
     padding: 0.6rem;
   }
 
+  .gameshell-location-stage--battle .gameshell-location-main {
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  .gameshell-location-stage--battle .battle-panel {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
   .battle-shell {
+    width: 100%;
     flex: 1 1 auto;
     min-height: 0;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -1275,12 +1289,26 @@
   }
 
   .battle-center {
+    width: 100%;
+    min-width: 0;
     min-height: 0;
     overflow: visible;
     padding: 0.78rem 0.78rem 0;
     display: grid;
     grid-template-rows: auto minmax(15rem, 1fr) auto auto;
+    justify-items: stretch;
+    align-items: stretch;
     gap: 0.72rem;
+  }
+
+  .battle-center > *,
+  .battlefield-focus,
+  .battle-command-panel {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    justify-self: stretch;
+    box-sizing: border-box;
   }
 
   .battle-enemy-effect-box {
@@ -1379,36 +1407,79 @@
     transform: none;
   }
 
-  .battle-mobile-log-preview {
-    border: 1px solid rgba(59, 67, 92, 0.62);
+  .battle-mobile-log-card {
+    width: 100%;
+    border: 1px solid rgba(59, 67, 92, 0.68);
     border-radius: 0.72rem;
-    background: rgba(2, 6, 23, 0.32);
-    padding: 0.55rem 0.65rem;
-    display: grid;
-    gap: 0.18rem;
+    background: rgba(2, 6, 23, 0.34);
+    overflow: hidden;
   }
 
-  .battle-mobile-log-preview span {
-    color: #94a3b8;
+  .battle-mobile-log-card summary {
+    min-height: 2.35rem;
+    padding: 0.52rem 0.68rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .battle-mobile-log-card summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .battle-mobile-log-card summary span {
+    color: #cbd5e1;
     font-family: var(--mono);
-    font-size: 0.54rem;
+    font-size: 0.64rem;
     font-weight: 950;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
-  .battle-mobile-log-preview p {
-    margin: 0;
+  .battle-mobile-log-card summary strong {
+    color: #f59e0b;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 950;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .battle-mobile-log-body {
+    border-top: 1px solid rgba(59, 67, 92, 0.58);
+    padding: 0.62rem 0.68rem 0.68rem;
+    display: grid;
+    gap: 0.38rem;
+  }
+
+  .battle-mobile-log-line {
     color: #cbd5e1;
-    font-size: 0.68rem;
-    font-weight: 760;
-    line-height: 1.35;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 820;
+    line-height: 1.42;
+  }
+
+  .battle-mobile-log-line .battle-log-value {
+    font-weight: 950;
+  }
+
+  .battle-mobile-log-awaiting {
+    color: rgba(245, 158, 11, 0.86);
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-weight: 850;
   }
 
   .battle-command-panel {
     position: sticky;
     bottom: 0;
     z-index: 12;
+    width: calc(100% + 1.56rem);
+    max-width: none;
     margin: 0 -0.78rem;
     border-top: 1px solid rgba(40, 45, 61, 0.94);
     background:
