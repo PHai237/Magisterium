@@ -10,7 +10,7 @@ import type {
   EncounterId,
   ItemId,
   MonsterId,
-  SkillId
+  SkillId,
 } from "../../domain/magisterium.types";
 import { compactLabel, formatNumber, uniqueValues } from "../../lib/format";
 import { battlesApi } from "./battles.api";
@@ -58,75 +58,76 @@ const SKILL_DISPLAY_DEFINITIONS: Record<string, SkillDisplayDefinition> = {
     icon: "🔥",
     cost: "Costs 5 MP",
     group: "magic",
-    needsEnemyTarget: true
+    needsEnemyTarget: true,
   },
   heavy_strike: {
     label: "Heavy Strike",
     icon: "💥",
     cost: "Costs 12 Stamina",
     group: "attack",
-    needsEnemyTarget: true
+    needsEnemyTarget: true,
   },
   steady_strike: {
     label: "Steady Strike",
     icon: "⚔️",
     cost: "Costs 8 Stamina",
     group: "attack",
-    needsEnemyTarget: true
+    needsEnemyTarget: true,
   },
   quick_stab: {
     label: "Quick Stab",
     icon: "🗡️",
     cost: "Costs 6 Stamina",
     group: "attack",
-    needsEnemyTarget: true
+    needsEnemyTarget: true,
   },
   minor_heal: {
     label: "Minor Heal",
     icon: "✦",
     cost: "Costs 8 MP",
     group: "magic",
-    needsEnemyTarget: false
-  }
+    needsEnemyTarget: false,
+  },
 };
 
 const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
   minor_hp_potion: {
     label: "Minor HP Potion",
-    icon: "🧪"
+    icon: "🧪",
   },
   minor_mp_potion: {
     label: "Minor MP Potion",
-    icon: "🔷"
+    icon: "🔷",
   },
   stamina_bread: {
     label: "Stamina Bread",
-    icon: "🍞"
-  }
+    icon: "🍞",
+  },
 };
 
-const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> = {
-  slime: {
-    label: "Slime",
-    icon: "🟢",
-    level: 1
-  },
-  wild_boar: {
-    label: "Wild Boar",
-    icon: "🐗",
-    level: 1
-  },
-  wild_wolf: {
-    label: "Wild Wolf",
-    icon: "🐺",
-    level: 2
-  },
-  goblin: {
-    label: "Goblin",
-    icon: "👺",
-    level: 2
-  }
-};
+const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> =
+  {
+    slime: {
+      label: "Slime",
+      icon: "🟢",
+      level: 1,
+    },
+    wild_boar: {
+      label: "Wild Boar",
+      icon: "🐗",
+      level: 1,
+    },
+    wild_wolf: {
+      label: "Wild Wolf",
+      icon: "🐺",
+      level: 2,
+    },
+    goblin: {
+      label: "Goblin",
+      icon: "👺",
+      level: 2,
+    },
+  };
 
 function clampPercent(value: number, max: number): number {
   if (max <= 0) {
@@ -136,14 +137,16 @@ function clampPercent(value: number, max: number): number {
   return Math.max(0, Math.min(100, (value / max) * 100));
 }
 
-function getCharacterActor(battle: BattleState | null): BattleActorState | null {
+function getCharacterActor(
+  battle: BattleState | null,
+): BattleActorState | null {
   if (!battle) {
     return null;
   }
 
   return (
     Object.values(battle.actors).find(
-      (actor) => actor.actorType === "character"
+      (actor) => actor.actorType === "character",
     ) ?? null
   );
 }
@@ -154,7 +157,7 @@ function getMonsterActors(battle: BattleState | null): BattleActorState[] {
   }
 
   return Object.values(battle.actors).filter(
-    (actor) => actor.actorType === "monster"
+    (actor) => actor.actorType === "monster",
   );
 }
 
@@ -163,13 +166,13 @@ function getLiveMonsterActors(battle: BattleState | null): BattleActorState[] {
 }
 
 function getMonsterDisplay(
-  actor: BattleActorState | null | undefined
+  actor: BattleActorState | null | undefined,
 ): MonsterDisplayDefinition {
   if (!actor?.monsterId) {
     return {
       label: "Unknown Enemy",
       icon: "◇",
-      level: 1
+      level: 1,
     };
   }
 
@@ -183,7 +186,7 @@ function getSkillDisplay(skillId: SkillId): SkillDisplayDefinition {
       icon: "✦",
       cost: "Skill",
       group: "magic",
-      needsEnemyTarget: true
+      needsEnemyTarget: true,
     }
   );
 }
@@ -192,18 +195,21 @@ function getItemDisplay(itemId: ItemId): ItemDisplayDefinition {
   return (
     ITEM_DISPLAY_DEFINITIONS[itemId] ?? {
       label: compactLabel(itemId),
-      icon: "◇"
+      icon: "◇",
     }
   );
 }
 
-function getItemQuantity(actor: BattleActorState | null, itemId: ItemId): number {
+function getItemQuantity(
+  actor: BattleActorState | null,
+  itemId: ItemId,
+): number {
   if (!actor) {
     return 0;
   }
 
   return actor.inventoryItemIds.filter(
-    (currentItemId) => currentItemId === itemId
+    (currentItemId) => currentItemId === itemId,
   ).length;
 }
 
@@ -233,7 +239,7 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
       currentGroup = {
         label: getTurnGroupLabel(battle, event, fallbackRoundNumber),
         events: [],
-        current: false
+        current: false,
       };
 
       groups.push(currentGroup);
@@ -263,7 +269,7 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
 function getTurnGroupLabel(
   battle: BattleState,
   event: BattleEvent,
-  fallbackRoundNumber: number
+  fallbackRoundNumber: number,
 ): string {
   const actor = event.actorId ? battle.actors[event.actorId] : undefined;
   const actorName =
@@ -281,7 +287,7 @@ function getTurnGroupLabel(
 
 function getEventRoundNumber(
   event: BattleEvent,
-  fallbackRoundNumber: number
+  fallbackRoundNumber: number,
 ): number {
   const roundNumber = event.metadata?.roundNumber;
 
@@ -291,7 +297,7 @@ function getEventRoundNumber(
 }
 
 function getEventTone(
-  event: BattleEvent
+  event: BattleEvent,
 ): "damage" | "enemy" | "resource" | "cancelled" | "miss" | "neutral" {
   if (event.type === "MISS") {
     return "miss";
@@ -331,13 +337,13 @@ const HIDDEN_BATTLE_LOG_EVENT_TYPES = new Set([
   "DAMAGE_CALCULATED",
   "DAMAGE_MITIGATED",
   "RESOURCE_SPENT",
-  "ITEM_CONSUMED"
+  "ITEM_CONSUMED",
 ]);
 
 function getActorName(
   battle: BattleState | null,
   actorId: string | undefined,
-  currentCharacter: CharacterSnapshot
+  currentCharacter: CharacterSnapshot,
 ): string {
   if (!actorId || !battle) {
     return "Unknown";
@@ -358,7 +364,7 @@ function getActorName(
 
 function getActorLogRole(
   battle: BattleState | null,
-  actorId: string | undefined
+  actorId: string | undefined,
 ): "player" | "enemy" | "system" {
   if (!actorId || !battle) {
     return "system";
@@ -377,7 +383,7 @@ function renderActorName(
   battle: BattleState | null,
   actorId: string | undefined,
   currentCharacter: CharacterSnapshot,
-  forcedTone?: "miss"
+  forcedTone?: "miss",
 ): ReactNode {
   const actorName = getActorName(battle, actorId, currentCharacter);
   const actorRole = getActorLogRole(battle, actorId);
@@ -398,13 +404,15 @@ function renderActorName(
 }
 
 function getVisibleBattleLogEvents(events: BattleEvent[]): BattleEvent[] {
-  return events.filter((event) => !HIDDEN_BATTLE_LOG_EVENT_TYPES.has(event.type));
+  return events.filter(
+    (event) => !HIDDEN_BATTLE_LOG_EVENT_TYPES.has(event.type),
+  );
 }
 
 function renderBattleLogEvent(
   event: BattleEvent,
   battle: BattleState | null,
-  currentCharacter: CharacterSnapshot
+  currentCharacter: CharacterSnapshot,
 ): ReactNode {
   const actorRole = getActorLogRole(battle, event.actorId);
 
@@ -515,7 +523,7 @@ function ResourceBar({
   label,
   value,
   max,
-  tone
+  tone,
 }: {
   label: string;
   value: number;
@@ -540,12 +548,39 @@ function ResourceBar({
   );
 }
 
+function MobileResourcePill({
+  label,
+  value,
+  max,
+  tone,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  tone: "hp" | "mp" | "stamina";
+}) {
+  return (
+    <div className={`battle-mobile-resource battle-mobile-resource--${tone}`}>
+      <div className="battle-mobile-resource__top">
+        <span>{label}</span>
+        <strong>
+          {formatNumber(value)} / {formatNumber(max)}
+        </strong>
+      </div>
+
+      <div className="battle-mobile-resource__track">
+        <span style={{ width: `${clampPercent(value, max)}%` }} />
+      </div>
+    </div>
+  );
+}
+
 export function BattlePanel({
   userId,
   currentCharacter,
   initialEncounterId,
   onExitBattle,
-  onCharacterUpdated
+  onCharacterUpdated,
 }: BattlePanelProps) {
   const hasStartedRef = useRef(false);
   const battleLogScrollRef = useRef<HTMLDivElement | null>(null);
@@ -581,38 +616,51 @@ export function BattlePanel({
 
   const skillIds = useMemo(
     () => uniqueValues(playerActor?.skillIds ?? []),
-    [playerActor]
+    [playerActor],
   );
 
   const attackSkillIds = useMemo(
     () =>
-      skillIds.filter(
-        (skillId) => getSkillDisplay(skillId).group === "attack"
-      ),
-    [skillIds]
+      skillIds.filter((skillId) => getSkillDisplay(skillId).group === "attack"),
+    [skillIds],
   );
 
   const magicSkillIds = useMemo(
     () =>
       skillIds.filter((skillId) => getSkillDisplay(skillId).group === "magic"),
-    [skillIds]
+    [skillIds],
   );
 
   const usableBattleItems = useMemo(
     () =>
       uniqueValues(playerActor?.inventoryItemIds ?? []).filter(
-        (itemId) => ITEM_DISPLAY_DEFINITIONS[itemId] !== undefined
+        (itemId) => ITEM_DISPLAY_DEFINITIONS[itemId] !== undefined,
       ),
-    [playerActor]
+    [playerActor],
   );
 
   const battleFinished = isBattleFinished(battle);
   const isPlayerTurn = activeActor?.actorType === "character";
 
-  const battleLogGroups = useMemo(
-    () => groupBattleEvents(battle),
-    [battle]
-  );
+  const battleLogGroups = useMemo(() => groupBattleEvents(battle), [battle]);
+
+  const latestBattleLogEvent = useMemo(() => {
+    for (
+      let groupIndex = battleLogGroups.length - 1;
+      groupIndex >= 0;
+      groupIndex -= 1
+    ) {
+      const visibleEvents = getVisibleBattleLogEvents(
+        battleLogGroups[groupIndex]!.events,
+      );
+
+      if (visibleEvents.length > 0) {
+        return visibleEvents[visibleEvents.length - 1]!;
+      }
+    }
+
+    return null;
+  }, [battleLogGroups]);
 
   useLayoutEffect(() => {
     const logElement = battleLogScrollRef.current;
@@ -624,7 +672,7 @@ export function BattlePanel({
     const frameId = window.requestAnimationFrame(() => {
       logElement.scrollTo({
         top: logElement.scrollHeight,
-        behavior: "smooth"
+        behavior: "smooth",
       });
     });
 
@@ -650,7 +698,7 @@ export function BattlePanel({
           characterId: currentCharacter.id,
           encounterId: initialEncounterId,
           autoStart: true,
-          autoResolveMonsterTurns: true
+          autoResolveMonsterTurns: true,
         });
 
         if (cancelled) {
@@ -667,7 +715,7 @@ export function BattlePanel({
         setError(
           createError instanceof Error
             ? createError.message
-            : "Failed to start battle."
+            : "Failed to start battle.",
         );
       } finally {
         if (!cancelled) {
@@ -685,7 +733,7 @@ export function BattlePanel({
 
   useEffect(() => {
     const targetStillAvailable = liveEnemies.some(
-      (actor) => actor.actorId === targetId
+      (actor) => actor.actorId === targetId,
     );
 
     if (!targetStillAvailable) {
@@ -712,7 +760,7 @@ export function BattlePanel({
       skillId?: SkillId;
       itemId?: ItemId;
       targetRequired?: boolean;
-    } = {}
+    } = {},
   ) {
     if (!battle || !activeActor || busy || battleFinished) {
       return;
@@ -739,14 +787,14 @@ export function BattlePanel({
         targetIds: options.targetRequired && targetId ? [targetId] : [],
         skillId: options.skillId,
         itemId: options.itemId,
-        autoResolveMonsterTurns: true
+        autoResolveMonsterTurns: true,
       });
 
       setBattle(result.battleState);
       setActiveDrawer("MAIN");
     } catch (actionError) {
       setError(
-        actionError instanceof Error ? actionError.message : "Action failed."
+        actionError instanceof Error ? actionError.message : "Action failed.",
       );
     } finally {
       setBusy(false);
@@ -766,7 +814,7 @@ export function BattlePanel({
       const result = await battlesApi.claimReward(
         userId,
         battle.battleId,
-        currentCharacter
+        currentCharacter,
       );
 
       setBattle(result.battle);
@@ -779,13 +827,13 @@ export function BattlePanel({
       setNotice(
         rewardItems
           ? `Reward claimed: ${result.reward.exp} EXP, ${result.reward.moneyBronze} Bronze, ${rewardItems}.`
-          : `Reward claimed: ${result.reward.exp} EXP, ${result.reward.moneyBronze} Bronze.`
+          : `Reward claimed: ${result.reward.exp} EXP, ${result.reward.moneyBronze} Bronze.`,
       );
     } catch (claimError) {
       setError(
         claimError instanceof Error
           ? claimError.message
-          : "Reward claim failed."
+          : "Reward claim failed.",
       );
     } finally {
       setBusy(false);
@@ -859,7 +907,9 @@ export function BattlePanel({
     }
 
     if (!activeActor || !isPlayerTurn) {
-      return <div className="battle-loading-card">Enemy turn is resolving...</div>;
+      return (
+        <div className="battle-loading-card">Enemy turn is resolving...</div>
+      );
     }
 
     return (
@@ -937,7 +987,7 @@ export function BattlePanel({
                   onClick={() =>
                     void runAction("use_skill", {
                       skillId,
-                      targetRequired: skill.needsEnemyTarget
+                      targetRequired: skill.needsEnemyTarget,
                     })
                   }
                 >
@@ -971,7 +1021,7 @@ export function BattlePanel({
                   onClick={() =>
                     void runAction("use_skill", {
                       skillId,
-                      targetRequired: skill.needsEnemyTarget
+                      targetRequired: skill.needsEnemyTarget,
                     })
                   }
                 >
@@ -984,7 +1034,9 @@ export function BattlePanel({
             })}
 
             {magicSkillIds.length === 0 ? (
-              <div className="battle-drawer-empty">No magic skill equipped.</div>
+              <div className="battle-drawer-empty">
+                No magic skill equipped.
+              </div>
             ) : null}
           </div>
         ) : null}
@@ -1004,7 +1056,7 @@ export function BattlePanel({
                   onClick={() =>
                     void runAction("use_item", {
                       itemId,
-                      targetRequired: false
+                      targetRequired: false,
                     })
                   }
                 >
@@ -1025,7 +1077,9 @@ export function BattlePanel({
             </button>
 
             {usableBattleItems.length === 0 ? (
-              <div className="battle-drawer-empty">No battle item available.</div>
+              <div className="battle-drawer-empty">
+                No battle item available.
+              </div>
             ) : null}
           </div>
         ) : null}
@@ -1035,7 +1089,7 @@ export function BattlePanel({
 
   return (
     <section className="battle-panel">
-      <header className="battle-topbar">
+      <header className="battle-topbar battle-topbar--desktop">
         <div className="battle-topbar__spacer" />
 
         <div className="battle-topbar__vitals">
@@ -1061,7 +1115,9 @@ export function BattlePanel({
 
           <ResourceBar
             label="STA"
-            value={playerActor?.stamina ?? currentCharacter.currentState.stamina}
+            value={
+              playerActor?.stamina ?? currentCharacter.currentState.stamina
+            }
             max={
               playerActor?.derivedStats.maxStamina ??
               currentCharacter.derivedStats.maxStamina
@@ -1072,6 +1128,128 @@ export function BattlePanel({
 
         <div className="battle-topbar__spacer" />
       </header>
+
+      <section className="battle-mobile-hud" aria-label="Mobile battle HUD">
+        <div className="battle-mobile-identity">
+          <div className="battle-mobile-identity__avatar" aria-hidden="true">
+            {currentCharacter.name.charAt(0).toUpperCase()}
+          </div>
+
+          <div className="battle-mobile-identity__copy">
+            <strong>{currentCharacter.name}</strong>
+            <span>
+              Lv. {currentCharacter.progression.level} ·{" "}
+              {compactLabel(currentCharacter.originId)}
+            </span>
+          </div>
+
+          <div
+            className={
+              isPlayerTurn
+                ? "battle-mobile-turn battle-mobile-turn--ready"
+                : "battle-mobile-turn"
+            }
+          >
+            {battleFinished
+              ? compactLabel(battle?.status ?? "ended")
+              : isPlayerTurn
+                ? "Your Turn"
+                : "Enemy Turn"}
+          </div>
+        </div>
+
+        <div className="battle-mobile-resources">
+          <MobileResourcePill
+            label="HP"
+            value={playerActor?.hp ?? currentCharacter.currentState.hp}
+            max={
+              playerActor?.derivedStats.maxHp ??
+              currentCharacter.derivedStats.maxHp
+            }
+            tone="hp"
+          />
+
+          <MobileResourcePill
+            label="MP"
+            value={playerActor?.mp ?? currentCharacter.currentState.mp}
+            max={
+              playerActor?.derivedStats.maxMp ??
+              currentCharacter.derivedStats.maxMp
+            }
+            tone="mp"
+          />
+
+          <MobileResourcePill
+            label="STA"
+            value={
+              playerActor?.stamina ?? currentCharacter.currentState.stamina
+            }
+            max={
+              playerActor?.derivedStats.maxStamina ??
+              currentCharacter.derivedStats.maxStamina
+            }
+            tone="stamina"
+          />
+        </div>
+
+        <details className="battle-mobile-status-card">
+          <summary>
+            <span>Character Status</span>
+            <strong>
+              {playerActor?.activeStatusEffects.length
+                ? `${playerActor.activeStatusEffects.length} active effect(s)`
+                : "No active effects"}
+            </strong>
+          </summary>
+
+          <div className="battle-mobile-stat-grid">
+            <div>
+              <span>P.ATK</span>
+              <strong>
+                {formatNumber(
+                  playerActor?.derivedStats.pAtk ??
+                    currentCharacter.derivedStats.pAtk,
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>M.ATK</span>
+              <strong>
+                {formatNumber(
+                  playerActor?.derivedStats.mAtk ??
+                    currentCharacter.derivedStats.mAtk,
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>SPD</span>
+              <strong>
+                {formatNumber(
+                  playerActor?.derivedStats.actionSpeed ??
+                    currentCharacter.derivedStats.actionSpeed,
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>CRIT</span>
+              <strong>
+                {formatNumber(
+                  playerActor?.derivedStats.critRate ??
+                    currentCharacter.derivedStats.critRate,
+                )}
+                %
+              </strong>
+            </div>
+          </div>
+
+          <div className="battle-mobile-effects">
+            {renderActiveEffects(playerActor)}
+          </div>
+        </details>
+      </section>
 
       <div className="battle-shell">
         <aside className="battle-side battle-side--character">
@@ -1094,7 +1272,7 @@ export function BattlePanel({
                 <strong>
                   {formatNumber(
                     playerActor?.derivedStats.pAtk ??
-                      currentCharacter.derivedStats.pAtk
+                      currentCharacter.derivedStats.pAtk,
                   )}
                 </strong>
               </div>
@@ -1104,7 +1282,7 @@ export function BattlePanel({
                 <strong>
                   {formatNumber(
                     playerActor?.derivedStats.mAtk ??
-                      currentCharacter.derivedStats.mAtk
+                      currentCharacter.derivedStats.mAtk,
                   )}
                 </strong>
               </div>
@@ -1114,7 +1292,7 @@ export function BattlePanel({
                 <strong>
                   {formatNumber(
                     playerActor?.derivedStats.actionSpeed ??
-                      currentCharacter.derivedStats.actionSpeed
+                      currentCharacter.derivedStats.actionSpeed,
                   )}
                 </strong>
               </div>
@@ -1124,7 +1302,7 @@ export function BattlePanel({
                 <strong>
                   {formatNumber(
                     playerActor?.derivedStats.critRate ??
-                      currentCharacter.derivedStats.critRate
+                      currentCharacter.derivedStats.critRate,
                   )}
                   %
                 </strong>
@@ -1143,6 +1321,19 @@ export function BattlePanel({
             <div className="battle-effect-title">Enemy Effects</div>
             {renderActiveEffects(focusedEnemy)}
           </section>
+
+          <details className="battle-mobile-enemy-effects">
+            <summary>
+              <span>Enemy Effects</span>
+              <strong>
+                {focusedEnemy?.activeStatusEffects.length
+                  ? `${focusedEnemy.activeStatusEffects.length} active effect(s)`
+                  : "No active effects"}
+              </strong>
+            </summary>
+
+            {renderActiveEffects(focusedEnemy)}
+          </details>
 
           <div className="battlefield-focus">
             {battle ? (
@@ -1167,6 +1358,59 @@ export function BattlePanel({
                     />
                   </div>
                 ) : null}
+
+                {liveEnemies.length > 1 ? (
+                  <div
+                    className="battle-target-strip"
+                    aria-label="Enemy targets"
+                  >
+                    {liveEnemies.map((enemy) => {
+                      const enemyDisplay = getMonsterDisplay(enemy);
+                      const isSelected =
+                        focusedEnemy?.actorId === enemy.actorId;
+
+                      return (
+                        <button
+                          key={enemy.actorId}
+                          type="button"
+                          className={
+                            isSelected
+                              ? "battle-target-card battle-target-card--selected"
+                              : "battle-target-card"
+                          }
+                          disabled={busy}
+                          onClick={() => setTargetId(enemy.actorId)}
+                        >
+                          <span
+                            className="battle-target-card__icon"
+                            aria-hidden="true"
+                          >
+                            {enemyDisplay.icon}
+                          </span>
+
+                          <span className="battle-target-card__copy">
+                            <strong>{enemyDisplay.label}</strong>
+                            <em>
+                              {formatNumber(enemy.hp)} /{" "}
+                              {formatNumber(enemy.derivedStats.maxHp)} HP
+                            </em>
+                          </span>
+
+                          <span className="battle-target-card__hp">
+                            <span
+                              style={{
+                                width: `${clampPercent(
+                                  enemy.hp,
+                                  enemy.derivedStats.maxHp,
+                                )}%`,
+                              }}
+                            />
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </>
             ) : (
               <div className="battlefield-loading">
@@ -1177,7 +1421,25 @@ export function BattlePanel({
             )}
           </div>
 
-          <section className="battle-command-panel">{renderCommandPanel()}</section>
+          {battle && latestBattleLogEvent ? (
+            <section
+              className="battle-mobile-log-preview"
+              aria-label="Latest combat log"
+            >
+              <span>Latest</span>
+              <p>
+                {renderBattleLogEvent(
+                  latestBattleLogEvent,
+                  battle,
+                  currentCharacter,
+                )}
+              </p>
+            </section>
+          ) : null}
+
+          <section className="battle-command-panel">
+            {renderCommandPanel()}
+          </section>
         </main>
 
         <aside className="battle-side battle-side--log">
@@ -1207,7 +1469,7 @@ export function BattlePanel({
                       <div
                         key={event.id}
                         className={`battle-log-line battle-log-line--${getEventTone(
-                          event
+                          event,
                         )}`}
                       >
                         {renderBattleLogEvent(event, battle, currentCharacter)}
@@ -1225,7 +1487,9 @@ export function BattlePanel({
             ) : (
               <div className="battle-log-turn battle-log-turn--current">
                 <div className="battle-log-turn__tag">Battle</div>
-                <div className="battle-log-awaiting">● Preparing encounter...</div>
+                <div className="battle-log-awaiting">
+                  ● Preparing encounter...
+                </div>
               </div>
             )}
           </div>
