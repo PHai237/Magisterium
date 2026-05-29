@@ -462,7 +462,9 @@
 
 @media (max-width: 980px) {
   .market-basic-card {
+    height: auto;
     min-height: 0;
+    max-height: none;
   }
 
   .market-basic-card__body {
@@ -472,28 +474,269 @@
   .market-vendor-list {
     max-height: 12rem;
   }
-}
 
-@media (max-width: 760px) {
-  .market-basic-card {
-    padding: 0.82rem;
+  .market-trading-panel {
+    min-height: 24rem;
   }
 
   .market-item-grid {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 760px) {
+  .market-basic-card {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    border-radius: 0.95rem;
+    padding: 0.72rem;
+    gap: 0.58rem;
+  }
+
+  .market-basic-card__top {
+    min-height: 2.6rem;
+    justify-content: flex-start;
+    padding: 0 0.05rem 0.58rem;
+  }
+
+  .market-basic-card__identity {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .market-basic-card__identity span {
+    font-size: 0.86rem;
+    letter-spacing: 0.035em;
+  }
+
+  .market-basic-card__icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    font-size: 1.08rem;
+    box-shadow:
+      0 0 0 4px rgba(245, 158, 11, 0.045),
+      0 0 24px rgba(245, 158, 11, 0.16);
+  }
+
+  .market-basic-card__body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.62rem;
+    overflow: visible;
+  }
+
+  .market-vendor-list,
+  .market-trading-panel {
+    border-radius: 0.76rem;
+  }
+
+  .market-vendor-list {
+    max-height: none;
+    padding: 0.56rem;
+    gap: 0.48rem;
+  }
+
+  .market-section-title {
+    font-size: 0.6rem;
+  }
+
+  .market-vendor-scroll {
+    display: flex;
+    gap: 0.48rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.08rem 0.04rem 0.32rem;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .market-vendor-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .market-vendor-card {
+    flex: 0 0 12.6rem;
+    scroll-snap-align: start;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem;
+  }
+
+  .market-vendor-card:not(:disabled):hover {
+    transform: none;
+  }
+
+  .market-vendor-card__icon {
+    width: 1.9rem;
+    height: 1.9rem;
+    font-size: 0.95rem;
+  }
+
+  .market-vendor-card__copy strong {
+    font-size: 0.7rem;
+  }
+
+  .market-vendor-card__copy em {
+    font-size: 0.58rem;
+  }
+
+  .market-vendor-card__status {
+    grid-column: 2;
+    width: fit-content;
+    padding: 0.13rem 0.32rem;
+    font-size: 0.5rem;
+  }
+
+  .market-trading-panel {
+    min-height: 0;
+    padding: 0.58rem;
+    grid-template-rows: auto auto auto;
+    gap: 0.52rem;
+  }
 
   .market-vendor-header {
     display: grid;
+    gap: 0.36rem;
+    padding-bottom: 0.52rem;
+  }
+
+  .market-vendor-header h3 {
+    font-size: 0.9rem;
+    line-height: 1.18;
+  }
+
+  .market-filter-row {
+    flex-wrap: nowrap;
+    gap: 0.36rem;
+    overflow-x: auto;
+    padding-bottom: 0.22rem;
+    scrollbar-width: none;
+  }
+
+  .market-filter-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .market-filter-button {
+    flex: 0 0 auto;
+    padding: 0.3rem 0.52rem;
+    font-size: 0.57rem;
+  }
+
+  .market-item-scroll {
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .market-item-grid {
+    grid-template-columns: 1fr;
+    gap: 0.48rem;
+  }
+
+  .market-item-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: start;
+    gap: 0.48rem;
+    border-radius: 0.66rem;
+    padding: 0.54rem;
+  }
+
+  .market-item-card:hover {
+    transform: none;
+  }
+
+  .market-item-card__icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.52rem;
+    font-size: 1.02rem;
+  }
+
+  .market-item-card__title-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.42rem;
+  }
+
+  .market-item-card__title-row strong {
+    font-size: 0.68rem;
+    white-space: normal;
+  }
+
+  .market-item-card__title-row span {
+    font-size: 0.62rem;
+  }
+
+  .market-item-card__copy p {
+    font-size: 0.61rem;
+    -webkit-line-clamp: 3;
+  }
+
+  .market-item-card__meta {
+    gap: 0.22rem;
+  }
+
+  .market-item-card__meta span {
+    font-size: 0.52rem;
+  }
+
+  .market-buy-button {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 2.05rem;
+    font-size: 0.62rem;
+  }
+
+  .market-empty-state {
+    min-height: 8rem;
+    padding: 0.85rem;
+    font-size: 0.68rem;
   }
 
   .market-basic-card__footer {
+    min-height: auto;
     display: grid;
     justify-items: start;
+    gap: 0.32rem;
+    padding: 0.52rem 0.05rem 0;
+    font-size: 0.61rem;
   }
 
   .market-message {
     text-align: left;
     white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .market-basic-card {
+    padding: 0.62rem;
+  }
+
+  .market-vendor-card {
+    flex-basis: 11.4rem;
+  }
+
+  .market-vendor-card__copy strong {
+    font-size: 0.66rem;
+  }
+
+  .market-vendor-card__copy em {
+    font-size: 0.55rem;
+  }
+
+  .market-item-card {
+    padding: 0.48rem;
+  }
+
+  .market-item-card__title-row strong {
+    font-size: 0.64rem;
   }
 }

@@ -435,3 +435,68 @@
     width: 100%;
   }
 }
+
+@media (max-width: 480px) {
+  .inn-basic-card {
+    width: 100%;
+    max-height: none;
+    padding: 0.72rem;
+    gap: 0.58rem;
+    border-radius: 0.95rem;
+  }
+
+  .inn-basic-card__header {
+    gap: 0.62rem;
+  }
+
+  .inn-basic-card__visual {
+    width: 3.35rem;
+    height: 3.35rem;
+    flex-basis: 3.35rem;
+  }
+
+  .inn-basic-card__sigil {
+    width: 2.55rem;
+    height: 2.55rem;
+    font-size: 1.1rem;
+  }
+
+  .inn-basic-card__copy p {
+    font-size: 0.62rem;
+  }
+
+  .inn-basic-card__copy h2 {
+    font-size: 1.08rem;
+    white-space: normal;
+  }
+
+  .inn-service-box {
+    padding: 0.52rem;
+  }
+
+  .inn-service-summary {
+    grid-template-columns: 1fr;
+    gap: 0.22rem;
+  }
+
+  .inn-restore-row {
+    min-height: 1.8rem;
+    padding: 0.34rem 0.42rem;
+    gap: 0.42rem;
+  }
+
+  .inn-restore-row strong,
+  .inn-service-summary strong {
+    white-space: normal;
+  }
+
+  .inn-action-panel {
+    grid-template-columns: 4.6rem minmax(0, 1fr);
+    gap: 0.46rem;
+  }
+
+  .inn-payment-button {
+    min-width: 0;
+    padding-inline: 0.45rem;
+  }
+}

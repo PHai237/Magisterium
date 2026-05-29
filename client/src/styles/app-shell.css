@@ -172,33 +172,65 @@
 
 @media (max-width: 1180px) {
   .phase5-root {
-    min-height: 100vh;
-    height: auto;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
   }
 
   .phase5-topbar {
+    flex: 0 0 auto;
     height: auto;
-    min-height: 65px;
-    align-items: center;
-    padding: 0.75rem 1rem;
+    min-height: 58px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    justify-items: stretch;
+    gap: 0.65rem;
+    padding:
+      max(0.65rem, env(safe-area-inset-top))
+      0.8rem
+      0.65rem;
+  }
+
+  .phase5-topbar--gate {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .phase5-topbar__center {
     justify-self: start;
+    white-space: normal;
   }
 
   .phase5-topbar__actions {
-    margin-left: auto;
+    justify-self: end;
   }
 
   .phase5-workspace {
+    flex: 1 1 auto;
+    min-height: 0;
     height: auto;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 @media (max-width: 760px) {
-  .phase5-topbar__center {
-    white-space: normal;
+  .phase5-topbar {
+    min-height: 56px;
+    padding:
+      max(0.55rem, env(safe-area-inset-top))
+      0.7rem
+      0.55rem;
+  }
+
+  .phase5-logout-button--icon {
+    width: 2.05rem;
+    height: 2.05rem;
+    min-height: 2.05rem;
+  }
+
+  .phase5-logout-button--icon::after,
+  .phase5-logout-button--icon::before {
+    display: none;
   }
 }

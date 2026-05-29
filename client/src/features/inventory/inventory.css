@@ -642,3 +642,108 @@
     min-height: 8rem;
   }
 }
+
+@media (max-width: 760px) {
+  .inventory-overlay {
+    inset: 0;
+    left: 0;
+    bottom: auto;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    transform: none;
+  }
+
+  .inventory-overlay__header {
+    height: auto;
+    min-height: 3.35rem;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  .inventory-overlay__heading {
+    flex: 1 1 100%;
+  }
+
+  .inventory-wallet {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .inventory-overlay__layout {
+    height: calc(100% - 3.35rem);
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .inventory-paperdoll {
+    min-height: 18.5rem;
+    border-right: 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  .inventory-equipment-slot {
+    width: 3.7rem;
+    height: 3.45rem;
+  }
+
+  .inventory-equipment-slot strong {
+    max-width: 3rem;
+  }
+
+  .inventory-bag {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.62rem;
+    padding: 0.65rem;
+  }
+
+  .inventory-type-tabs {
+    order: -1;
+    display: flex;
+    gap: 0.42rem;
+    overflow-x: auto;
+    padding: 0 0 0.2rem;
+    scrollbar-width: none;
+  }
+
+  .inventory-type-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .inventory-type-tab {
+    flex: 0 0 auto;
+    width: 2.55rem;
+    height: 2.35rem;
+    border-radius: 0.62rem;
+  }
+
+  .inventory-type-tab:hover,
+  .inventory-type-tab--active {
+    transform: none;
+  }
+
+  .inventory-type-tab::after {
+    display: none;
+  }
+
+  .inventory-bag__main {
+    min-height: auto;
+  }
+
+  .inventory-bag-grid {
+    min-height: auto;
+    max-height: 24rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 4rem;
+    padding-right: 0.1rem;
+  }
+
+  .inventory-action-panel {
+    min-height: 9rem;
+  }
+}

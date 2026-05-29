@@ -84,8 +84,13 @@ select option {
   color: var(--text);
 }
 
+body {
+  min-width: 320px;
+  overscroll-behavior: none;
+}
+
 @media (max-width: 1180px) {
   body {
-    overflow: auto;
+    overflow: hidden;
   }
 }
