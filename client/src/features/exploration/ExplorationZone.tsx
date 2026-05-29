@@ -80,6 +80,10 @@ export function ExplorationZone({
     ExplorationJournalGroup[]
   >([]);
   const [error, setError] = useState<string | null>(null);
+  const latestSearchLogGroup =
+    searchLogGroups.length > 0
+      ? searchLogGroups[searchLogGroups.length - 1]!
+      : null;
 
   useEffect(() => {
     searchLockRef.current = false;
@@ -202,6 +206,32 @@ export function ExplorationZone({
               </span>
             </div>
           </div>
+
+          <details className="exploration-mobile-journal" open>
+            <summary>
+              <span>
+                {latestSearchLogGroup ? "Latest Search" : "Search Log"}
+              </span>
+              <strong>Exploration Log</strong>
+            </summary>
+
+            <div className="exploration-mobile-journal__body">
+              {latestSearchLogGroup ? (
+                latestSearchLogGroup.messages.map((message, index) => (
+                  <div
+                    key={`${latestSearchLogGroup.id}-${index}`}
+                    className={getLogClassName(message)}
+                  >
+                    {message}
+                  </div>
+                ))
+              ) : (
+                <div className="exploration-journal-empty">
+                  Search results will appear here.
+                </div>
+              )}
+            </div>
+          </details>
 
           <div className="exploration-control">
             <button
