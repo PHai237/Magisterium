@@ -19,6 +19,8 @@ interface InventoryOverlayProps {
 
 type InventoryFilter = "all" | "weapon" | "armor" | "consumable" | "material";
 
+type InventoryMobilePanel = "character" | "bag";
+
 type ItemDisplayCategory =
   | "equipment"
   | "consumable"
@@ -237,89 +239,12 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "pass",
     description: "Redeem this at The Inn for one full overnight rest."
   },
-  fresh_potato: {
-    id: "fresh_potato",
-    name: "Fresh Potato",
-    icon: "🥔",
-    category: "material",
-    description: "A sturdy farm potato. A basic starch for early cooking recipes."
-  },
-  plump_wheat: {
-    id: "plump_wheat",
-    name: "Plump Wheat",
-    icon: "🌾",
-    category: "material",
-    description: "Clean bundled wheat for bread and travel rations."
-  },
-  gathered_egg: {
-    id: "gathered_egg",
-    name: "Gathered Egg",
-    icon: "🥚",
-    category: "material",
-    description: "A fresh egg gathered from local farms."
-  },
-  moon_turnip: {
-    id: "moon_turnip",
-    name: "Moon Turnip",
-    icon: "🌙",
-    category: "material",
-    description: "A rare pale turnip harvested under moonlight."
-  },
-  green_herb: {
-    id: "green_herb",
-    name: "Green Herb",
-    icon: "🌿",
-    category: "material",
-    description: "A common medicinal herb used in simple alchemy."
-  },
-  clear_glass_vial: {
-    id: "clear_glass_vial",
-    name: "Clear Glass Vial",
-    icon: "⚗",
-    category: "material",
-    description: "A clean vial for bottling weak potions and extracts."
-  },
-  basic_solvent: {
-    id: "basic_solvent",
-    name: "Basic Solvent",
-    icon: "🧴",
-    category: "material",
-    description: "A low-grade alchemical solvent for drawing out active properties."
-  },
-  cooking_salt: {
-    id: "cooking_salt",
-    name: "Cooking Salt",
-    icon: "🧂",
-    category: "material",
-    description: "Plain cooking salt required for many basic meals."
-  },
-  pressed_seed_oil: {
-    id: "pressed_seed_oil",
-    name: "Pressed Seed Oil",
-    icon: "🫙",
-    category: "material",
-    description: "A small flask of cooking oil pressed from local seed crops."
-  },
   slime_gel: {
     id: "slime_gel",
     name: "Slime Gel",
     icon: "🟢",
     category: "material",
     description: "Sticky residue from a slime. Mostly used as a low-grade crafting material."
-  },
-  boar_meat: {
-    id: "boar_meat",
-    name: "Boar Meat",
-    icon: "🥩",
-    category: "material",
-    description: "A fresh cut of meat from a wild boar. Useful for cooking and early rations."
-  },
-  wolf_skin: {
-    id: "wolf_skin",
-    name: "Wolf's Skin",
-    icon: "🧵",
-    category: "material",
-    description: "A rough pelt taken from a wild wolf. Useful for basic leatherwork."
   },
   goblin_ear: {
     id: "goblin_ear",
@@ -464,6 +389,8 @@ export function InventoryOverlay({
   ]);
   const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null);
   const [filter, setFilter] = useState<InventoryFilter>("all");
+  const [mobilePanel, setMobilePanel] =
+    useState<InventoryMobilePanel>("bag");
   const [busyItemId, setBusyItemId] = useState<ItemId | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -677,7 +604,11 @@ export function InventoryOverlay({
   }
 
   return (
-    <section className="inventory-overlay" aria-label="Inventory">
+    <section
+      className="inventory-overlay"
+      data-mobile-panel={mobilePanel}
+      aria-label="Inventory"
+    >
       <header className="inventory-overlay__header">
         <div className="inventory-overlay__heading">
           <h2>Inventory</h2>
@@ -703,6 +634,34 @@ export function InventoryOverlay({
         >
           ×
         </button>
+
+        <div className="inventory-mobile-switch" aria-label="Inventory view">
+          <button
+            type="button"
+            className={
+              mobilePanel === "character"
+                ? "inventory-mobile-switch__button inventory-mobile-switch__button--active"
+                : "inventory-mobile-switch__button"
+            }
+            aria-pressed={mobilePanel === "character"}
+            onClick={() => setMobilePanel("character")}
+          >
+            Character
+          </button>
+
+          <button
+            type="button"
+            className={
+              mobilePanel === "bag"
+                ? "inventory-mobile-switch__button inventory-mobile-switch__button--active"
+                : "inventory-mobile-switch__button"
+            }
+            aria-pressed={mobilePanel === "bag"}
+            onClick={() => setMobilePanel("bag")}
+          >
+            Bag
+          </button>
+        </div>
       </header>
 
       <div className="inventory-overlay__layout">
