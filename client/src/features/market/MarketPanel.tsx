@@ -7,7 +7,7 @@ import {
   type MarketCatalog,
   type MarketCatalogItem,
   type MarketVendor,
-  marketApi
+  marketApi,
 } from "./market.api";
 import "./market.css";
 
@@ -34,10 +34,24 @@ const ITEM_ICONS: Record<string, string> = {
   cooking_salt: "🧂",
   pressed_seed_oil: "🫙",
   slime_gel: "🟢",
+  clear_slime_core: "◇",
+  elastic_membrane: "◌",
   boar_meat: "🥩",
-  wolf_skin: "🐺",
+  boar_tusk: "△",
+  tough_hide: "▰",
+  wolf_pelt: "🐺",
+  wolf_fang: "△",
+  tough_sinew: "⌁",
   goblin_ear: "👂",
-  cracked_dagger: "🗡️",
+  goblin_scrap: "▣",
+  bent_rivet: "•",
+  dull_iron_shard: "▰",
+  cracked_blade: "▱",
+  coal: "●",
+  copper_nugget: "◆",
+  rough_wood: "▬",
+  common_wood: "▬",
+  basic_thread: "⌁",
   str_fragment: "🟥",
   dex_fragment: "🟩",
   con_fragment: "🛡️",
@@ -49,7 +63,7 @@ const ITEM_ICONS: Record<string, string> = {
   con_rune: "🛡️",
   int_rune: "🔵",
   wis_rune: "🟣",
-  luk_rune: "🟡"
+  luk_rune: "🟡",
 };
 
 const FILTER_PRIORITY = [
@@ -61,7 +75,7 @@ const FILTER_PRIORITY = [
   "container",
   "seasoning",
   "material",
-  "loot"
+  "loot",
 ];
 
 function getItemIcon(itemId: ItemId): string {
@@ -122,9 +136,7 @@ function buildVendorFilters(vendor: MarketVendor | null): MarketFilter[] {
   const remainingFilters = Array.from(itemTags)
     .filter(
       (tag) =>
-        !FILTER_PRIORITY.includes(tag) &&
-        tag !== "market" &&
-        tag !== vendor.id
+        !FILTER_PRIORITY.includes(tag) && tag !== "market" && tag !== vendor.id,
     )
     .slice(0, 4);
 
@@ -133,7 +145,7 @@ function buildVendorFilters(vendor: MarketVendor | null): MarketFilter[] {
 
 function filterVendorItems(
   vendor: MarketVendor | null,
-  activeFilter: MarketFilter
+  activeFilter: MarketFilter,
 ): MarketCatalogItem[] {
   if (!vendor) {
     return [];
@@ -177,7 +189,7 @@ function getVendorNpcName(vendor: MarketVendor): string {
 export function MarketPanel({
   userId,
   currentCharacter,
-  onCharacterUpdated
+  onCharacterUpdated,
 }: MarketPanelProps) {
   const [catalog, setCatalog] = useState<MarketCatalog | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState("");
@@ -200,12 +212,12 @@ export function MarketPanel({
 
   const vendorFilters = useMemo(
     () => buildVendorFilters(selectedVendor),
-    [selectedVendor]
+    [selectedVendor],
   );
 
   const visibleItems = useMemo(
     () => filterVendorItems(selectedVendor, activeFilter),
-    [activeFilter, selectedVendor]
+    [activeFilter, selectedVendor],
   );
 
   useEffect(() => {
@@ -232,7 +244,7 @@ export function MarketPanel({
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Failed to load market catalog."
+              : "Failed to load market catalog.",
           );
         }
       } finally {
@@ -296,7 +308,7 @@ export function MarketPanel({
       const result = await marketApi.buy(userId, {
         characterId: currentCharacter.id,
         itemId: item.itemId,
-        quantity: 1
+        quantity: 1,
       });
 
       onCharacterUpdated(result.character);
@@ -307,7 +319,7 @@ export function MarketPanel({
       setNotice(`Bought 1x ${item.name} for ${item.buyPriceBronze} Bronze.`);
     } catch (buyError) {
       setError(
-        buyError instanceof Error ? buyError.message : "Purchase failed."
+        buyError instanceof Error ? buyError.message : "Purchase failed.",
       );
     } finally {
       setBusyItemId(null);
@@ -344,14 +356,17 @@ export function MarketPanel({
                     className={[
                       "market-vendor-card",
                       `market-vendor-card--${tone}`,
-                      isSelected ? "market-vendor-card--active" : ""
+                      isSelected ? "market-vendor-card--active" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                     disabled={Boolean(busyItemId)}
                     onClick={() => selectVendor(vendor)}
                   >
-                    <span className="market-vendor-card__icon" aria-hidden="true">
+                    <span
+                      className="market-vendor-card__icon"
+                      aria-hidden="true"
+                    >
                       {vendor.icon}
                     </span>
 
@@ -412,7 +427,10 @@ export function MarketPanel({
 
                       return (
                         <article key={item.itemId} className="market-item-card">
-                          <div className="market-item-card__icon" aria-hidden="true">
+                          <div
+                            className="market-item-card__icon"
+                            aria-hidden="true"
+                          >
                             {getItemIcon(item.itemId)}
                           </div>
 
@@ -425,7 +443,9 @@ export function MarketPanel({
                             <p>{item.description}</p>
 
                             <div className="market-item-card__meta">
-                              <span>Stock: {formatNumber(item.currentStock)}</span>
+                              <span>
+                                Stock: {formatNumber(item.currentStock)}
+                              </span>
                               <span>{item.rarity}</span>
                             </div>
                           </div>

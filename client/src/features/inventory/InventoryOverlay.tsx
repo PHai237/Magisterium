@@ -4,7 +4,7 @@ import type {
   CharacterSnapshot,
   ConsumableEffectApplication,
   InventoryItemStack,
-  ItemId
+  ItemId,
 } from "../../domain/magisterium.types";
 import { compactLabel, formatNumber } from "../../lib/format";
 import { charactersApi } from "../characters/characters.api";
@@ -31,15 +31,15 @@ type ItemDisplayCategory =
 type EquipmentSlot =
   | "weapon"
   | "off_hand"
-  | "head"
-  | "body"
-  | "hands"
-  | "feet"
+  | "helmet"
+  | "armor"
+  | "legging"
+  | "boots"
   | "accessory";
 
 const ONE_NIGHT_INN_PASS_ITEM_IDS = new Set<ItemId>([
   "one_night_inn_pass",
-  "one_night_inn_voucher"
+  "one_night_inn_voucher",
 ]);
 
 interface ItemDisplayDefinition {
@@ -61,46 +61,54 @@ interface EquipmentSlotView {
 
 const EQUIPMENT_SLOTS: EquipmentSlotView[] = [
   {
-    id: "head",
-    label: "Head",
+    id: "helmet",
+    label: "Helmet",
     icon: "👑",
-    className: "slot-head",
-    slot: "head"
+    className: "slot-helmet",
+    slot: "helmet",
   },
   {
     id: "hand",
     label: "Hand",
     icon: "⚔️",
     className: "slot-hand",
-    slot: "weapon"
+    slot: "weapon",
   },
   {
     id: "offhand",
     label: "Off-hand",
     icon: "🛡️",
     className: "slot-offhand",
-    slot: "off_hand"
+    slot: "off_hand",
   },
   {
     id: "armor",
     label: "Armor",
     icon: "🦺",
     className: "slot-armor",
-    slot: "body"
+    slot: "armor",
   },
   {
     id: "legging",
     label: "Legging",
     icon: "👖",
-    className: "slot-legging"
+    className: "slot-legging",
+    slot: "legging",
   },
   {
     id: "boots",
     label: "Boots",
     icon: "🥾",
     className: "slot-boots",
-    slot: "feet"
-  }
+    slot: "boots",
+  },
+  {
+    id: "accessory",
+    label: "Accessory",
+    icon: "◇",
+    className: "slot-accessory",
+    slot: "accessory",
+  },
 ];
 
 const INVENTORY_FILTERS: Array<{
@@ -112,7 +120,7 @@ const INVENTORY_FILTERS: Array<{
   { id: "weapon", label: "Weapon", icon: "⚔️" },
   { id: "armor", label: "Armor", icon: "🛡️" },
   { id: "consumable", label: "Consumable", icon: "🧪" },
-  { id: "material", label: "Material", icon: "◇" }
+  { id: "material", label: "Material", icon: "◇" },
 ];
 
 const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
@@ -122,7 +130,7 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "🪄",
     category: "equipment",
     equipmentSlot: "weapon",
-    description: "Starter staff for magic-focused characters."
+    description: "Starter staff for magic-focused characters.",
   },
   rusty_sword: {
     id: "rusty_sword",
@@ -130,7 +138,7 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "🗡️",
     category: "equipment",
     equipmentSlot: "weapon",
-    description: "A worn starter blade with basic physical attack."
+    description: "A worn starter blade with basic physical attack.",
   },
   worn_travelers_knife: {
     id: "worn_travelers_knife",
@@ -138,7 +146,7 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "🔪",
     category: "equipment",
     equipmentSlot: "weapon",
-    description: "A light knife for agile wanderers."
+    description: "A light knife for agile wanderers.",
   },
   small_dagger: {
     id: "small_dagger",
@@ -146,15 +154,7 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "🗡️",
     category: "equipment",
     equipmentSlot: "weapon",
-    description: "A compact blade for quick strikes."
-  },
-  cracked_dagger: {
-    id: "cracked_dagger",
-    name: "Cracked Dagger",
-    icon: "🗡️",
-    category: "equipment",
-    equipmentSlot: "weapon",
-    description: "A damaged goblin dagger. Still usable, but unreliable."
+    description: "A compact blade for quick strikes.",
   },
   training_greatsword: {
     id: "training_greatsword",
@@ -162,7 +162,7 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "⚔️",
     category: "equipment",
     equipmentSlot: "weapon",
-    description: "A heavy two-handed training weapon."
+    description: "A heavy two-handed training weapon.",
   },
   worn_wooden_shield: {
     id: "worn_wooden_shield",
@@ -170,7 +170,7 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "🛡️",
     category: "equipment",
     equipmentSlot: "off_hand",
-    description: "A battered shield for early defensive builds."
+    description: "A battered shield for early defensive builds.",
   },
   simple_wooden_charm: {
     id: "simple_wooden_charm",
@@ -178,165 +178,305 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "📿",
     category: "equipment",
     equipmentSlot: "accessory",
-    description: "A modest charm carried by novice adventurers."
+    description: "A modest charm carried by novice adventurers.",
   },
   cloth_cap: {
     id: "cloth_cap",
     name: "Cloth Cap",
     icon: "🎩",
     category: "equipment",
-    equipmentSlot: "head",
-    description: "Basic headwear with minor protection."
+    equipmentSlot: "helmet",
+    description: "Basic helmet-slot headwear with minor protection.",
   },
   patched_tunic: {
     id: "patched_tunic",
     name: "Patched Tunic",
     icon: "🦺",
     category: "equipment",
-    equipmentSlot: "body",
-    description: "A patched starter tunic."
+    equipmentSlot: "armor",
+    description: "A patched starter tunic.",
   },
   worn_boots: {
     id: "worn_boots",
     name: "Worn Boots",
     icon: "🥾",
     category: "equipment",
-    equipmentSlot: "feet",
-    description: "Old boots for long roads."
+    equipmentSlot: "boots",
+    description: "Old boots for long roads.",
   },
   stamina_bread: {
     id: "stamina_bread",
     name: "Stamina Bread",
     icon: "🍞",
     category: "consumable",
-    description: "Restores a small amount of stamina."
+    description: "Restores a small amount of stamina.",
   },
   minor_hp_potion: {
     id: "minor_hp_potion",
     name: "Minor HP Potion",
     icon: "🧪",
     category: "consumable",
-    description: "Restores a small amount of HP."
+    description: "Restores a small amount of HP.",
   },
   minor_mp_potion: {
     id: "minor_mp_potion",
     name: "Minor MP Potion",
     icon: "🔷",
     category: "consumable",
-    description: "Restores a small amount of MP."
+    description: "Restores a small amount of MP.",
   },
   one_night_inn_pass: {
     id: "one_night_inn_pass",
     name: "One-Night Inn Pass",
     icon: "🎟️",
     category: "pass",
-    description: "Redeem this at The Inn for one full overnight rest."
+    description: "Redeem this at The Inn for one full overnight rest.",
   },
   one_night_inn_voucher: {
     id: "one_night_inn_voucher",
     name: "One-Night Inn Pass",
     icon: "🎟️",
     category: "pass",
-    description: "Redeem this at The Inn for one full overnight rest."
+    description: "Redeem this at The Inn for one full overnight rest.",
   },
   str_fragment: {
     id: "str_fragment",
     name: "STR Fragment",
     icon: "🟥",
     category: "material",
-    description: "A raw shard of Strength potential. Refine 10 at The Sanctuary into 1 STR Rune."
+    description:
+      "A raw shard of Strength potential. Refine 10 at The Sanctuary into 1 STR Rune.",
   },
   dex_fragment: {
     id: "dex_fragment",
     name: "DEX Fragment",
     icon: "🟩",
     category: "material",
-    description: "A raw shard of Dexterity potential. Refine 10 at The Sanctuary into 1 DEX Rune."
+    description:
+      "A raw shard of Dexterity potential. Refine 10 at The Sanctuary into 1 DEX Rune.",
   },
   con_fragment: {
     id: "con_fragment",
     name: "CON Fragment",
     icon: "🛡️",
     category: "material",
-    description: "A raw shard of Constitution potential. Refine 10 at The Sanctuary into 1 CON Rune."
+    description:
+      "A raw shard of Constitution potential. Refine 10 at The Sanctuary into 1 CON Rune.",
   },
   int_fragment: {
     id: "int_fragment",
     name: "INT Fragment",
     icon: "🟦",
     category: "material",
-    description: "A raw shard of Intelligence potential. Refine 10 at The Sanctuary into 1 INT Rune."
+    description:
+      "A raw shard of Intelligence potential. Refine 10 at The Sanctuary into 1 INT Rune.",
   },
   wis_fragment: {
     id: "wis_fragment",
     name: "WIS Fragment",
     icon: "🟪",
     category: "material",
-    description: "A raw shard of Wisdom potential. Refine 10 at The Sanctuary into 1 WIS Rune."
+    description:
+      "A raw shard of Wisdom potential. Refine 10 at The Sanctuary into 1 WIS Rune.",
   },
   luk_fragment: {
     id: "luk_fragment",
     name: "LUK Fragment",
     icon: "🟨",
     category: "material",
-    description: "A raw shard of Luck potential. Refine 10 at The Sanctuary into 1 LUK Rune."
+    description:
+      "A raw shard of Luck potential. Refine 10 at The Sanctuary into 1 LUK Rune.",
   },
   str_rune: {
     id: "str_rune",
     name: "STR Rune",
     icon: "🔴",
     category: "material",
-    description: "A condensed Strength rune. Imbue it at The Sanctuary to permanently increase STR."
+    description:
+      "A condensed Strength rune. Imbue it at The Sanctuary to permanently increase STR.",
   },
   dex_rune: {
     id: "dex_rune",
     name: "DEX Rune",
     icon: "🟢",
     category: "material",
-    description: "A condensed Dexterity rune. Imbue it at The Sanctuary to permanently increase DEX."
+    description:
+      "A condensed Dexterity rune. Imbue it at The Sanctuary to permanently increase DEX.",
   },
   con_rune: {
     id: "con_rune",
     name: "CON Rune",
     icon: "🛡️",
     category: "material",
-    description: "A condensed Constitution rune. Imbue it at The Sanctuary to permanently increase CON."
+    description:
+      "A condensed Constitution rune. Imbue it at The Sanctuary to permanently increase CON.",
   },
   int_rune: {
     id: "int_rune",
     name: "INT Rune",
     icon: "🔵",
     category: "material",
-    description: "A condensed Intelligence rune. Imbue it at The Sanctuary to permanently increase INT."
+    description:
+      "A condensed Intelligence rune. Imbue it at The Sanctuary to permanently increase INT.",
   },
   wis_rune: {
     id: "wis_rune",
     name: "WIS Rune",
     icon: "🟣",
     category: "material",
-    description: "A condensed Wisdom rune. Imbue it at The Sanctuary to permanently increase WIS."
+    description:
+      "A condensed Wisdom rune. Imbue it at The Sanctuary to permanently increase WIS.",
   },
   luk_rune: {
     id: "luk_rune",
     name: "LUK Rune",
     icon: "🟡",
     category: "material",
-    description: "A condensed Luck rune. Imbue it at The Sanctuary to permanently increase LUK."
+    description:
+      "A condensed Luck rune. Imbue it at The Sanctuary to permanently increase LUK.",
   },
   slime_gel: {
     id: "slime_gel",
     name: "Slime Gel",
     icon: "🟢",
     category: "material",
-    description: "Sticky residue from a slime. Mostly used as a low-grade crafting material."
+    description:
+      "Sticky residue from a slime. Mostly used as a low-grade crafting material.",
+  },
+  clear_slime_core: {
+    id: "clear_slime_core",
+    name: "Clear Slime Core",
+    icon: "◇",
+    category: "material",
+    description:
+      "A translucent slime core for alchemy and flexible craft bindings.",
+  },
+  elastic_membrane: {
+    id: "elastic_membrane",
+    name: "Elastic Membrane",
+    icon: "◌",
+    category: "material",
+    description:
+      "A stretchable membrane used for wraps, grips, and reagent work.",
+  },
+  boar_meat: {
+    id: "boar_meat",
+    name: "Boar Meat",
+    icon: "M",
+    category: "material",
+    description: "Fresh boar meat used for cooking and early provisioning.",
+  },
+  boar_tusk: {
+    id: "boar_tusk",
+    name: "Boar Tusk",
+    icon: "△",
+    category: "material",
+    description:
+      "A hard tusk used for crude fittings, points, and reinforced tool parts.",
+  },
+  tough_hide: {
+    id: "tough_hide",
+    name: "Tough Hide",
+    icon: "▰",
+    category: "material",
+    description: "Sturdy hide for leather armor, straps, and rugged padding.",
+  },
+  wolf_pelt: {
+    id: "wolf_pelt",
+    name: "Wolf Pelt",
+    icon: "P",
+    category: "material",
+    description: "A rough pelt taken from a wild wolf.",
+  },
+  wolf_fang: {
+    id: "wolf_fang",
+    name: "Wolf Fang",
+    icon: "△",
+    category: "material",
+    description:
+      "A sharp fang used for small blades, charms, and predatory craft parts.",
+  },
+  tough_sinew: {
+    id: "tough_sinew",
+    name: "Tough Sinew",
+    icon: "⌁",
+    category: "material",
+    description:
+      "Strong beast sinew for bindings, seams, and rough bowstring work.",
   },
   goblin_ear: {
     id: "goblin_ear",
     name: "Goblin Ear",
     icon: "👂",
     category: "material",
-    description: "A crude proof of defeating a goblin."
-  }
+    description: "A crude proof of defeating a goblin.",
+  },
+  goblin_scrap: {
+    id: "goblin_scrap",
+    name: "Goblin Scrap",
+    icon: "▣",
+    category: "material",
+    description: "Scavenged metal and junk from goblin gear.",
+  },
+  bent_rivet: {
+    id: "bent_rivet",
+    name: "Bent Rivet",
+    icon: "•",
+    category: "material",
+    description: "A warped rivet that can be reforged or hammered flat.",
+  },
+  dull_iron_shard: {
+    id: "dull_iron_shard",
+    name: "Dull Iron Shard",
+    icon: "▰",
+    category: "material",
+    description: "A blunt shard of low-grade iron for early smithing.",
+  },
+  cracked_blade: {
+    id: "cracked_blade",
+    name: "Cracked Blade",
+    icon: "▱",
+    category: "material",
+    description: "A broken blade segment used as a smithing component.",
+  },
+  coal: {
+    id: "coal",
+    name: "Coal",
+    icon: "●",
+    category: "material",
+    description: "Plain forge fuel for smelting and metalwork.",
+  },
+  copper_nugget: {
+    id: "copper_nugget",
+    name: "Copper Nugget",
+    icon: "◆",
+    category: "material",
+    description:
+      "A small copper nugget for early fittings and simple metal goods.",
+  },
+  rough_wood: {
+    id: "rough_wood",
+    name: "Rough Wood",
+    icon: "▬",
+    category: "material",
+    description:
+      "Unfinished common wood for handles, frames, and basic crafting.",
+  },
+  common_wood: {
+    id: "common_wood",
+    name: "Common Wood",
+    icon: "▬",
+    category: "material",
+    description: "A simple worked wood piece for early crafting recipes.",
+  },
+  basic_thread: {
+    id: "basic_thread",
+    name: "Basic Thread",
+    icon: "⌁",
+    category: "material",
+    description:
+      "Simple thread for stitching cloth, leather, wraps, and crafted goods.",
+  },
 };
 
 function buildInventoryStacks(itemIds: ItemId[]): InventoryItemStack[] {
@@ -354,7 +494,7 @@ function buildInventoryStacks(itemIds: ItemId[]): InventoryItemStack[] {
 
   return orderedItemIds.map((itemId) => ({
     itemId,
-    quantity: quantityByItemId.get(itemId) ?? 0
+    quantity: quantityByItemId.get(itemId) ?? 0,
   }));
 }
 
@@ -378,7 +518,7 @@ function getItemDefinition(itemId: ItemId): ItemDisplayDefinition {
       name: compactLabel(itemId),
       icon: "◇",
       category: "unknown",
-      description: "Unknown item."
+      description: "Unknown item.",
     }
   );
 }
@@ -413,7 +553,7 @@ function getItemCategoryLabel(item: ItemDisplayDefinition): string {
 
 function filterInventoryStacks(
   stacks: InventoryItemStack[],
-  filter: InventoryFilter
+  filter: InventoryFilter,
 ): InventoryItemStack[] {
   if (filter === "all") {
     return stacks;
@@ -463,18 +603,17 @@ export function InventoryOverlay({
   userId,
   currentCharacter,
   onCharacterUpdated,
-  onClose
+  onClose,
 }: InventoryOverlayProps) {
   const [stacks, setStacks] = useState<InventoryItemStack[]>(() =>
-    buildInventoryStacks(currentCharacter.inventoryItemIds)
+    buildInventoryStacks(currentCharacter.inventoryItemIds),
   );
   const [equippedItemIds, setEquippedItemIds] = useState<ItemId[]>(() => [
-    ...currentCharacter.equippedItemIds
+    ...currentCharacter.equippedItemIds,
   ]);
   const [selectedItemId, setSelectedItemId] = useState<ItemId | null>(null);
   const [filter, setFilter] = useState<InventoryFilter>("all");
-  const [mobilePanel, setMobilePanel] =
-    useState<InventoryMobilePanel>("bag");
+  const [mobilePanel, setMobilePanel] = useState<InventoryMobilePanel>("bag");
   const [busyItemId, setBusyItemId] = useState<ItemId | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -482,20 +621,22 @@ export function InventoryOverlay({
 
   const wallet = useMemo(
     () => getCurrencyBreakdown(currentCharacter.moneyBronze),
-    [currentCharacter.moneyBronze]
+    [currentCharacter.moneyBronze],
   );
 
   const equippedItems = useMemo(
     () => equippedItemIds.map((itemId) => getItemDefinition(itemId)),
-    [equippedItemIds]
+    [equippedItemIds],
   );
 
   const selectedStack = useMemo(
     () => stacks.find((stack) => stack.itemId === selectedItemId) ?? null,
-    [selectedItemId, stacks]
+    [selectedItemId, stacks],
   );
 
-  const selectedItem = selectedItemId ? getItemDefinition(selectedItemId) : null;
+  const selectedItem = selectedItemId
+    ? getItemDefinition(selectedItemId)
+    : null;
 
   const selectedItemIsEquipped = selectedItemId
     ? equippedItemIds.includes(selectedItemId)
@@ -503,21 +644,21 @@ export function InventoryOverlay({
 
   const visibleStacks = useMemo(
     () => filterInventoryStacks(stacks, filter),
-    [filter, stacks]
+    [filter, stacks],
   );
 
   const bagCells = useMemo(() => {
     const minimumSlots = 25;
     const filledCells = visibleStacks.map((stack) => ({
       stack,
-      item: getItemDefinition(stack.itemId)
+      item: getItemDefinition(stack.itemId),
     }));
 
     const emptyCount = Math.max(0, minimumSlots - filledCells.length);
 
     return {
       filledCells,
-      emptyCells: Array.from({ length: emptyCount }, (_, index) => index)
+      emptyCells: Array.from({ length: emptyCount }, (_, index) => index),
     };
   }, [visibleStacks]);
 
@@ -532,11 +673,11 @@ export function InventoryOverlay({
   useEffect(() => {
     const availableItemIds = new Set<ItemId>([
       ...currentCharacter.inventoryItemIds,
-      ...equippedItemIds
+      ...equippedItemIds,
     ]);
 
     setSelectedItemId((current) =>
-      current && !availableItemIds.has(current) ? null : current
+      current && !availableItemIds.has(current) ? null : current,
     );
   }, [currentCharacter.inventoryItemIds, equippedItemIds]);
 
@@ -563,7 +704,7 @@ export function InventoryOverlay({
       try {
         const nextStacks = await charactersApi.getInventory(
           userId,
-          currentCharacter.id
+          currentCharacter.id,
         );
 
         if (!cancelled) {
@@ -571,7 +712,9 @@ export function InventoryOverlay({
           setSelectedItemId((previousSelectedItemId) => {
             if (
               previousSelectedItemId &&
-              nextStacks.some((stack) => stack.itemId === previousSelectedItemId)
+              nextStacks.some(
+                (stack) => stack.itemId === previousSelectedItemId,
+              )
             ) {
               return previousSelectedItemId;
             }
@@ -584,7 +727,7 @@ export function InventoryOverlay({
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Failed to load inventory."
+              : "Failed to load inventory.",
           );
         }
       } finally {
@@ -603,7 +746,7 @@ export function InventoryOverlay({
 
   async function runInventoryAction(
     itemId: ItemId,
-    action: "equip" | "unequip" | "use"
+    action: "equip" | "unequip" | "use",
   ) {
     if (busyItemId) {
       return;
@@ -616,7 +759,7 @@ export function InventoryOverlay({
       setError(
         isInnPass(item)
           ? "Inn Passes can only be redeemed at The Inn."
-          : `${item.name} cannot be used from the inventory.`
+          : `${item.name} cannot be used from the inventory.`,
       );
       return;
     }
@@ -630,7 +773,7 @@ export function InventoryOverlay({
         const result = await charactersApi.equip(
           userId,
           currentCharacter.id,
-          itemId
+          itemId,
         );
 
         onCharacterUpdated(result.character);
@@ -644,7 +787,7 @@ export function InventoryOverlay({
         const result = await charactersApi.unequip(
           userId,
           currentCharacter.id,
-          itemId
+          itemId,
         );
 
         onCharacterUpdated(result.character);
@@ -657,7 +800,7 @@ export function InventoryOverlay({
       const result = await charactersApi.useConsumable(
         userId,
         currentCharacter.id,
-        itemId
+        itemId,
       );
 
       onCharacterUpdated(result.character);
@@ -672,7 +815,7 @@ export function InventoryOverlay({
       setError(
         actionError instanceof Error
           ? actionError.message
-          : "Inventory action failed."
+          : "Inventory action failed.",
       );
     } finally {
       setBusyItemId(null);
@@ -768,7 +911,7 @@ export function InventoryOverlay({
                   className={[
                     "inventory-equipment-slot",
                     `inventory-equipment-slot--${slotView.className}`,
-                    equippedItem ? "inventory-equipment-slot--filled" : ""
+                    equippedItem ? "inventory-equipment-slot--filled" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -816,7 +959,7 @@ export function InventoryOverlay({
                       "inventory-bag-cell",
                       selectedItemId === stack.itemId
                         ? "inventory-bag-cell--selected"
-                        : ""
+                        : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
@@ -846,7 +989,10 @@ export function InventoryOverlay({
               {selectedItem ? (
                 <>
                   <div className="inventory-action-panel__item">
-                    <span className="inventory-action-panel__icon" aria-hidden="true">
+                    <span
+                      className="inventory-action-panel__icon"
+                      aria-hidden="true"
+                    >
                       {selectedItem.icon}
                     </span>
 
@@ -881,7 +1027,7 @@ export function InventoryOverlay({
                         onClick={() =>
                           void runInventoryAction(
                             selectedItem.id,
-                            selectedItemIsEquipped ? "unequip" : "equip"
+                            selectedItemIsEquipped ? "unequip" : "equip",
                           )
                         }
                       >

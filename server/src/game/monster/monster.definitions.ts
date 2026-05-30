@@ -363,7 +363,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       moneyBronze: 4,
       lootTable: [
         {
-          itemId: 'wolf_skin',
+          itemId: 'wolf_pelt',
           chancePercent: 55,
           minQuantity: 1,
           maxQuantity: 1,
@@ -447,12 +447,6 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
         {
           itemId: 'goblin_ear',
           chancePercent: 30,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
-        {
-          itemId: 'cracked_dagger',
-          chancePercent: 8,
           minQuantity: 1,
           maxQuantity: 1,
         },

@@ -18,10 +18,10 @@ export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type EquipmentSlot =
   | 'weapon'
   | 'off_hand'
-  | 'head'
-  | 'body'
-  | 'hands'
-  | 'feet'
+  | 'helmet'
+  | 'armor'
+  | 'legging'
+  | 'boots'
   | 'accessory';
 
 export type ConsumableTargetType = 'self' | 'ally';
