@@ -249,19 +249,28 @@ export function SanctuaryPanel({
 
   return (
     <section className="sanctuary-panel" aria-label="The Sanctuary">
-      <aside className="sanctuary-altar-card">
-        <div className="sanctuary-altar-card__halo" aria-hidden="true" />
-
-        <header className="sanctuary-altar-header">
-          <div className="sanctuary-altar-glyph" aria-hidden="true">
+      <header className="sanctuary-panel__top">
+        <div className="sanctuary-panel__identity">
+          <span>The Sanctuary</span>
+          <div className="sanctuary-panel__icon" aria-hidden="true">
             🏛️
           </div>
+        </div>
+      </header>
 
-          <div>
-            <span>The Sanctuary</span>
-            <h2>{status.character.name}</h2>
-          </div>
-        </header>
+      <div className="sanctuary-panel__body">
+        <aside className="sanctuary-altar-card">
+          <div className="sanctuary-altar-card__halo" aria-hidden="true" />
+
+          <header className="sanctuary-altar-header">
+            <div className="sanctuary-altar-glyph" aria-hidden="true">
+              🏛️
+            </div>
+          </header>
+
+        <div className="sanctuary-rank-owner">
+          <span>{status.character.name}</span>
+        </div>
 
         <section
           className={
@@ -314,9 +323,9 @@ export function SanctuaryPanel({
               ? "Perform Rank Ascension"
               : getStatusMessage(status)}
         </Button>
-      </aside>
+        </aside>
 
-      <main className="sanctuary-stat-board">
+        <main className="sanctuary-stat-board">
         <header className="sanctuary-stat-board__header">
           <div>
             <span>Six Core Attributes</span>
@@ -412,7 +421,8 @@ export function SanctuaryPanel({
           </span>
           <strong>{compactLabel(rankStatus.currentRank.id)}</strong>
         </footer>
-      </main>
+        </main>
+      </div>
     </section>
   );
 }
