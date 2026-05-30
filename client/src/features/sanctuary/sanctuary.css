@@ -368,7 +368,7 @@
 .sanctuary-stat-summary {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(6.9rem, 6.9rem) auto;
+  grid-template-columns: minmax(5.35rem, 5.35rem) auto;
   align-items: stretch;
   justify-content: start;
   gap: 0.46rem;
@@ -601,7 +601,7 @@
   }
 
   .sanctuary-stat-summary {
-    grid-template-columns: minmax(6.9rem, 6.9rem) auto;
+    grid-template-columns: minmax(5.35rem, 5.35rem) auto;
   }
 
   .sanctuary-stat-row__actions {
