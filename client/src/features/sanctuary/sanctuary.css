@@ -365,11 +365,18 @@
   align-items: start;
 }
 
-.sanctuary-stat-name-line {
+.sanctuary-stat-summary {
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 0.38rem;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.46rem;
+}
+
+.sanctuary-stat-copy {
+  min-width: 0;
+  display: grid;
+  align-content: center;
 }
 
 .sanctuary-stat-icon {
@@ -400,12 +407,13 @@
 }
 
 .sanctuary-stat-value {
-  min-width: 2.92rem;
+  min-width: 3.18rem;
   border: 1px solid rgba(59, 67, 92, 0.58);
   border-radius: 0.58rem;
   background: rgba(2, 6, 23, 0.34);
-  padding: 0.25rem 0.36rem;
+  padding: 0.34rem 0.4rem;
   display: grid;
+  align-content: center;
   justify-items: center;
   gap: 0.04rem;
 }

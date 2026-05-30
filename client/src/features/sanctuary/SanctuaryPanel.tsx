@@ -469,15 +469,16 @@ export function SanctuaryPanel({
                     {display.icon}
                   </span>
 
-                  <div>
-                    <div className="sanctuary-stat-name-line">
+                  <div className="sanctuary-stat-summary">
+                    <div className="sanctuary-stat-copy">
                       <strong>{display.label}</strong>
-                      <div className="sanctuary-stat-value">
-                        <span>Value</span>
-                        <strong>{formatNumber(effectiveValue)}</strong>
-                      </div>
+                      <small>Bonus +{formatNumber(stat.accumulatedBonus)}</small>
                     </div>
-                    <small>Bonus +{formatNumber(stat.accumulatedBonus)}</small>
+
+                    <div className="sanctuary-stat-value">
+                      <span>Value</span>
+                      <strong>{formatNumber(effectiveValue)}</strong>
+                    </div>
                   </div>
                 </div>
 
