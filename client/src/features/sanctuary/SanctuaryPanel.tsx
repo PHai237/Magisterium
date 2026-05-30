@@ -262,15 +262,9 @@ export function SanctuaryPanel({
         <aside className="sanctuary-altar-card">
           <div className="sanctuary-altar-card__halo" aria-hidden="true" />
 
-          <header className="sanctuary-altar-header">
-            <div className="sanctuary-altar-glyph" aria-hidden="true">
-              🏛️
-            </div>
-          </header>
-
-        <div className="sanctuary-rank-owner">
-          <span>{status.character.name}</span>
-        </div>
+          <div className="sanctuary-rank-owner">
+            <span>{status.character.name}</span>
+          </div>
 
         <section
           className={

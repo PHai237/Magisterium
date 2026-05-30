@@ -152,30 +152,6 @@
   z-index: 1;
 }
 
-.sanctuary-altar-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.78rem;
-}
-
-.sanctuary-altar-glyph {
-  width: 3.4rem;
-  height: 3.4rem;
-  flex: 0 0 3.4rem;
-  border: 1px solid rgba(212, 163, 89, 0.34);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 50% 35%, rgba(245, 158, 11, 0.16), transparent 2.4rem),
-    rgba(13, 22, 37, 0.84);
-  display: grid;
-  place-items: center;
-  font-size: 1.32rem;
-  box-shadow:
-    0 0 0 5px rgba(212, 163, 89, 0.055),
-    0 0 28px rgba(59, 130, 246, 0.12);
-}
-
 .sanctuary-average-card span,
 .sanctuary-altar-message span,
 .sanctuary-stat-board__header span,
