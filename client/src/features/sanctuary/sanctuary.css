@@ -360,15 +360,15 @@
 .sanctuary-stat-row__identity {
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.6rem;
-  align-items: center;
+  align-items: start;
 }
 
 .sanctuary-stat-name-line {
   min-width: 0;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.38rem;
 }
 
@@ -400,11 +400,11 @@
 }
 
 .sanctuary-stat-value {
-  min-width: 3.18rem;
+  min-width: 2.92rem;
   border: 1px solid rgba(59, 67, 92, 0.58);
   border-radius: 0.58rem;
   background: rgba(2, 6, 23, 0.34);
-  padding: 0.34rem 0.4rem;
+  padding: 0.25rem 0.36rem;
   display: grid;
   justify-items: center;
   gap: 0.04rem;
@@ -589,10 +589,6 @@
 
   .sanctuary-stat-row {
     grid-template-columns: 1fr;
-  }
-
-  .sanctuary-stat-row__identity {
-    grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
   .sanctuary-stat-row__actions {
