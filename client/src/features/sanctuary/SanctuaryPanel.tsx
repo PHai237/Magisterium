@@ -328,7 +328,6 @@ export function SanctuaryPanel({
         <main className="sanctuary-stat-board">
         <header className="sanctuary-stat-board__header">
           <div>
-            <span>Six Core Attributes</span>
             <h3>Fragments · Runes · Imbuement</h3>
           </div>
 
