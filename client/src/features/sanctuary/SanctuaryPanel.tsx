@@ -284,10 +284,10 @@ export function SanctuaryPanel({
         </header>
 
         <div className="sanctuary-stat-list">
-          {orderedStats.map((statKey) => {
-            const display = STAT_DISPLAY_DEFINITIONS[statKey];
-            const stat = status.character.stats[statKey];
-            const effectiveValue = getEffectiveStatValue(status, statKey);
+            {orderedStats.map((statKey) => {
+              const display = STAT_DISPLAY_DEFINITIONS[statKey];
+              const stat = status.character.stats[statKey];
+              const effectiveValue = getEffectiveStatValue(status, statKey);
             const fragmentCount = getQuantity(status.fragments, statKey);
             const runeCount = getQuantity(status.runes, statKey);
 
@@ -306,10 +306,8 @@ export function SanctuaryPanel({
                   <div>
                     <strong>{display.label}</strong>
                     <small>
-                      {statKey} · Base {formatNumber(stat.currentValue)} · Bonus +
-                      {formatNumber(stat.accumulatedBonus)}
+                      {statKey} · Bonus +{formatNumber(stat.accumulatedBonus)}
                     </small>
-                    <p>{display.description}</p>
                   </div>
                 </div>
 

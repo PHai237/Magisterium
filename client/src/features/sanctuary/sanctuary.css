@@ -147,7 +147,7 @@
   filter: blur(2px);
 }
 
-.sanctuary-altar-card > * {
+.sanctuary-altar-card > *:not(.sanctuary-altar-card__halo) {
   position: relative;
   z-index: 1;
 }
@@ -379,14 +379,6 @@
   font-family: var(--mono);
   font-size: 0.62rem;
   font-weight: 850;
-}
-
-.sanctuary-stat-row__identity p {
-  margin: 0.24rem 0 0;
-  color: #64748b;
-  font-size: 0.64rem;
-  font-weight: 760;
-  line-height: 1.35;
 }
 
 .sanctuary-stat-row__resource {
