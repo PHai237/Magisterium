@@ -32,9 +32,12 @@ function collectStarterItemIds(): ItemId[] {
 function collectMonsterLootItemIds(): ItemId[] {
   return Array.from(
     new Set(
-      MONSTER_DEFINITIONS.flatMap((monster) =>
-        monster.reward.lootTable.map((entry) => entry.itemId),
-      ),
+      MONSTER_DEFINITIONS.flatMap((monster) => [
+        ...monster.reward.lootTable.map((entry) => entry.itemId),
+        ...(monster.reward.randomLootPools ?? []).flatMap((pool) =>
+          pool.entries.map((entry) => entry.itemId),
+        ),
+      ]),
     ),
   );
 }

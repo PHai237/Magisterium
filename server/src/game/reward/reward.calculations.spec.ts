@@ -243,5 +243,104 @@ describe('reward calculations', () => {
 
       expect(reward.items).toEqual([]);
     });
+
+    it('should roll one item from a random loot pool', () => {
+      const reward = calculateBattleReward(
+        createRewardInput({
+          defeatedMonsters: [
+            {
+              actorId: 'slime_1',
+              monsterId: 'slime',
+              reward: {
+                exp: 5,
+                moneyBronze: 2,
+                lootTable: [],
+                randomLootPools: [
+                  {
+                    id: 'stat_fragment',
+                    chancePercent: 100,
+                    entries: [
+                      {
+                        itemId: 'str_fragment',
+                        weight: 1,
+                        minQuantity: 1,
+                        maxQuantity: 1,
+                      },
+                      {
+                        itemId: 'dex_fragment',
+                        weight: 1,
+                        minQuantity: 1,
+                        maxQuantity: 1,
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(reward.lootRolls).toHaveLength(1);
+      expect(reward.lootRolls[0]).toEqual(
+        expect.objectContaining({
+          chancePercent: 100,
+          dropped: true,
+          quantity: 1,
+        }),
+      );
+      expect(['str_fragment', 'dex_fragment']).toContain(
+        reward.lootRolls[0]?.itemId,
+      );
+      expect(reward.items).toHaveLength(1);
+    });
+
+    it('should not drop more than one item from a failed random loot pool', () => {
+      const reward = calculateBattleReward(
+        createRewardInput({
+          defeatedMonsters: [
+            {
+              actorId: 'slime_1',
+              monsterId: 'slime',
+              reward: {
+                exp: 5,
+                moneyBronze: 2,
+                lootTable: [],
+                randomLootPools: [
+                  {
+                    id: 'stat_fragment',
+                    chancePercent: 0,
+                    entries: [
+                      {
+                        itemId: 'str_fragment',
+                        weight: 1,
+                        minQuantity: 1,
+                        maxQuantity: 1,
+                      },
+                      {
+                        itemId: 'dex_fragment',
+                        weight: 1,
+                        minQuantity: 1,
+                        maxQuantity: 1,
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(reward.lootRolls).toHaveLength(1);
+      expect(reward.lootRolls[0]).toEqual(
+        expect.objectContaining({
+          chancePercent: 0,
+          dropped: false,
+          quantity: 0,
+        }),
+      );
+      expect(reward.items).toEqual([]);
+    });
   });
 });

@@ -2,6 +2,8 @@ import type {
   MonsterDefinition,
   MonsterId,
   MonsterLootEntry,
+  MonsterRandomLootPool,
+  MonsterRandomLootPoolEntry,
 } from './monster.types';
 
 export const MONSTER_IDS = [
@@ -14,6 +16,25 @@ export const MONSTER_IDS = [
 function freezeLootEntry(entry: MonsterLootEntry): Readonly<MonsterLootEntry> {
   return Object.freeze({
     ...entry,
+  });
+}
+
+function freezeRandomLootPoolEntry(
+  entry: MonsterRandomLootPoolEntry,
+): Readonly<MonsterRandomLootPoolEntry> {
+  return Object.freeze({
+    ...entry,
+  });
+}
+
+function freezeRandomLootPool(
+  pool: MonsterRandomLootPool,
+): Readonly<MonsterRandomLootPool> {
+  return Object.freeze({
+    ...pool,
+    entries: Object.freeze(
+      pool.entries.map((entry) => freezeRandomLootPoolEntry(entry)),
+    ),
   });
 }
 
@@ -39,10 +60,58 @@ function freezeMonsterDefinition(
       lootTable: Object.freeze(
         monster.reward.lootTable.map((entry) => freezeLootEntry(entry)),
       ),
+      randomLootPools: Object.freeze(
+        (monster.reward.randomLootPools ?? []).map((pool) =>
+          freezeRandomLootPool(pool),
+        ),
+      ),
     }),
     tags: Object.freeze([...monster.tags]),
   });
 }
+
+const STAT_FRAGMENT_RANDOM_LOOT_POOL = Object.freeze({
+  id: 'stat_fragment',
+  chancePercent: 30,
+  entries: Object.freeze([
+    Object.freeze({
+      itemId: 'str_fragment',
+      weight: 1,
+      minQuantity: 1,
+      maxQuantity: 1,
+    }),
+    Object.freeze({
+      itemId: 'dex_fragment',
+      weight: 1,
+      minQuantity: 1,
+      maxQuantity: 1,
+    }),
+    Object.freeze({
+      itemId: 'con_fragment',
+      weight: 1,
+      minQuantity: 1,
+      maxQuantity: 1,
+    }),
+    Object.freeze({
+      itemId: 'int_fragment',
+      weight: 1,
+      minQuantity: 1,
+      maxQuantity: 1,
+    }),
+    Object.freeze({
+      itemId: 'wis_fragment',
+      weight: 1,
+      minQuantity: 1,
+      maxQuantity: 1,
+    }),
+    Object.freeze({
+      itemId: 'luk_fragment',
+      weight: 1,
+      minQuantity: 1,
+      maxQuantity: 1,
+    }),
+  ]),
+}) satisfies MonsterRandomLootPool;
 
 const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
   {
@@ -121,19 +190,8 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           minQuantity: 1,
           maxQuantity: 2,
         },
-        {
-          itemId: 'con_fragment',
-          chancePercent: 35,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
-        {
-          itemId: 'wis_fragment',
-          chancePercent: 20,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
       ],
+      randomLootPools: [STAT_FRAGMENT_RANDOM_LOOT_POOL],
     },
 
     tags: ['monster', 'starter', 'beast', 'gelatinous', 'town-outskirts'],
@@ -214,19 +272,8 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           minQuantity: 1,
           maxQuantity: 2,
         },
-        {
-          itemId: 'str_fragment',
-          chancePercent: 35,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
-        {
-          itemId: 'con_fragment',
-          chancePercent: 25,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
       ],
+      randomLootPools: [STAT_FRAGMENT_RANDOM_LOOT_POOL],
     },
 
     tags: ['monster', 'starter', 'beast', 'boar', 'town-outskirts'],
@@ -307,19 +354,8 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           minQuantity: 1,
           maxQuantity: 1,
         },
-        {
-          itemId: 'dex_fragment',
-          chancePercent: 40,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
-        {
-          itemId: 'luk_fragment',
-          chancePercent: 20,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
       ],
+      randomLootPools: [STAT_FRAGMENT_RANDOM_LOOT_POOL],
     },
 
     tags: ['monster', 'starter', 'beast', 'wolf', 'town-outskirts'],
@@ -401,24 +437,13 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           maxQuantity: 1,
         },
         {
-          itemId: 'int_fragment',
-          chancePercent: 30,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
-        {
-          itemId: 'dex_fragment',
-          chancePercent: 25,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
-        {
           itemId: 'cracked_dagger',
           chancePercent: 8,
           minQuantity: 1,
           maxQuantity: 1,
         },
       ],
+      randomLootPools: [STAT_FRAGMENT_RANDOM_LOOT_POOL],
     },
 
     tags: ['monster', 'starter', 'humanoid', 'goblin', 'forest-edge'],

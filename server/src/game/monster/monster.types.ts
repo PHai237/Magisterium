@@ -23,10 +23,24 @@ export interface MonsterLootEntry {
   maxQuantity: number;
 }
 
+export interface MonsterRandomLootPoolEntry {
+  itemId: ItemId;
+  weight: number;
+  minQuantity: number;
+  maxQuantity: number;
+}
+
+export interface MonsterRandomLootPool {
+  id: string;
+  chancePercent: number;
+  entries: readonly MonsterRandomLootPoolEntry[];
+}
+
 export interface MonsterRewardDefinition {
   exp: number;
   moneyBronze: number;
   lootTable: readonly MonsterLootEntry[];
+  randomLootPools?: readonly MonsterRandomLootPool[];
 }
 
 export interface MonsterDefinition {
