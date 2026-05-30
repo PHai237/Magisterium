@@ -33,6 +33,7 @@ export class SanctuaryController {
       characterId,
       this.readRequiredUserIdHeader(userIdHeader),
       dto.statKey,
+      dto.quantity,
     );
   }
 
@@ -46,6 +47,7 @@ export class SanctuaryController {
       characterId,
       this.readRequiredUserIdHeader(userIdHeader),
       dto.statKey,
+      dto.quantity,
     );
   }
 

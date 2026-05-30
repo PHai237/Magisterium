@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 
 import { Button } from "../../components/ui/Button";
 import { STAT_KEYS } from "../../domain/magisterium.constants";
@@ -21,41 +22,47 @@ interface SanctuaryPanelProps {
 interface StatDisplayDefinition {
   label: string;
   icon: string;
-  description: string;
 }
 
 const FRAGMENTS_PER_RUNE = 10;
 
+type SanctuaryActionKind = "refine" | "imbue";
+type SanctuaryQuantityMode = "one" | "all" | "custom";
+
+interface SanctuaryQuantitySelection {
+  mode: SanctuaryQuantityMode;
+  customValue: string;
+}
+
+const DEFAULT_QUANTITY_SELECTION: SanctuaryQuantitySelection = {
+  mode: "one",
+  customValue: ""
+};
+
 const STAT_DISPLAY_DEFINITIONS: Record<StatKey, StatDisplayDefinition> = {
   STR: {
     label: "Strength",
-    icon: "💪",
-    description: "Physical force, weapon impact, and direct strike pressure."
+    icon: "💪"
   },
   DEX: {
     label: "Dexterity",
-    icon: "🎯",
-    description: "Precision, evasion, action speed, and agile techniques."
+    icon: "🎯"
   },
   CON: {
     label: "Constitution",
-    icon: "🛡️",
-    description: "Health, stamina stability, and physical survivability."
+    icon: "🛡️"
   },
   INT: {
     label: "Intelligence",
-    icon: "🧠",
-    description: "Spell calculation, magical attack, and arcane scaling."
+    icon: "🧠"
   },
   WIS: {
     label: "Wisdom",
-    icon: "🔮",
-    description: "Spiritual control, mana discipline, healing, and resistance."
+    icon: "🔮"
   },
   LUK: {
     label: "Luck",
-    icon: "🎲",
-    description: "Critical potential, second chance, and combat procs."
+    icon: "🎲"
   }
 };
 
@@ -93,6 +100,32 @@ function formatRankThreshold(status: CharacterSanctuaryStatusResult): string {
   return `Next threshold: ${formatNumber(nextRequirement, 1)} AVG`;
 }
 
+function getQuantitySelectionKey(
+  statKey: StatKey,
+  actionKind: SanctuaryActionKind
+): string {
+  return `${statKey}:${actionKind}`;
+}
+
+function getSelectedActionQuantity(
+  selection: SanctuaryQuantitySelection,
+  maxQuantity: number
+): number {
+  if (selection.mode === "one") {
+    return 1;
+  }
+
+  if (selection.mode === "all") {
+    return maxQuantity;
+  }
+
+  return Math.floor(Number(selection.customValue));
+}
+
+function displayStatLabel(statKey: StatKey): string {
+  return STAT_DISPLAY_DEFINITIONS[statKey].label;
+}
+
 export function SanctuaryPanel({
   userId,
   currentCharacter,
@@ -102,6 +135,9 @@ export function SanctuaryPanel({
     null
   );
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [quantitySelections, setQuantitySelections] = useState<
+    Record<string, SanctuaryQuantitySelection>
+  >({});
   const [error, setError] = useState<string | null>(null);
 
   const loading = status === null;
@@ -178,17 +214,88 @@ export function SanctuaryPanel({
     }
   }
 
-  function refineRune(statKey: StatKey) {
-    void runSanctuaryAction(
-      `refine-${statKey}`,
-      () => sanctuaryApi.refineRune(userId, currentCharacter.id, statKey)
+  function getQuantitySelection(
+    statKey: StatKey,
+    actionKind: SanctuaryActionKind
+  ): SanctuaryQuantitySelection {
+    return (
+      quantitySelections[getQuantitySelectionKey(statKey, actionKind)] ??
+      DEFAULT_QUANTITY_SELECTION
     );
   }
 
-  function imbueRune(statKey: StatKey) {
+  function updateQuantitySelection(
+    statKey: StatKey,
+    actionKind: SanctuaryActionKind,
+    nextSelection: SanctuaryQuantitySelection
+  ) {
+    setQuantitySelections((currentSelections) => ({
+      ...currentSelections,
+      [getQuantitySelectionKey(statKey, actionKind)]: nextSelection
+    }));
+  }
+
+  function resolveActionQuantity(
+    statKey: StatKey,
+    actionKind: SanctuaryActionKind,
+    maxQuantity: number
+  ): number | null {
+    const selectedQuantity = getSelectedActionQuantity(
+      getQuantitySelection(statKey, actionKind),
+      maxQuantity
+    );
+
+    if (!Number.isSafeInteger(selectedQuantity) || selectedQuantity <= 0) {
+      setError("Enter a positive quantity.");
+      return null;
+    }
+
+    if (selectedQuantity > maxQuantity) {
+      setError(
+        actionKind === "refine"
+          ? `Not enough ${statKey} fragments to refine ${formatNumber(
+              selectedQuantity
+            )} rune(s).`
+          : `Not enough ${statKey} runes to imbue ${formatNumber(
+              selectedQuantity
+            )} time(s).`
+      );
+      return null;
+    }
+
+    return selectedQuantity;
+  }
+
+  function refineRune(statKey: StatKey, maxQuantity: number) {
+    const quantity = resolveActionQuantity(statKey, "refine", maxQuantity);
+
+    if (quantity === null) {
+      return;
+    }
+
+    void runSanctuaryAction(
+      `refine-${statKey}`,
+      () =>
+        sanctuaryApi.refineRune(
+          userId,
+          currentCharacter.id,
+          statKey,
+          quantity
+        )
+    );
+  }
+
+  function imbueRune(statKey: StatKey, maxQuantity: number) {
+    const quantity = resolveActionQuantity(statKey, "imbue", maxQuantity);
+
+    if (quantity === null) {
+      return;
+    }
+
     void runSanctuaryAction(
       `imbue-${statKey}`,
-      () => sanctuaryApi.imbueRune(userId, currentCharacter.id, statKey)
+      () =>
+        sanctuaryApi.imbueRune(userId, currentCharacter.id, statKey, quantity)
     );
   }
 
@@ -200,6 +307,54 @@ export function SanctuaryPanel({
     void runSanctuaryAction(
       "rank-up",
       () => sanctuaryApi.rankUp(userId, currentCharacter.id)
+    );
+  }
+
+  function renderQuantityControl(
+    statKey: StatKey,
+    actionKind: SanctuaryActionKind,
+    maxQuantity: number
+  ) {
+    const selection = getQuantitySelection(statKey, actionKind);
+    const disabled = Boolean(busyAction) || maxQuantity <= 0;
+    const actionLabel = actionKind === "refine" ? "refine" : "imbue";
+
+    return (
+      <div className="sanctuary-quantity-control">
+        <select
+          aria-label={`${displayStatLabel(statKey)} ${actionLabel} quantity`}
+          disabled={disabled}
+          value={selection.mode}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+            updateQuantitySelection(statKey, actionKind, {
+              mode: event.target.value as SanctuaryQuantityMode,
+              customValue: selection.customValue
+            })
+          }
+        >
+          <option value="one">1</option>
+          <option value="all">All</option>
+          <option value="custom">Qty</option>
+        </select>
+
+        {selection.mode === "custom" ? (
+          <input
+            aria-label={`${displayStatLabel(statKey)} custom ${actionLabel} quantity`}
+            disabled={disabled}
+            inputMode="numeric"
+            min={1}
+            placeholder="0"
+            type="number"
+            value={selection.customValue}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              updateQuantitySelection(statKey, actionKind, {
+                mode: "custom",
+                customValue: event.target.value
+              })
+            }
+          />
+        ) : null}
+      </div>
     );
   }
 
@@ -263,6 +418,12 @@ export function SanctuaryPanel({
             <p>{formatRankThreshold(status)}</p>
           </section>
 
+          {error ? (
+            <div className="sanctuary-action-error" role="alert">
+              {error}
+            </div>
+          ) : null}
+
           {isRankReady ? (
             <Button
               type="button"
@@ -276,23 +437,26 @@ export function SanctuaryPanel({
         </aside>
 
         <main className="sanctuary-stat-board">
-        <header className="sanctuary-stat-board__header">
-          <div>
-            <h3>Fragments · Runes · Imbuement</h3>
-          </div>
+          <header className="sanctuary-stat-board__header">
+            <div>
+              <h3>Fragments · Runes · Imbuement</h3>
+            </div>
+          </header>
 
-        </header>
-
-        <div className="sanctuary-stat-list">
+          <div className="sanctuary-stat-list">
             {orderedStats.map((statKey) => {
               const display = STAT_DISPLAY_DEFINITIONS[statKey];
               const stat = status.character.stats[statKey];
               const effectiveValue = getEffectiveStatValue(status, statKey);
-            const fragmentCount = getQuantity(status.fragments, statKey);
-            const runeCount = getQuantity(status.runes, statKey);
+              const fragmentCount = getQuantity(status.fragments, statKey);
+              const runeCount = getQuantity(status.runes, statKey);
 
-            const canRefine = fragmentCount >= FRAGMENTS_PER_RUNE;
-            const canImbue = runeCount >= 1;
+            const maxRefineQuantity = Math.floor(
+              fragmentCount / FRAGMENTS_PER_RUNE
+            );
+            const maxImbueQuantity = runeCount;
+            const canRefine = maxRefineQuantity >= 1;
+            const canImbue = maxImbueQuantity >= 1;
             const refineBusy = busyAction === `refine-${statKey}`;
             const imbueBusy = busyAction === `imbue-${statKey}`;
 
@@ -337,29 +501,38 @@ export function SanctuaryPanel({
                     <strong>{formatNumber(effectiveValue)}</strong>
                   </div>
 
-                  <button
-                    type="button"
-                    className="sanctuary-action-button sanctuary-action-button--refine"
-                    disabled={!canRefine || Boolean(busyAction)}
-                    onClick={() => refineRune(statKey)}
-                  >
-                    {refineBusy ? "..." : "Refine"}
-                  </button>
+                  <div className="sanctuary-action-cluster">
+                    <button
+                      type="button"
+                      className="sanctuary-action-button sanctuary-action-button--refine"
+                      disabled={!canRefine || Boolean(busyAction)}
+                      onClick={() => refineRune(statKey, maxRefineQuantity)}
+                    >
+                      {refineBusy ? "..." : "Refine"}
+                    </button>
+                    {renderQuantityControl(
+                      statKey,
+                      "refine",
+                      maxRefineQuantity
+                    )}
+                  </div>
 
-                  <button
-                    type="button"
-                    className="sanctuary-action-button sanctuary-action-button--imbue"
-                    disabled={!canImbue || Boolean(busyAction)}
-                    onClick={() => imbueRune(statKey)}
-                  >
-                    {imbueBusy ? "..." : "Imbue"}
-                  </button>
+                  <div className="sanctuary-action-cluster">
+                    <button
+                      type="button"
+                      className="sanctuary-action-button sanctuary-action-button--imbue"
+                      disabled={!canImbue || Boolean(busyAction)}
+                      onClick={() => imbueRune(statKey, maxImbueQuantity)}
+                    >
+                      {imbueBusy ? "..." : "Imbue"}
+                    </button>
+                    {renderQuantityControl(statKey, "imbue", maxImbueQuantity)}
+                  </div>
                 </div>
               </article>
             );
           })}
-        </div>
-
+          </div>
         </main>
       </div>
     </section>

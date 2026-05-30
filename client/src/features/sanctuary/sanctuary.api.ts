@@ -16,18 +16,28 @@ export const sanctuaryApi = {
     );
   },
 
-  refineRune(userId: string, characterId: string, statKey: StatKey) {
+  refineRune(
+    userId: string,
+    characterId: string,
+    statKey: StatKey,
+    quantity = 1
+  ) {
     return apiPost<CharacterRuneRefinementResult>(
       `/sanctuary/${characterId}/refine-rune`,
-      { statKey },
+      { statKey, quantity },
       { userId }
     );
   },
 
-  imbueRune(userId: string, characterId: string, statKey: StatKey) {
+  imbueRune(
+    userId: string,
+    characterId: string,
+    statKey: StatKey,
+    quantity = 1
+  ) {
     return apiPost<CharacterRuneImbueResult>(
       `/sanctuary/${characterId}/imbue-rune`,
-      { statKey },
+      { statKey, quantity },
       { userId }
     );
   },

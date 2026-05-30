@@ -881,9 +881,14 @@ export class CharacterService implements OnModuleInit {
     characterId: string,
     userId: string,
     statKey: StatKey,
+    quantity = 1,
   ): CharacterRuneRefinementResult {
     const userScope = normalizeRequiredUserId(userId);
     const normalizedStatKey = this.normalizeSanctuaryStatKey(statKey);
+    const normalizedQuantity =
+      this.normalizePositiveInventoryMutationQuantity(quantity);
+    const consumedFragmentQuantity =
+      SANCTUARY_FRAGMENT_COST_PER_RUNE * normalizedQuantity;
     const fragmentItemId = STAT_FRAGMENT_ITEM_ID_BY_STAT[normalizedStatKey];
     const runeItemId = STAT_RUNE_ITEM_ID_BY_STAT[normalizedStatKey];
     const existingCharacter = this.findEntityById(characterId);
@@ -892,14 +897,14 @@ export class CharacterService implements OnModuleInit {
     this.assertInventoryHasQuantity(
       existingCharacter,
       fragmentItemId,
-      SANCTUARY_FRAGMENT_COST_PER_RUNE,
+      consumedFragmentQuantity,
     );
 
     const removedFragments = this.runInventoryOperationOrThrowBadRequest(() =>
       removeItemQuantityFromInventory(
         existingCharacter.inventoryItemIds,
         fragmentItemId,
-        SANCTUARY_FRAGMENT_COST_PER_RUNE,
+        consumedFragmentQuantity,
       ),
     );
 
@@ -907,7 +912,7 @@ export class CharacterService implements OnModuleInit {
       addItemQuantityToInventory(
         removedFragments.inventoryItemIds,
         runeItemId,
-        1,
+        normalizedQuantity,
       ),
     );
 
@@ -926,9 +931,9 @@ export class CharacterService implements OnModuleInit {
       refinement: {
         statKey: normalizedStatKey,
         consumedItemId: fragmentItemId,
-        consumedQuantity: SANCTUARY_FRAGMENT_COST_PER_RUNE,
+        consumedQuantity: consumedFragmentQuantity,
         createdItemId: runeItemId,
-        createdQuantity: 1,
+        createdQuantity: normalizedQuantity,
       },
     };
   }
@@ -937,26 +942,36 @@ export class CharacterService implements OnModuleInit {
     characterId: string,
     userId: string,
     statKey: StatKey,
+    quantity = 1,
   ): CharacterRuneImbueResult {
     const userScope = normalizeRequiredUserId(userId);
     const normalizedStatKey = this.normalizeSanctuaryStatKey(statKey);
+    const normalizedQuantity =
+      this.normalizePositiveInventoryMutationQuantity(quantity);
     const runeItemId = STAT_RUNE_ITEM_ID_BY_STAT[normalizedStatKey];
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertInventoryHasQuantity(existingCharacter, runeItemId, 1);
+    this.assertInventoryHasQuantity(
+      existingCharacter,
+      runeItemId,
+      normalizedQuantity,
+    );
 
     const previousProgress = existingCharacter.stats[normalizedStatKey];
     const previousAccumulatedBonus = previousProgress.accumulatedBonus;
     const nextStatProgress = createStatProgress(
       previousProgress.currentValue,
       previousProgress.fragmentCount,
-      previousAccumulatedBonus + 1,
+      previousAccumulatedBonus + normalizedQuantity,
     );
 
-    if (nextStatProgress.accumulatedBonus <= previousAccumulatedBonus) {
+    if (
+      nextStatProgress.accumulatedBonus !==
+      previousAccumulatedBonus + normalizedQuantity
+    ) {
       throw new BadRequestException(
-        `${normalizedStatKey} rune imbue would not increase the stat because it is already at its bonus cap.`,
+        `${normalizedStatKey} rune imbue quantity exceeds the stat bonus cap.`,
       );
     }
 
@@ -964,7 +979,7 @@ export class CharacterService implements OnModuleInit {
       removeItemQuantityFromInventory(
         existingCharacter.inventoryItemIds,
         runeItemId,
-        1,
+        normalizedQuantity,
       ),
     );
 
@@ -987,7 +1002,7 @@ export class CharacterService implements OnModuleInit {
       imbue: {
         statKey: normalizedStatKey,
         consumedItemId: runeItemId,
-        consumedQuantity: 1,
+        consumedQuantity: normalizedQuantity,
         previousAccumulatedBonus,
         nextAccumulatedBonus:
           nextCharacter.stats[normalizedStatKey].accumulatedBonus,

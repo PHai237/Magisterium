@@ -12,12 +12,32 @@ export class SanctuaryService {
     return this.characterService.getSanctuaryStatus(characterId, userId);
   }
 
-  refineRune(characterId: string, userId: string, statKey: StatKey) {
-    return this.characterService.refineStatRune(characterId, userId, statKey);
+  refineRune(
+    characterId: string,
+    userId: string,
+    statKey: StatKey,
+    quantity = 1,
+  ) {
+    return this.characterService.refineStatRune(
+      characterId,
+      userId,
+      statKey,
+      quantity,
+    );
   }
 
-  imbueRune(characterId: string, userId: string, statKey: StatKey) {
-    return this.characterService.imbueStatRune(characterId, userId, statKey);
+  imbueRune(
+    characterId: string,
+    userId: string,
+    statKey: StatKey,
+    quantity = 1,
+  ) {
+    return this.characterService.imbueStatRune(
+      characterId,
+      userId,
+      statKey,
+      quantity,
+    );
   }
 
   rankUp(characterId: string, userId: string) {

@@ -263,6 +263,17 @@
   transition: width 220ms ease;
 }
 
+.sanctuary-action-error {
+  border: 1px solid rgba(248, 113, 113, 0.26);
+  border-radius: 0.72rem;
+  background: rgba(127, 29, 29, 0.14);
+  color: #fecdd3;
+  padding: 0.58rem 0.68rem;
+  font-size: 0.7rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
 .sanctuary-rankup-button.ui-button {
   width: 100%;
   min-height: 2.9rem;
@@ -333,7 +344,7 @@
     rgba(15, 23, 42, 0.42);
   padding: 0.62rem;
   display: grid;
-  grid-template-columns: minmax(12rem, 1.18fr) minmax(9rem, 0.8fr) auto;
+  grid-template-columns: minmax(10rem, 0.85fr) minmax(10rem, 0.95fr) minmax(19rem, 1.05fr);
   align-items: center;
   gap: 0.72rem;
   transition:
@@ -420,14 +431,23 @@
 }
 
 .sanctuary-stat-row__actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto repeat(2, minmax(0, 1fr));
   align-items: center;
   justify-content: flex-end;
   gap: 0.42rem;
 }
 
+.sanctuary-action-cluster {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(3.9rem, 1fr) auto;
+  align-items: center;
+  gap: 0.28rem;
+}
+
 .sanctuary-stat-value {
-  min-width: 3.35rem;
+  min-width: 3.1rem;
   border: 1px solid rgba(59, 67, 92, 0.58);
   border-radius: 0.58rem;
   background: rgba(2, 6, 23, 0.34);
@@ -458,6 +478,40 @@
     color 150ms ease,
     opacity 150ms ease,
     transform 150ms ease;
+}
+
+.sanctuary-quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.sanctuary-quantity-control select,
+.sanctuary-quantity-control input {
+  min-height: 2.1rem;
+  border: 1px solid rgba(59, 67, 92, 0.58);
+  border-radius: 0.5rem;
+  background: rgba(2, 6, 23, 0.36);
+  color: #dbeafe;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 950;
+}
+
+.sanctuary-quantity-control select {
+  width: 3.55rem;
+  padding: 0 0.28rem;
+}
+
+.sanctuary-quantity-control input {
+  width: 3.1rem;
+  padding: 0 0.34rem;
+}
+
+.sanctuary-quantity-control select:disabled,
+.sanctuary-quantity-control input:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .sanctuary-action-button--refine {
@@ -528,9 +582,8 @@
     justify-content: stretch;
   }
 
-  .sanctuary-stat-value,
-  .sanctuary-action-button {
-    flex: 1 1 0;
+  .sanctuary-action-cluster {
+    grid-template-columns: minmax(4.6rem, 1fr) auto;
   }
 }
 
@@ -576,8 +629,11 @@
   }
 
   .sanctuary-stat-row__actions {
-    display: grid;
-    grid-template-columns: minmax(3rem, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: 1fr;
+  }
+
+  .sanctuary-stat-value {
+    justify-items: start;
   }
 
   .sanctuary-action-button:not(:disabled):hover {
