@@ -8,7 +8,7 @@ import type {
   SanctuaryInventoryQuantity,
   StatKey
 } from "../../domain/magisterium.types";
-import { compactLabel, formatNumber } from "../../lib/format";
+import { formatNumber } from "../../lib/format";
 import { sanctuaryApi } from "./sanctuary.api";
 import "./sanctuary.css";
 
@@ -91,21 +91,6 @@ function formatRankThreshold(status: CharacterSanctuaryStatusResult): string {
   }
 
   return `Next threshold: ${formatNumber(nextRequirement, 1)} AVG`;
-}
-
-function getStatusMessage(status: CharacterSanctuaryStatusResult): string {
-  if (status.rankStatus.isEligibleForRankUp) {
-    return "Celestial ascension is ready. The altar is waiting for your vow.";
-  }
-
-  if (!status.rankStatus.nextRank) {
-    return "Your Falna has reached the current known ceiling.";
-  }
-
-  return `Raise your six-stat average to ${formatNumber(
-    status.rankStatus.averageStatRequiredForNextRank ?? 0,
-    1
-  )} to unlock ${status.rankStatus.nextRank.name}.`;
 }
 
 export function SanctuaryPanel({
@@ -249,51 +234,45 @@ export function SanctuaryPanel({
         <aside className="sanctuary-altar-card">
           <div className="sanctuary-altar-card__halo" aria-hidden="true" />
 
-        <section
-          className={
-            isRankReady
-              ? "sanctuary-rank-card sanctuary-rank-card--ready"
-              : "sanctuary-rank-card"
-          }
-        >
-          <span>Current Rank</span>
-          <strong>{rankStatus.currentRank.name}</strong>
-        </section>
+          <section
+            className={
+              isRankReady
+                ? "sanctuary-rank-card sanctuary-rank-card--ready"
+                : "sanctuary-rank-card"
+            }
+          >
+            <span>Current Rank</span>
+            <strong>{rankStatus.currentRank.name}</strong>
+          </section>
 
-        <section className="sanctuary-average-card">
-          <div>
-            <span>Average Potential</span>
-            <strong>{formatNumber(rankStatus.averageStatValue, 1)}</strong>
-          </div>
+          <section className="sanctuary-average-card">
+            <div>
+              <span>Average Potential</span>
+              <strong>{formatNumber(rankStatus.averageStatValue, 1)}</strong>
+            </div>
 
-          <div>
-            <span>Next Rank</span>
-            <strong>{nextRankName}</strong>
-          </div>
+            <div>
+              <span>Next Rank</span>
+              <strong>{nextRankName}</strong>
+            </div>
 
-          <div className="sanctuary-rank-progress">
-            <span style={{ width: `${clampPercent(rankStatus.progressPercentToNextRank)}%` }} />
-          </div>
+            <div className="sanctuary-rank-progress">
+              <span style={{ width: `${clampPercent(rankStatus.progressPercentToNextRank)}%` }} />
+            </div>
 
-          <p>{formatRankThreshold(status)}</p>
-        </section>
+            <p>{formatRankThreshold(status)}</p>
+          </section>
 
-        <Button
-          type="button"
-          className={
-            isRankReady
-              ? "sanctuary-rankup-button sanctuary-rankup-button--ready"
-              : "sanctuary-rankup-button"
-          }
-          disabled={!isRankReady || Boolean(busyAction)}
-          onClick={rankUp}
-        >
-          {busyAction === "rank-up"
-            ? "Ascending..."
-            : isRankReady
-              ? "Perform Rank Ascension"
-              : getStatusMessage(status)}
-        </Button>
+          {isRankReady ? (
+            <Button
+              type="button"
+              className="sanctuary-rankup-button sanctuary-rankup-button--ready"
+              disabled={Boolean(busyAction)}
+              onClick={rankUp}
+            >
+              {busyAction === "rank-up" ? "Ascending..." : "Perform Rank Ascension"}
+            </Button>
+          ) : null}
         </aside>
 
         <main className="sanctuary-stat-board">
@@ -302,7 +281,6 @@ export function SanctuaryPanel({
             <h3>Fragments · Runes · Imbuement</h3>
           </div>
 
-          <strong>{formatNumber(rankStatus.progressPercentToNextRank)}%</strong>
         </header>
 
         <div className="sanctuary-stat-list">
@@ -384,13 +362,6 @@ export function SanctuaryPanel({
           })}
         </div>
 
-        <footer className="sanctuary-stat-board__footer">
-          <span>
-            10 fragments become 1 rune. A rune only increases a stat after it is
-            imbued at The Sanctuary.
-          </span>
-          <strong>{compactLabel(rankStatus.currentRank.id)}</strong>
-        </footer>
         </main>
       </div>
     </section>
