@@ -117,9 +117,6 @@ export function SanctuaryPanel({
     null
   );
   const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [message, setMessage] = useState(
-    "Welcome to The Sanctuary. Fragments may be refined into runes, then imbued into your Falna."
-  );
   const [error, setError] = useState<string | null>(null);
 
   const loading = status === null;
@@ -171,8 +168,7 @@ export function SanctuaryPanel({
 
   async function runSanctuaryAction(
     actionKey: string,
-    action: () => Promise<CharacterSanctuaryStatusResult>,
-    successMessage: (nextStatus: CharacterSanctuaryStatusResult) => string
+    action: () => Promise<CharacterSanctuaryStatusResult>
   ) {
     if (busyAction) {
       return;
@@ -186,7 +182,6 @@ export function SanctuaryPanel({
 
       setStatus(nextStatus);
       onCharacterUpdated(nextStatus.character);
-      setMessage(successMessage(nextStatus));
     } catch (actionError) {
       setError(
         actionError instanceof Error
@@ -201,20 +196,14 @@ export function SanctuaryPanel({
   function refineRune(statKey: StatKey) {
     void runSanctuaryAction(
       `refine-${statKey}`,
-      () => sanctuaryApi.refineRune(userId, currentCharacter.id, statKey),
-      () =>
-        `Condensed ${FRAGMENTS_PER_RUNE} ${statKey} fragments into 1 ${statKey} rune.`
+      () => sanctuaryApi.refineRune(userId, currentCharacter.id, statKey)
     );
   }
 
   function imbueRune(statKey: StatKey) {
     void runSanctuaryAction(
       `imbue-${statKey}`,
-      () => sanctuaryApi.imbueRune(userId, currentCharacter.id, statKey),
-      (nextStatus) =>
-        `Imbued a ${statKey} rune. ${statKey} is now ${formatNumber(
-          getEffectiveStatValue(nextStatus, statKey)
-        )}.`
+      () => sanctuaryApi.imbueRune(userId, currentCharacter.id, statKey)
     );
   }
 
@@ -225,9 +214,7 @@ export function SanctuaryPanel({
 
     void runSanctuaryAction(
       "rank-up",
-      () => sanctuaryApi.rankUp(userId, currentCharacter.id),
-      (nextStatus) =>
-        `Ascension complete. Current rank: ${nextStatus.rankStatus.currentRank.name}.`
+      () => sanctuaryApi.rankUp(userId, currentCharacter.id)
     );
   }
 
@@ -262,10 +249,6 @@ export function SanctuaryPanel({
         <aside className="sanctuary-altar-card">
           <div className="sanctuary-altar-card__halo" aria-hidden="true" />
 
-          <div className="sanctuary-rank-owner">
-            <span>{status.character.name}</span>
-          </div>
-
         <section
           className={
             isRankReady
@@ -275,7 +258,6 @@ export function SanctuaryPanel({
         >
           <span>Current Rank</span>
           <strong>{rankStatus.currentRank.name}</strong>
-          <em>{isRankReady ? "Ascension Ready" : "Potential Growing"}</em>
         </section>
 
         <section className="sanctuary-average-card">
@@ -294,11 +276,6 @@ export function SanctuaryPanel({
           </div>
 
           <p>{formatRankThreshold(status)}</p>
-        </section>
-
-        <section className="sanctuary-altar-message">
-          <span>Altar</span>
-          <p>{error ?? message}</p>
         </section>
 
         <Button
