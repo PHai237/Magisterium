@@ -320,7 +320,9 @@ export function SanctuaryPanel({
     const actionLabel = actionKind === "refine" ? "refine" : "imbue";
 
     return (
-      <div className="sanctuary-quantity-control">
+      <div
+        className={`sanctuary-quantity-control sanctuary-quantity-control--${selection.mode}`}
+      >
         <select
           aria-label={`${displayStatLabel(statKey)} ${actionLabel} quantity`}
           disabled={disabled}
@@ -468,10 +470,11 @@ export function SanctuaryPanel({
                   </span>
 
                   <div>
-                    <strong>{display.label}</strong>
-                    <small>
-                      {statKey} · Bonus +{formatNumber(stat.accumulatedBonus)}
-                    </small>
+                    <div className="sanctuary-stat-name-line">
+                      <strong>{display.label}</strong>
+                      <b>{formatNumber(effectiveValue)}</b>
+                    </div>
+                    <small>Bonus +{formatNumber(stat.accumulatedBonus)}</small>
                   </div>
                 </div>
 
@@ -496,11 +499,6 @@ export function SanctuaryPanel({
                 </div>
 
                 <div className="sanctuary-stat-row__actions">
-                  <div className="sanctuary-stat-value">
-                    <span>Value</span>
-                    <strong>{formatNumber(effectiveValue)}</strong>
-                  </div>
-
                   <div className="sanctuary-action-cluster">
                     <button
                       type="button"
