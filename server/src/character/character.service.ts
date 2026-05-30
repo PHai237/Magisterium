@@ -28,6 +28,7 @@ import {
   calculateBaseStats,
   calculateDerivedStats,
   createCharacterSnapshot,
+  createStatProgress,
   getDefaultStarterKit,
   getOriginById,
 } from '../game/character/character.calculations';
@@ -51,6 +52,22 @@ import {
 } from '../game/item/item.registry';
 
 import {
+  SANCTUARY_FRAGMENT_COST_PER_RUNE,
+  SANCTUARY_STAT_KEYS,
+  STAT_FRAGMENT_ITEM_ID_BY_STAT,
+  STAT_RUNE_ITEM_ID_BY_STAT,
+} from '../game/sanctuary/sanctuary.constants';
+import { calculateRankStatus } from '../game/sanctuary/sanctuary-rank.calculations';
+
+import type {
+  CharacterRankUpResult,
+  CharacterRuneImbueResult,
+  CharacterRuneRefinementResult,
+  CharacterSanctuaryStatusResult,
+  RankId,
+} from '../game/sanctuary/sanctuary.types';
+
+import {
   equipItem,
   unequipItem,
 } from '../game/inventory/equipment.calculations';
@@ -71,6 +88,7 @@ import type {
   CharacterSnapshot,
   CurrentState,
   ItemId,
+  StatKey,
   StarterKitDefinition,
 } from '../game/character/character.types';
 
@@ -561,6 +579,14 @@ export class CharacterService implements OnModuleInit {
     };
   }
 
+  consumeInventoryItem(
+    characterId: string,
+    userId: string,
+    itemId: ItemId,
+  ): CharacterInventoryMutationResult {
+    return this.removeInventoryItem(characterId, userId, itemId, 1);
+  }
+
   buyMarketItem(
     characterId: string,
     userId: string,
@@ -688,14 +714,6 @@ export class CharacterService implements OnModuleInit {
         inventoryChange,
       },
     };
-  }
-
-  consumeInventoryItem(
-    characterId: string,
-    userId: string,
-    itemId: ItemId,
-  ): CharacterInventoryMutationResult {
-    return this.removeInventoryItem(characterId, userId, itemId, 1);
   }
 
   equipInventoryItem(
@@ -845,6 +863,181 @@ export class CharacterService implements OnModuleInit {
       },
 
       inventoryChange,
+    };
+  }
+
+  getSanctuaryStatus(
+    characterId: string,
+    userId: string,
+  ): CharacterSanctuaryStatusResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const character = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(character, userScope);
+
+    return this.buildSanctuaryStatusResult(character);
+  }
+
+  refineStatRune(
+    characterId: string,
+    userId: string,
+    statKey: StatKey,
+  ): CharacterRuneRefinementResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const normalizedStatKey = this.normalizeSanctuaryStatKey(statKey);
+    const fragmentItemId = STAT_FRAGMENT_ITEM_ID_BY_STAT[normalizedStatKey];
+    const runeItemId = STAT_RUNE_ITEM_ID_BY_STAT[normalizedStatKey];
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertInventoryHasQuantity(
+      existingCharacter,
+      fragmentItemId,
+      SANCTUARY_FRAGMENT_COST_PER_RUNE,
+    );
+
+    const removedFragments = this.runInventoryOperationOrThrowBadRequest(() =>
+      removeItemQuantityFromInventory(
+        existingCharacter.inventoryItemIds,
+        fragmentItemId,
+        SANCTUARY_FRAGMENT_COST_PER_RUNE,
+      ),
+    );
+
+    const createdRune = this.runInventoryOperationOrThrowBadRequest(() =>
+      addItemQuantityToInventory(
+        removedFragments.inventoryItemIds,
+        runeItemId,
+        1,
+      ),
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      inventoryItemIds: createdRune.inventoryItemIds,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      ...this.buildSanctuaryStatusResult(nextCharacter),
+      refinement: {
+        statKey: normalizedStatKey,
+        consumedItemId: fragmentItemId,
+        consumedQuantity: SANCTUARY_FRAGMENT_COST_PER_RUNE,
+        createdItemId: runeItemId,
+        createdQuantity: 1,
+      },
+    };
+  }
+
+  imbueStatRune(
+    characterId: string,
+    userId: string,
+    statKey: StatKey,
+  ): CharacterRuneImbueResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const normalizedStatKey = this.normalizeSanctuaryStatKey(statKey);
+    const runeItemId = STAT_RUNE_ITEM_ID_BY_STAT[normalizedStatKey];
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertInventoryHasQuantity(existingCharacter, runeItemId, 1);
+
+    const previousProgress = existingCharacter.stats[normalizedStatKey];
+    const previousAccumulatedBonus = previousProgress.accumulatedBonus;
+    const nextStatProgress = createStatProgress(
+      previousProgress.currentValue,
+      previousProgress.fragmentCount,
+      previousAccumulatedBonus + 1,
+    );
+
+    if (nextStatProgress.accumulatedBonus <= previousAccumulatedBonus) {
+      throw new BadRequestException(
+        `${normalizedStatKey} rune imbue would not increase the stat because it is already at its bonus cap.`,
+      );
+    }
+
+    const removedRune = this.runInventoryOperationOrThrowBadRequest(() =>
+      removeItemQuantityFromInventory(
+        existingCharacter.inventoryItemIds,
+        runeItemId,
+        1,
+      ),
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      stats: {
+        ...existingCharacter.stats,
+        [normalizedStatKey]: nextStatProgress,
+      },
+      inventoryItemIds: removedRune.inventoryItemIds,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      ...this.buildSanctuaryStatusResult(nextCharacter),
+      imbue: {
+        statKey: normalizedStatKey,
+        consumedItemId: runeItemId,
+        consumedQuantity: 1,
+        previousAccumulatedBonus,
+        nextAccumulatedBonus:
+          nextCharacter.stats[normalizedStatKey].accumulatedBonus,
+      },
+    };
+  }
+
+  rankUpAtSanctuary(
+    characterId: string,
+    userId: string,
+  ): CharacterRankUpResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const existingCharacter = this.findEntityById(characterId);
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+
+    const rankStatus = calculateRankStatus(existingCharacter);
+
+    if (!rankStatus.nextRank || !rankStatus.isEligibleForRankUp) {
+      throw new BadRequestException(
+        'Character has not reached the next rank average stat threshold.',
+      );
+    }
+
+    const nextRank = rankStatus.nextRank;
+    const nextProgression = {
+      ...existingCharacter.progression,
+      level: nextRank.index + 1,
+      rankIndex: nextRank.index,
+      rankId: nextRank.id as RankId,
+    };
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      progression: nextProgression,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      ...this.buildSanctuaryStatusResult(nextCharacter),
+      rankUp: {
+        previousRank: rankStatus.currentRank,
+        nextRank,
+        averageStatValue: rankStatus.averageStatValue,
+      },
     };
   }
 
@@ -1261,6 +1454,43 @@ export class CharacterService implements OnModuleInit {
     }
 
     return normalizedValue;
+  }
+
+  private normalizeSanctuaryStatKey(statKey: StatKey): StatKey {
+    if (!SANCTUARY_STAT_KEYS.includes(statKey)) {
+      throw new BadRequestException(
+        `Unsupported sanctuary stat key: ${statKey}`,
+      );
+    }
+
+    return statKey;
+  }
+
+  private buildSanctuaryStatusResult(
+    character: Character,
+  ): CharacterSanctuaryStatusResult {
+    const snapshot = createCharacterSnapshot(character);
+
+    return {
+      character: snapshot,
+      rankStatus: calculateRankStatus(character),
+      fragments: SANCTUARY_STAT_KEYS.map((statKey) => ({
+        statKey,
+        itemId: STAT_FRAGMENT_ITEM_ID_BY_STAT[statKey],
+        quantity: countInventoryItem(
+          snapshot.inventoryItemIds,
+          STAT_FRAGMENT_ITEM_ID_BY_STAT[statKey],
+        ),
+      })),
+      runes: SANCTUARY_STAT_KEYS.map((statKey) => ({
+        statKey,
+        itemId: STAT_RUNE_ITEM_ID_BY_STAT[statKey],
+        quantity: countInventoryItem(
+          snapshot.inventoryItemIds,
+          STAT_RUNE_ITEM_ID_BY_STAT[statKey],
+        ),
+      })),
+    };
   }
 
   private assertInventoryItemIsConsumableForContext(

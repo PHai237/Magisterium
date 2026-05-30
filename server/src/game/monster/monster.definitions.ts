@@ -121,6 +121,18 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           minQuantity: 1,
           maxQuantity: 2,
         },
+        {
+          itemId: 'con_fragment',
+          chancePercent: 35,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+        {
+          itemId: 'wis_fragment',
+          chancePercent: 20,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
       ],
     },
 
@@ -201,6 +213,18 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           chancePercent: 70,
           minQuantity: 1,
           maxQuantity: 2,
+        },
+        {
+          itemId: 'str_fragment',
+          chancePercent: 35,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+        {
+          itemId: 'con_fragment',
+          chancePercent: 25,
+          minQuantity: 1,
+          maxQuantity: 1,
         },
       ],
     },
@@ -283,6 +307,18 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           minQuantity: 1,
           maxQuantity: 1,
         },
+        {
+          itemId: 'dex_fragment',
+          chancePercent: 40,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+        {
+          itemId: 'luk_fragment',
+          chancePercent: 20,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
       ],
     },
 
@@ -361,6 +397,18 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
         {
           itemId: 'goblin_ear',
           chancePercent: 30,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+        {
+          itemId: 'int_fragment',
+          chancePercent: 30,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+        {
+          itemId: 'dex_fragment',
+          chancePercent: 25,
           minQuantity: 1,
           maxQuantity: 1,
         },
