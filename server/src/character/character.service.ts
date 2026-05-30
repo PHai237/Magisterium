@@ -64,7 +64,6 @@ import type {
   CharacterRuneImbueResult,
   CharacterRuneRefinementResult,
   CharacterSanctuaryStatusResult,
-  RankId,
 } from '../game/sanctuary/sanctuary.types';
 
 import {
@@ -1018,7 +1017,7 @@ export class CharacterService implements OnModuleInit {
       ...existingCharacter.progression,
       level: nextRank.index + 1,
       rankIndex: nextRank.index,
-      rankId: nextRank.id as RankId,
+      rankId: nextRank.id,
     };
 
     const nextCharacter: Character = {
@@ -1593,7 +1592,9 @@ export class CharacterService implements OnModuleInit {
     const totalPriceBronze = unitPriceBronze * quantity;
 
     if (!Number.isSafeInteger(totalPriceBronze)) {
-      throw new BadRequestException('Market total price must be a safe integer.');
+      throw new BadRequestException(
+        'Market total price must be a safe integer.',
+      );
     }
 
     return totalPriceBronze;
