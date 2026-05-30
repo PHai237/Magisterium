@@ -819,6 +819,23 @@
   color: #facc15;
 }
 
+.gameshell-node--sanctuary {
+  top: 34%;
+  left: 18%;
+  border-color: rgba(212, 163, 89, 0.42);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(212, 163, 89, 0.15), transparent 4.8rem),
+    radial-gradient(circle at 50% 100%, rgba(59, 130, 246, 0.12), transparent 4.6rem),
+    rgba(7, 11, 18, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(212, 163, 89, 0.045) inset,
+    0 18px 38px rgba(0, 0, 0, 0.45);
+}
+
+.gameshell-node--sanctuary strong {
+  color: #fcd34d;
+}
+
 .gameshell-node--archive {
   top: 24%;
   right: 10%;
@@ -957,6 +974,32 @@
 
 .gameshell-location-stage--market .market-basic-card {
   min-height: 0;
+}
+
+.gameshell-location-stage--sanctuary {
+  padding: 0.85rem 1rem;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.11), transparent 24rem),
+    radial-gradient(circle at 18% 72%, rgba(212, 163, 89, 0.08), transparent 20rem),
+    #070b12;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-main {
+  place-items: center;
+  padding: 3.45rem 0 0;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-back {
+  top: 1rem;
+  left: 1.25rem;
+  border-color: rgba(212, 163, 89, 0.24);
+  background: rgba(7, 11, 18, 0.72);
+  color: #fcd34d;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-back:not(:disabled):hover {
+  border-color: rgba(212, 163, 89, 0.48);
+  background: rgba(120, 53, 15, 0.16);
 }
 
 .gameshell-placeholder-card {

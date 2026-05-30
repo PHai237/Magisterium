@@ -239,6 +239,90 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "pass",
     description: "Redeem this at The Inn for one full overnight rest."
   },
+  str_fragment: {
+    id: "str_fragment",
+    name: "STR Fragment",
+    icon: "🟥",
+    category: "material",
+    description: "A raw shard of Strength potential. Refine 10 at The Sanctuary into 1 STR Rune."
+  },
+  dex_fragment: {
+    id: "dex_fragment",
+    name: "DEX Fragment",
+    icon: "🟩",
+    category: "material",
+    description: "A raw shard of Dexterity potential. Refine 10 at The Sanctuary into 1 DEX Rune."
+  },
+  con_fragment: {
+    id: "con_fragment",
+    name: "CON Fragment",
+    icon: "🛡️",
+    category: "material",
+    description: "A raw shard of Constitution potential. Refine 10 at The Sanctuary into 1 CON Rune."
+  },
+  int_fragment: {
+    id: "int_fragment",
+    name: "INT Fragment",
+    icon: "🟦",
+    category: "material",
+    description: "A raw shard of Intelligence potential. Refine 10 at The Sanctuary into 1 INT Rune."
+  },
+  wis_fragment: {
+    id: "wis_fragment",
+    name: "WIS Fragment",
+    icon: "🟪",
+    category: "material",
+    description: "A raw shard of Wisdom potential. Refine 10 at The Sanctuary into 1 WIS Rune."
+  },
+  luk_fragment: {
+    id: "luk_fragment",
+    name: "LUK Fragment",
+    icon: "🟨",
+    category: "material",
+    description: "A raw shard of Luck potential. Refine 10 at The Sanctuary into 1 LUK Rune."
+  },
+  str_rune: {
+    id: "str_rune",
+    name: "STR Rune",
+    icon: "🔴",
+    category: "material",
+    description: "A condensed Strength rune. Imbue it at The Sanctuary to permanently increase STR."
+  },
+  dex_rune: {
+    id: "dex_rune",
+    name: "DEX Rune",
+    icon: "🟢",
+    category: "material",
+    description: "A condensed Dexterity rune. Imbue it at The Sanctuary to permanently increase DEX."
+  },
+  con_rune: {
+    id: "con_rune",
+    name: "CON Rune",
+    icon: "🛡️",
+    category: "material",
+    description: "A condensed Constitution rune. Imbue it at The Sanctuary to permanently increase CON."
+  },
+  int_rune: {
+    id: "int_rune",
+    name: "INT Rune",
+    icon: "🔵",
+    category: "material",
+    description: "A condensed Intelligence rune. Imbue it at The Sanctuary to permanently increase INT."
+  },
+  wis_rune: {
+    id: "wis_rune",
+    name: "WIS Rune",
+    icon: "🟣",
+    category: "material",
+    description: "A condensed Wisdom rune. Imbue it at The Sanctuary to permanently increase WIS."
+  },
+  luk_rune: {
+    id: "luk_rune",
+    name: "LUK Rune",
+    icon: "🟡",
+    category: "material",
+    description: "A condensed Luck rune. Imbue it at The Sanctuary to permanently increase LUK."
+  },
   slime_gel: {
     id: "slime_gel",
     name: "Slime Gel",

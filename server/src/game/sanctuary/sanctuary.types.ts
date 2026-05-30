@@ -42,8 +42,7 @@ export interface CharacterSanctuaryStatusResult {
   runes: SanctuaryInventoryQuantity[];
 }
 
-export interface CharacterRuneRefinementResult
-  extends CharacterSanctuaryStatusResult {
+export interface CharacterRuneRefinementResult extends CharacterSanctuaryStatusResult {
   refinement: {
     statKey: StatKey;
     consumedItemId: ItemId;
@@ -53,8 +52,7 @@ export interface CharacterRuneRefinementResult
   };
 }
 
-export interface CharacterRuneImbueResult
-  extends CharacterSanctuaryStatusResult {
+export interface CharacterRuneImbueResult extends CharacterSanctuaryStatusResult {
   imbue: {
     statKey: StatKey;
     consumedItemId: ItemId;

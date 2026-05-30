@@ -37,7 +37,19 @@ const ITEM_ICONS: Record<string, string> = {
   boar_meat: "🥩",
   wolf_skin: "🐺",
   goblin_ear: "👂",
-  cracked_dagger: "🗡️"
+  cracked_dagger: "🗡️",
+  str_fragment: "🟥",
+  dex_fragment: "🟩",
+  con_fragment: "🛡️",
+  int_fragment: "🟦",
+  wis_fragment: "🟪",
+  luk_fragment: "🟨",
+  str_rune: "🔴",
+  dex_rune: "🟢",
+  con_rune: "🛡️",
+  int_rune: "🔵",
+  wis_rune: "🟣",
+  luk_rune: "🟡"
 };
 
 const FILTER_PRIORITY = [
