@@ -129,9 +129,10 @@
 
 .sanctuary-altar-card {
   padding: 1rem;
-  display: grid;
-  grid-template-rows: auto auto auto auto auto auto;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: 0.78rem;
 }
 
@@ -627,10 +628,6 @@
 
   .sanctuary-panel__body {
     grid-template-columns: 1fr;
-  }
-
-  .sanctuary-altar-card {
-    grid-template-rows: auto auto auto auto auto auto;
   }
 
   .sanctuary-stat-board {
