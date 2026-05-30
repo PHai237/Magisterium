@@ -342,5 +342,58 @@ describe('reward calculations', () => {
       );
       expect(reward.items).toEqual([]);
     });
+
+    it('should support multiple independent rolls from a random loot pool', () => {
+      const reward = calculateBattleReward(
+        createRewardInput({
+          defeatedMonsters: [
+            {
+              actorId: 'slime_1',
+              monsterId: 'slime',
+              reward: {
+                exp: 5,
+                moneyBronze: 2,
+                lootTable: [],
+                randomLootPools: [
+                  {
+                    id: 'stat_fragment_bonus_pair',
+                    chancePercent: 100,
+                    rollCount: 2,
+                    entries: [
+                      {
+                        itemId: 'str_fragment',
+                        weight: 1,
+                        minQuantity: 1,
+                        maxQuantity: 1,
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(reward.lootRolls).toHaveLength(2);
+      expect(reward.lootRolls).toEqual([
+        expect.objectContaining({
+          itemId: 'str_fragment',
+          dropped: true,
+          quantity: 1,
+        }),
+        expect.objectContaining({
+          itemId: 'str_fragment',
+          dropped: true,
+          quantity: 1,
+        }),
+      ]);
+      expect(reward.items).toEqual([
+        {
+          itemId: 'str_fragment',
+          quantity: 2,
+        },
+      ]);
+    });
   });
 });

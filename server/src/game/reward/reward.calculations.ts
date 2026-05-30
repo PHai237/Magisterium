@@ -103,6 +103,7 @@ function buildRandomLootPoolPickSeed(input: {
   actorId: string;
   monsterId: MonsterId;
   poolId: string;
+  rollIndex: number;
 }): string {
   return [
     input.battleId,
@@ -110,6 +111,7 @@ function buildRandomLootPoolPickSeed(input: {
     input.actorId,
     input.monsterId,
     input.poolId,
+    input.rollIndex,
     'random_loot_pool_pick',
   ].join(':');
 }
@@ -144,6 +146,16 @@ function normalizeRandomLootWeight(weight: number): number {
   }
 
   return Math.max(0, weight);
+}
+
+function normalizeRandomLootPoolRollCount(
+  rollCount: number | undefined,
+): number {
+  if (rollCount === undefined) {
+    return 1;
+  }
+
+  return Math.max(0, Math.floor(rollCount));
 }
 
 function pickRandomLootPoolEntry(input: {
@@ -223,24 +235,8 @@ function rollRandomLootPool(input: {
   actorId: string;
   monsterId: MonsterId;
   pool: MonsterRandomLootPool;
-}): LootRollResult | undefined {
-  const selectedEntry = pickRandomLootPoolEntry({
-    pool: input.pool,
-    pickPercent: rollPercent(
-      buildRandomLootPoolPickSeed({
-        battleId: input.battleId,
-        seed: input.seed,
-        actorId: input.actorId,
-        monsterId: input.monsterId,
-        poolId: input.pool.id,
-      }),
-    ),
-  });
-
-  if (!selectedEntry) {
-    return undefined;
-  }
-
+}): LootRollResult[] {
+  const rollCount = normalizeRandomLootPoolRollCount(input.pool.rollCount);
   const chancePercent = normalizeLootChance(input.pool.chancePercent);
   const rollPercentValue = rollPercent(
     buildRandomLootPoolDropSeed({
@@ -253,40 +249,73 @@ function rollRandomLootPool(input: {
   );
 
   const dropped = rollPercentValue < chancePercent;
-  const quantityRange = normalizeLootQuantityRange(selectedEntry);
 
-  const quantityResult = dropped
-    ? rollLootQuantity({
-        battleId: input.battleId,
-        seed: input.seed,
-        actorId: input.actorId,
-        monsterId: input.monsterId,
-        itemId: selectedEntry.itemId,
-        minQuantity: quantityRange.minQuantity,
-        maxQuantity: quantityRange.maxQuantity,
-      })
-    : {
-        quantity: 0,
-      };
+  if (rollCount <= 0) {
+    return [];
+  }
 
-  return {
-    actorId: input.actorId,
-    monsterId: input.monsterId,
+  const rolls: LootRollResult[] = [];
 
-    itemId: selectedEntry.itemId,
+  for (let rollIndex = 0; rollIndex < rollCount; rollIndex += 1) {
+    const selectedEntry = pickRandomLootPoolEntry({
+      pool: input.pool,
+      pickPercent: rollPercent(
+        buildRandomLootPoolPickSeed({
+          battleId: input.battleId,
+          seed: input.seed,
+          actorId: input.actorId,
+          monsterId: input.monsterId,
+          poolId: input.pool.id,
+          rollIndex,
+        }),
+      ),
+    });
 
-    chancePercent,
-    rollPercent: rollPercentValue,
+    if (!selectedEntry) {
+      continue;
+    }
 
-    dropped,
+    const quantityRange = normalizeLootQuantityRange(selectedEntry);
 
-    quantity: quantityResult.quantity,
+    const quantityResult = dropped
+      ? rollLootQuantity({
+          battleId: input.battleId,
+          seed: input.seed,
+          actorId: input.actorId,
+          monsterId: input.monsterId,
+          itemId: selectedEntry.itemId,
+          minQuantity: quantityRange.minQuantity,
+          maxQuantity: quantityRange.maxQuantity,
+        })
+      : {
+          quantity: 0,
+        };
 
-    minQuantity: quantityRange.minQuantity,
-    maxQuantity: quantityRange.maxQuantity,
+    rolls.push({
+      actorId: input.actorId,
+      monsterId: input.monsterId,
 
-    quantityRollPercent: quantityResult.quantityRollPercent,
-  };
+      itemId: selectedEntry.itemId,
+
+      chancePercent,
+      rollPercent: rollPercentValue,
+
+      dropped,
+
+      quantity: quantityResult.quantity,
+
+      minQuantity: quantityRange.minQuantity,
+      maxQuantity: quantityRange.maxQuantity,
+
+      quantityRollPercent: quantityResult.quantityRollPercent,
+    });
+
+    if (!dropped) {
+      break;
+    }
+  }
+
+  return rolls;
 }
 
 function rollLootEntry(input: {
@@ -401,17 +430,15 @@ export function calculateBattleReward(
     }
 
     for (const pool of defeatedMonster.reward.randomLootPools ?? []) {
-      const roll = rollRandomLootPool({
-        battleId: input.battleId,
-        seed: input.seed,
-        actorId: defeatedMonster.actorId,
-        monsterId: defeatedMonster.monsterId,
-        pool,
-      });
-
-      if (roll) {
-        lootRolls.push(roll);
-      }
+      lootRolls.push(
+        ...rollRandomLootPool({
+          battleId: input.battleId,
+          seed: input.seed,
+          actorId: defeatedMonster.actorId,
+          monsterId: defeatedMonster.monsterId,
+          pool,
+        }),
+      );
     }
   }
 

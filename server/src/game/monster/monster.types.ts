@@ -33,6 +33,7 @@ export interface MonsterRandomLootPoolEntry {
 export interface MonsterRandomLootPool {
   id: string;
   chancePercent: number;
+  rollCount?: number;
   entries: readonly MonsterRandomLootPoolEntry[];
 }
 

@@ -70,48 +70,62 @@ function freezeMonsterDefinition(
   });
 }
 
+const STAT_FRAGMENT_RANDOM_LOOT_POOL_ENTRIES = Object.freeze([
+  Object.freeze({
+    itemId: 'str_fragment',
+    weight: 1,
+    minQuantity: 1,
+    maxQuantity: 1,
+  }),
+  Object.freeze({
+    itemId: 'dex_fragment',
+    weight: 1,
+    minQuantity: 1,
+    maxQuantity: 1,
+  }),
+  Object.freeze({
+    itemId: 'con_fragment',
+    weight: 1,
+    minQuantity: 1,
+    maxQuantity: 1,
+  }),
+  Object.freeze({
+    itemId: 'int_fragment',
+    weight: 1,
+    minQuantity: 1,
+    maxQuantity: 1,
+  }),
+  Object.freeze({
+    itemId: 'wis_fragment',
+    weight: 1,
+    minQuantity: 1,
+    maxQuantity: 1,
+  }),
+  Object.freeze({
+    itemId: 'luk_fragment',
+    weight: 1,
+    minQuantity: 1,
+    maxQuantity: 1,
+  }),
+]) satisfies readonly MonsterRandomLootPoolEntry[];
+
 const STAT_FRAGMENT_RANDOM_LOOT_POOL = Object.freeze({
   id: 'stat_fragment',
   chancePercent: 30,
-  entries: Object.freeze([
-    Object.freeze({
-      itemId: 'str_fragment',
-      weight: 1,
-      minQuantity: 1,
-      maxQuantity: 1,
-    }),
-    Object.freeze({
-      itemId: 'dex_fragment',
-      weight: 1,
-      minQuantity: 1,
-      maxQuantity: 1,
-    }),
-    Object.freeze({
-      itemId: 'con_fragment',
-      weight: 1,
-      minQuantity: 1,
-      maxQuantity: 1,
-    }),
-    Object.freeze({
-      itemId: 'int_fragment',
-      weight: 1,
-      minQuantity: 1,
-      maxQuantity: 1,
-    }),
-    Object.freeze({
-      itemId: 'wis_fragment',
-      weight: 1,
-      minQuantity: 1,
-      maxQuantity: 1,
-    }),
-    Object.freeze({
-      itemId: 'luk_fragment',
-      weight: 1,
-      minQuantity: 1,
-      maxQuantity: 1,
-    }),
-  ]),
+  entries: STAT_FRAGMENT_RANDOM_LOOT_POOL_ENTRIES,
 }) satisfies MonsterRandomLootPool;
+
+const STAT_FRAGMENT_BONUS_PAIR_RANDOM_LOOT_POOL = Object.freeze({
+  id: 'stat_fragment_bonus_pair',
+  chancePercent: 1,
+  rollCount: 2,
+  entries: STAT_FRAGMENT_RANDOM_LOOT_POOL_ENTRIES,
+}) satisfies MonsterRandomLootPool;
+
+const STAT_FRAGMENT_RANDOM_LOOT_POOLS = Object.freeze([
+  STAT_FRAGMENT_RANDOM_LOOT_POOL,
+  STAT_FRAGMENT_BONUS_PAIR_RANDOM_LOOT_POOL,
+]) satisfies readonly MonsterRandomLootPool[];
 
 const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
   {
@@ -191,7 +205,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           maxQuantity: 2,
         },
       ],
-      randomLootPools: [STAT_FRAGMENT_RANDOM_LOOT_POOL],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
     },
 
     tags: ['monster', 'starter', 'beast', 'gelatinous', 'town-outskirts'],
@@ -273,7 +287,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           maxQuantity: 2,
         },
       ],
-      randomLootPools: [STAT_FRAGMENT_RANDOM_LOOT_POOL],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
     },
 
     tags: ['monster', 'starter', 'beast', 'boar', 'town-outskirts'],
@@ -355,7 +369,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           maxQuantity: 1,
         },
       ],
-      randomLootPools: [STAT_FRAGMENT_RANDOM_LOOT_POOL],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
     },
 
     tags: ['monster', 'starter', 'beast', 'wolf', 'town-outskirts'],
@@ -443,7 +457,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           maxQuantity: 1,
         },
       ],
-      randomLootPools: [STAT_FRAGMENT_RANDOM_LOOT_POOL],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
     },
 
     tags: ['monster', 'starter', 'humanoid', 'goblin', 'forest-edge'],
