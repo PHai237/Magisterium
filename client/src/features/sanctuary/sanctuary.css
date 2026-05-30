@@ -154,7 +154,8 @@
 
 .sanctuary-average-card span,
 .sanctuary-stat-board__header span,
-.sanctuary-stat-row__numbers span {
+.sanctuary-stat-row__numbers span,
+.sanctuary-stat-value span {
   color: #94a3b8;
   font-family: var(--mono);
   font-size: 0.62rem;
@@ -343,7 +344,7 @@
     rgba(15, 23, 42, 0.42);
   padding: 0.62rem;
   display: grid;
-  grid-template-columns: minmax(9rem, 0.72fr) minmax(18rem, 1.18fr) minmax(15.5rem, auto);
+  grid-template-columns: minmax(12.6rem, 0.9fr) minmax(16.2rem, 1.05fr) minmax(15.5rem, auto);
   align-items: center;
   gap: 0.72rem;
   transition:
@@ -359,9 +360,9 @@
 .sanctuary-stat-row__identity {
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0.6rem;
-  align-items: start;
+  align-items: center;
 }
 
 .sanctuary-stat-name-line {
@@ -389,13 +390,6 @@
   font-weight: 950;
 }
 
-.sanctuary-stat-name-line b {
-  color: #93c5fd;
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  font-weight: 950;
-}
-
 .sanctuary-stat-row__identity small {
   display: block;
   margin-top: 0.12rem;
@@ -403,6 +397,24 @@
   font-family: var(--mono);
   font-size: 0.62rem;
   font-weight: 850;
+}
+
+.sanctuary-stat-value {
+  min-width: 3.18rem;
+  border: 1px solid rgba(59, 67, 92, 0.58);
+  border-radius: 0.58rem;
+  background: rgba(2, 6, 23, 0.34);
+  padding: 0.34rem 0.4rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.04rem;
+}
+
+.sanctuary-stat-value strong {
+  color: #f8fafc;
+  font-family: var(--mono);
+  font-size: 0.84rem;
+  font-weight: 950;
 }
 
 .sanctuary-stat-row__resource {
@@ -579,6 +591,10 @@
     grid-template-columns: 1fr;
   }
 
+  .sanctuary-stat-row__identity {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
   .sanctuary-stat-row__actions {
     justify-content: stretch;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -632,6 +648,14 @@
 
   .sanctuary-stat-row__actions {
     grid-template-columns: 1fr;
+  }
+
+  .sanctuary-stat-row__identity {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .sanctuary-stat-value {
+    justify-items: start;
   }
 
   .sanctuary-action-button:not(:disabled):hover {
