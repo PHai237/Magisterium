@@ -351,9 +351,9 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     description:
       "A translucent slime core for alchemy and flexible craft bindings.",
   },
-  elastic_membrane: {
-    id: "elastic_membrane",
-    name: "Elastic Membrane",
+  slime_membrane: {
+    id: "slime_membrane",
+    name: "Slime Membrane",
     icon: "◌",
     category: "material",
     description:
@@ -396,13 +396,13 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     description:
       "A sharp fang used for small blades, charms, and predatory craft parts.",
   },
-  tough_sinew: {
-    id: "tough_sinew",
-    name: "Tough Sinew",
+  beast_thread: {
+    id: "beast_thread",
+    name: "Beast Thread",
     icon: "⌁",
     category: "material",
     description:
-      "Strong beast sinew for bindings, seams, and rough bowstring work.",
+      "Rare beast thread for bindings, seams, and rough bowstring work.",
   },
   goblin_ear: {
     id: "goblin_ear",
@@ -417,20 +417,6 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "▣",
     category: "material",
     description: "Scavenged metal and junk from goblin gear.",
-  },
-  bent_rivet: {
-    id: "bent_rivet",
-    name: "Bent Rivet",
-    icon: "•",
-    category: "material",
-    description: "A warped rivet that can be reforged or hammered flat.",
-  },
-  dull_iron_shard: {
-    id: "dull_iron_shard",
-    name: "Dull Iron Shard",
-    icon: "▰",
-    category: "material",
-    description: "A blunt shard of low-grade iron for early smithing.",
   },
   cracked_blade: {
     id: "cracked_blade",
@@ -462,12 +448,13 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     description:
       "Unfinished common wood for handles, frames, and basic crafting.",
   },
-  common_wood: {
-    id: "common_wood",
-    name: "Common Wood",
-    icon: "▬",
+  rough_stone: {
+    id: "rough_stone",
+    name: "Rough Stone",
+    icon: "●",
     category: "material",
-    description: "A simple worked wood piece for early crafting recipes.",
+    description:
+      "A plain rough stone for sharpening, crude molds, and simple reinforcement.",
   },
   basic_thread: {
     id: "basic_thread",

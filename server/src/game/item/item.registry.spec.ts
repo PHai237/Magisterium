@@ -222,4 +222,47 @@ describe('item registry', () => {
       expect(hasItemDefinition(itemId)).toBe(true);
     }
   });
+
+  it('should use canonical early crafting material ids and rarities', () => {
+    const canonicalMaterialRarityById = {
+      slime_gel: 'common',
+      clear_slime_core: 'uncommon',
+      slime_membrane: 'uncommon',
+      boar_meat: 'common',
+      tough_hide: 'common',
+      boar_tusk: 'uncommon',
+      beast_thread: 'rare',
+      wolf_pelt: 'common',
+      wolf_fang: 'uncommon',
+      goblin_scrap: 'common',
+      goblin_ear: 'uncommon',
+      cracked_blade: 'uncommon',
+      rough_wood: 'common',
+      rough_stone: 'common',
+      coal: 'common',
+      basic_thread: 'common',
+      copper_nugget: 'uncommon',
+    } as const;
+
+    for (const [itemId, rarity] of Object.entries(
+      canonicalMaterialRarityById,
+    )) {
+      const item = getItemDefinitionById(itemId);
+
+      expect(item.category).toBe('material');
+      expect(item.rarity).toBe(rarity);
+    }
+
+    const retiredMaterialIds = [
+      ['elastic', 'membrane'],
+      ['tough', 'sinew'],
+      ['common', 'wood'],
+      ['bent', 'rivet'],
+      ['dull', 'iron', 'shard'],
+    ].map((parts) => parts.join('_'));
+
+    for (const itemId of retiredMaterialIds) {
+      expect(hasItemDefinition(itemId)).toBe(false);
+    }
+  });
 });
