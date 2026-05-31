@@ -393,40 +393,38 @@ export function addBaseStats(left: BaseStats, right: BaseStats): BaseStats {
 function calculateRawDerivedStats(baseStats: BaseStats): DerivedStats {
   const { STR, DEX, CON, INT, WIS, LUK } = baseStats;
 
-  const maxHp = Math.floor(20 + CON * 5);
+  const maxHp = Math.floor(50 + CON * 8);
   const maxMp = Math.floor(20 + INT * 3 + WIS * 2);
-  const maxStamina = Math.floor(100 + CON + DEX + STR);
+  const maxStamina = Math.floor(100 + (CON + DEX + STR) * 1.5);
 
-  const pAtk = roundToTwoDecimals(5 + STR * 1.5 + DEX * 0.5);
+  const pAtk = roundToTwoDecimals(5 + STR * 1.3 + DEX * 0.8);
   const mAtk = roundToTwoDecimals(5 + INT * 2);
-  const healingPotency = roundToTwoDecimals(5 + WIS * 1.5 + INT * 0.5);
+  const healingPotency = roundToTwoDecimals(5 + WIS * 2);
 
-  const pDef = roundToTwoDecimals(CON * 0.5 + STR * 0.2);
-  const mDef = roundToTwoDecimals(WIS * 0.5 + INT * 0.2);
+  const pDef = roundToTwoDecimals(2 + CON * 0.8);
+  const mDef = roundToTwoDecimals(2 + WIS * 0.8);
 
   const actionSpeed = roundToTwoDecimals(10 + DEX);
 
-  const accuracy = roundToTwoDecimals(
-    clamp(90 + DEX * 0.5 + LUK * 0.2, 50, 98),
-  );
+  const accuracy = roundToTwoDecimals(60 + DEX * 2.5);
 
-  const evasionRate = roundToTwoDecimals(clamp(DEX * 0.4 + LUK * 0.1, 0, 45));
+  const evasionRate = roundToTwoDecimals(DEX * 1.5);
 
-  const critRate = roundToTwoDecimals(clamp(1 + LUK * 0.5 + DEX * 0.1, 0, 50));
+  const critRate = roundToTwoDecimals(1 + LUK * 0.2 + DEX * 0.05);
 
   const critDamageBonus = roundToTwoDecimals(clamp(50 + STR * 0.5, 50, 150));
 
-  const fleeRate = roundToTwoDecimals(clamp(5 + DEX * 0.5 + LUK * 0.3, 5, 75));
+  const fleeRate = roundToTwoDecimals(10 + DEX * 2);
 
-  const statusResist = roundToTwoDecimals(clamp(WIS * 0.5 + LUK * 0.2, 0, 75));
+  const statusResist = roundToTwoDecimals(WIS * 1.5);
 
   const spiritualPotency = roundToTwoDecimals(WIS);
 
   const mpRegen = clamp(1 + Math.floor(WIS / 5), 1, 30);
   const staminaRegen = clamp(5 + Math.floor(CON / 3), 5, 40);
 
-  const secondChanceRate = roundToTwoDecimals(clamp(LUK * 0.2, 0, 25));
-  const procRate = roundToTwoDecimals(clamp(LUK * 0.5, 0, 50));
+  const secondChanceRate = 0;
+  const procRate = roundToTwoDecimals(LUK * 0.25);
 
   return {
     maxHp,

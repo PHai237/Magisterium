@@ -31,6 +31,39 @@ function createStatProgress(currentValue: number): StatProgress {
 }
 
 describe('character calculations', () => {
+  it('should calculate phase 6B derived stats from base stats', () => {
+    expect(calculateDerivedStats(BASE_STATS, [])).toEqual({
+      maxHp: 130,
+      maxMp: 70,
+      maxStamina: 145,
+
+      pAtk: 26,
+      mAtk: 25,
+      healingPotency: 25,
+
+      pDef: 10,
+      mDef: 10,
+
+      actionSpeed: 20,
+      accuracy: 85,
+      evasionRate: 15,
+
+      critRate: 3.5,
+      critDamageBonus: 55,
+
+      fleeRate: 30,
+
+      statusResist: 15,
+      spiritualPotency: 10,
+
+      mpRegen: 3,
+      staminaRegen: 8,
+
+      secondChanceRate: 0,
+      procRate: 2.5,
+    });
+  });
+
   it('should calculate base stats from stat progress records', () => {
     const baseStats = calculateBaseStats({
       STR: createStatProgress(10),

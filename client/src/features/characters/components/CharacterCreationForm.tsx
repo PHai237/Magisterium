@@ -2,7 +2,7 @@ import { Button } from "../../../components/ui/Button";
 import { STAT_KEYS } from "../../../domain/magisterium.constants";
 import type {
   CharacterCreationPreview,
-  OriginId
+  OriginId,
 } from "../../../domain/magisterium.types";
 import { CharacterOriginSelector } from "./CharacterOriginSelector";
 import { StartingKitPreview } from "./StartingKitPreview";
@@ -21,12 +21,12 @@ interface CharacterCreationFormProps {
 }
 
 const STAT_HINTS: Record<string, string> = {
-  STR: "Increases physical damage.",
-  DEX: "Improves accuracy, evasion, and speed.",
-  CON: "Increases HP and physical defense.",
+  STR: "Increases physical damage, stamina, and critical damage.",
+  DEX: "Improves accuracy, evasion, speed, stamina, and flee chance.",
+  CON: "Increases HP, stamina, physical defense, and stamina recovery.",
   INT: "Increases magic damage and MP.",
-  WIS: "Improves magic defense, buff/debuff power, and status resist.",
-  LUK: "Improves crits, evasion, flee chance, second chance, and combat procs."
+  WIS: "Improves healing, MP, magic defense, status resist, and MP recovery.",
+  LUK: "Improves critical chance and combat proc chance.",
 };
 
 export function CharacterCreationForm({
@@ -39,7 +39,7 @@ export function CharacterCreationForm({
   onNameChange,
   onOriginChange,
   onSubmit,
-  onReset
+  onReset,
 }: CharacterCreationFormProps) {
   return (
     <main className="character-main">
@@ -72,18 +72,18 @@ export function CharacterCreationForm({
 
               <div className="resource-preview">
                 <div className="resource-preview__item resource-preview__item--hp">
-                    <span>HP</span>
-                    <strong>{preview?.derivedStats.maxHp ?? "—"}</strong>
+                  <span>HP</span>
+                  <strong>{preview?.derivedStats.maxHp ?? "—"}</strong>
                 </div>
 
                 <div className="resource-preview__item resource-preview__item--mp">
-                    <span>MP</span>
-                    <strong>{preview?.derivedStats.maxMp ?? "—"}</strong>
+                  <span>MP</span>
+                  <strong>{preview?.derivedStats.maxMp ?? "—"}</strong>
                 </div>
 
                 <div className="resource-preview__item resource-preview__item--stamina">
-                    <span>Stamina</span>
-                    <strong>{preview?.derivedStats.maxStamina ?? "—"}</strong>
+                  <span>Stamina</span>
+                  <strong>{preview?.derivedStats.maxStamina ?? "—"}</strong>
                 </div>
               </div>
 
