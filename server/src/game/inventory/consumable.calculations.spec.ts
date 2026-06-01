@@ -26,8 +26,8 @@ describe('consumable calculations', () => {
 
   it('should reject item usage in an unsupported context', () => {
     expect(() =>
-      getConsumableItemDefinitionForUse('one_night_inn_voucher', 'battle'),
-    ).toThrow('Item one_night_inn_voucher cannot be used in battle.');
+      getConsumableItemDefinitionForUse('one_night_inn_pass', 'battle'),
+    ).toThrow('Item one_night_inn_pass cannot be used in battle.');
   });
 
   it('should restore HP without exceeding max HP', () => {
@@ -141,7 +141,7 @@ describe('consumable calculations', () => {
     });
   });
 
-  it('should apply rest effects from inn voucher', () => {
+  it('should apply rest effects from inn pass', () => {
     const character = createCharacter({
       name: 'RestUser',
       originId: 'mercenary',
@@ -163,7 +163,7 @@ describe('consumable calculations', () => {
     const result = applyConsumableItemEffectsToCharacter(
       exhaustedCharacter,
       snapshot.derivedStats,
-      'one_night_inn_voucher',
+      'one_night_inn_pass',
       'out_of_battle',
     );
 
@@ -196,7 +196,7 @@ it('should omit zero-amount rest effects when the character is already fully rec
   const result = applyConsumableItemEffectsToCharacter(
     character,
     snapshot.derivedStats,
-    'one_night_inn_voucher',
+    'one_night_inn_pass',
     'out_of_battle',
   );
 
@@ -228,7 +228,7 @@ it('should keep only meaningful rest effects when some resources are already ful
   const result = applyConsumableItemEffectsToCharacter(
     partiallyDrainedCharacter,
     snapshot.derivedStats,
-    'one_night_inn_voucher',
+    'one_night_inn_pass',
     'out_of_battle',
   );
 

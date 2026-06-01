@@ -151,9 +151,9 @@ export interface CharacterInnRestResult {
   character: CharacterSnapshot;
 
   rest: {
-    paymentMethod: 'bronze' | 'voucher';
+    paymentMethod: 'bronze' | 'pass';
     priceBronze: number;
-    voucherItemId?: ItemId;
+    passItemId?: ItemId;
     previousMoneyBronze: number;
     nextMoneyBronze: number;
     previousCurrentState: CurrentState;
@@ -178,7 +178,7 @@ export interface CharacterMarketTransactionResult {
 }
 
 const BASIC_INN_REST_PRICE_BRONZE = 3;
-const ONE_NIGHT_INN_VOUCHER_ID: ItemId = 'one_night_inn_voucher';
+const ONE_NIGHT_INN_PASS_ID: ItemId = 'one_night_inn_pass';
 
 const MAX_CHARACTERS_PER_USER = 3;
 
@@ -1129,7 +1129,7 @@ export class CharacterService implements OnModuleInit {
     };
   }
 
-  restAtInnWithVoucher(
+  restAtInnWithPass(
     characterId: string,
     userId: string,
   ): CharacterInnRestResult {
@@ -1140,7 +1140,7 @@ export class CharacterService implements OnModuleInit {
       throw new NotFoundException(`Character not found: ${characterId}`);
     }
 
-    this.assertInventoryHasQuantity(character, ONE_NIGHT_INN_VOUCHER_ID, 1);
+    this.assertInventoryHasQuantity(character, ONE_NIGHT_INN_PASS_ID, 1);
 
     const snapshotBeforeRest = createCharacterSnapshot(character);
     const restedAt = new Date().toISOString();
@@ -1154,14 +1154,14 @@ export class CharacterService implements OnModuleInit {
     const itemUseResult = applyConsumableItemEffectsToCharacter(
       sanitizedCharacterBeforeRest,
       snapshotBeforeRest.derivedStats,
-      ONE_NIGHT_INN_VOUCHER_ID,
+      ONE_NIGHT_INN_PASS_ID,
       'out_of_battle',
     );
 
     const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
       removeItemQuantityFromInventory(
         itemUseResult.character.inventoryItemIds,
-        ONE_NIGHT_INN_VOUCHER_ID,
+        ONE_NIGHT_INN_PASS_ID,
         1,
       ),
     );
@@ -1183,9 +1183,9 @@ export class CharacterService implements OnModuleInit {
     return {
       character: snapshotAfterRest,
       rest: {
-        paymentMethod: 'voucher',
+        paymentMethod: 'pass',
         priceBronze: 0,
-        voucherItemId: ONE_NIGHT_INN_VOUCHER_ID,
+        passItemId: ONE_NIGHT_INN_PASS_ID,
         previousMoneyBronze: character.moneyBronze,
         nextMoneyBronze: updatedCharacter.moneyBronze,
         previousCurrentState: snapshotBeforeRest.currentState,

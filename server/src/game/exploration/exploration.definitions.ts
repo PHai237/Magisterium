@@ -92,7 +92,7 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
         weight: 25,
       },
       {
-        itemId: 'one_night_inn_voucher',
+        itemId: 'one_night_inn_pass',
         minQuantity: 1,
         maxQuantity: 1,
         weight: 25,
@@ -168,7 +168,7 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
         weight: 25,
       },
       {
-        itemId: 'one_night_inn_voucher',
+        itemId: 'one_night_inn_pass',
         minQuantity: 1,
         maxQuantity: 1,
         weight: 25,

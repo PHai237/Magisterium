@@ -189,18 +189,7 @@ export class CharacterController {
     @Param('id') id: string,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.restAtInnWithVoucher(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
-    );
-  }
-
-  @Post(':id/inn/rest/voucher')
-  restAtInnWithVoucher(
-    @Param('id') id: string,
-    @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
-  ) {
-    return this.characterService.restAtInnWithVoucher(
+    return this.characterService.restAtInnWithPass(
       id,
       this.readRequiredUserIdHeader(userIdHeader),
     );

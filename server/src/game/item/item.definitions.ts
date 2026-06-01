@@ -338,11 +338,11 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
     tags: ['starter', 'consumable', 'potion', 'mp'],
   },
   {
-    id: 'one_night_inn_voucher',
+    id: 'one_night_inn_pass',
     name: 'One-Night Inn Pass',
     description:
       'A single-use pass for one safe night at a basic inn. Intended for full recovery outside battle.',
-    category: 'voucher',
+    category: 'pass',
     rarity: 'common',
     stackable: true,
     maxStackSize: 10,

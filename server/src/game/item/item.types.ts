@@ -10,7 +10,7 @@ export type ItemCategory =
   | 'equipment'
   | 'consumable'
   | 'material'
-  | 'voucher'
+  | 'pass'
   | 'quest';
 
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';

@@ -608,25 +608,25 @@ describe('CharacterController', () => {
     });
   });
 
-  it('should use an inn voucher through the inn endpoint', () => {
+  it('should use an inn pass through the inn endpoint', () => {
     const created = controller.create(
       {
-        name: 'VoucherInn',
+        name: 'PassInn',
         originId: 'mercenary',
       },
       'user_1',
     );
 
-    const result = controller.restAtInnWithVoucher(created.id, 'user_1');
+    const result = controller.restAtInnWithPass(created.id, 'user_1');
 
     expect(result.character.inventoryItemIds).not.toContain(
-      'one_night_inn_voucher',
+      'one_night_inn_pass',
     );
 
     expect(result.rest).toMatchObject({
-      paymentMethod: 'voucher',
+      paymentMethod: 'pass',
       priceBronze: 0,
-      voucherItemId: 'one_night_inn_voucher',
+      passItemId: 'one_night_inn_pass',
     });
   });
 

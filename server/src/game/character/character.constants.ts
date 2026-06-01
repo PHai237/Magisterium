@@ -62,7 +62,7 @@ export const STARTER_KIT_DEFINITIONS: StarterKitDefinition[] = [
       'stamina_bread',
       'minor_hp_potion',
       'minor_mp_potion',
-      'one_night_inn_voucher',
+      'one_night_inn_pass',
     ],
     tags: ['starter', 'survival', 'day-one-support'],
   },

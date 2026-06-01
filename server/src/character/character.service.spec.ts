@@ -847,7 +847,7 @@ describe('CharacterService', () => {
       });
     });
 
-    it('should reject using an inn voucher from the generic consumable endpoint', () => {
+    it('should reject using an inn pass from the generic consumable endpoint', () => {
       const created = service.create({
         name: 'RestUser',
         originId: 'mercenary',
@@ -858,14 +858,14 @@ describe('CharacterService', () => {
         service.useConsumableItemOutOfBattle(
           created.id,
           'user_1',
-          'one_night_inn_voucher',
+          'one_night_inn_pass',
         ),
       ).toThrow(BadRequestException);
     });
 
-    it('should use an inn voucher only through the inn service', () => {
+    it('should use an inn pass only through the inn service', () => {
       const created = service.create({
-        name: 'InnVoucherUser',
+        name: 'InnPassUser',
         originId: 'mercenary',
         userId: 'user_1',
       });
@@ -880,7 +880,7 @@ describe('CharacterService', () => {
         },
       }));
 
-      const result = service.restAtInnWithVoucher(created.id, 'user_1');
+      const result = service.restAtInnWithPass(created.id, 'user_1');
 
       expect(result.character.currentState).toEqual({
         hp: result.character.derivedStats.maxHp,
@@ -891,13 +891,13 @@ describe('CharacterService', () => {
       expect(result.character.fatigue).toBe(0);
       expect(result.character.moneyBronze).toBe(created.moneyBronze);
       expect(result.character.inventoryItemIds).not.toContain(
-        'one_night_inn_voucher',
+        'one_night_inn_pass',
       );
 
       expect(result.rest).toMatchObject({
-        paymentMethod: 'voucher',
+        paymentMethod: 'pass',
         priceBronze: 0,
-        voucherItemId: 'one_night_inn_voucher',
+        passItemId: 'one_night_inn_pass',
         previousMoneyBronze: created.moneyBronze,
         nextMoneyBronze: created.moneyBronze,
       });

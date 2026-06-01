@@ -500,7 +500,7 @@ describe('resolveUseItem', () => {
     const hero = createActor({
       actorId: 'hero',
       actorType: 'character',
-      inventoryItemIds: ['one_night_inn_voucher'],
+      inventoryItemIds: ['one_night_inn_pass'],
     });
 
     const slime = createActor({
@@ -519,7 +519,7 @@ describe('resolveUseItem', () => {
       actorId: 'hero',
       targetIds: [],
       actionType: 'use_item',
-      itemId: 'one_night_inn_voucher',
+      itemId: 'one_night_inn_pass',
     });
 
     expect(result.actionResult.phase).toBe('cancelled');
@@ -529,8 +529,8 @@ describe('resolveUseItem', () => {
       expect.objectContaining({
         type: 'ACTION_CANCELLED',
         actorId: 'hero',
-        itemId: 'one_night_inn_voucher',
-        message: 'Item one_night_inn_voucher cannot be used in battle.',
+        itemId: 'one_night_inn_pass',
+        message: 'Item one_night_inn_pass cannot be used in battle.',
       }),
     ]);
   });

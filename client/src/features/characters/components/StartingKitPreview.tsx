@@ -12,14 +12,14 @@ const STARTING_KIT_ITEM_ICONS: Record<string, string> = {
   stamina_bread: "🍞",
   minor_hp_potion: "🧪",
   minor_mp_potion: "🔷",
-  one_night_inn_voucher: "🎟️"
+  one_night_inn_pass: "🎟️"
 };
 
 const STARTING_KIT_ITEM_HINTS: Record<string, string> = {
   stamina_bread: "Restores a small amount of stamina.",
   minor_hp_potion: "Heals 10 HP.",
   minor_mp_potion: "Restores 10 MP.",
-  one_night_inn_voucher: "Redeem at The Inn for one full overnight rest."
+  one_night_inn_pass: "Redeem at The Inn for one full overnight rest."
 };
 
 function getStartingKitItemIcon(itemId: ItemId): string {

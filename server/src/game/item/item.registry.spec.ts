@@ -134,23 +134,23 @@ describe('item registry', () => {
   });
 
   it('should deep clone consumable effects', () => {
-    const rawVoucher = ITEM_DEFINITIONS.find(
-      (item) => item.id === 'one_night_inn_voucher',
+    const rawPass = ITEM_DEFINITIONS.find(
+      (item) => item.id === 'one_night_inn_pass',
     );
 
-    const clonedVoucher = getItemDefinitionById('one_night_inn_voucher');
+    const clonedPass = getItemDefinitionById('one_night_inn_pass');
 
-    expect(rawVoucher).toBeDefined();
+    expect(rawPass).toBeDefined();
 
-    expect(clonedVoucher).not.toBe(rawVoucher);
-    expect(clonedVoucher.consumable).not.toBe(rawVoucher?.consumable);
-    expect(clonedVoucher.consumable?.effects).not.toBe(
-      rawVoucher?.consumable?.effects,
+    expect(clonedPass).not.toBe(rawPass);
+    expect(clonedPass.consumable).not.toBe(rawPass?.consumable);
+    expect(clonedPass.consumable?.effects).not.toBe(
+      rawPass?.consumable?.effects,
     );
-    expect(clonedVoucher.consumable?.effects[0]).not.toBe(
-      rawVoucher?.consumable?.effects[0],
+    expect(clonedPass.consumable?.effects[0]).not.toBe(
+      rawPass?.consumable?.effects[0],
     );
-    expect(clonedVoucher).toEqual(rawVoucher);
+    expect(clonedPass).toEqual(rawPass);
   });
 
   it('should return multiple item definitions by ids', () => {
@@ -181,19 +181,19 @@ describe('item registry', () => {
   it('should classify item categories by capability', () => {
     expect(isEquipmentItem('rusty_sword')).toBe(true);
     expect(isConsumableItem('minor_hp_potion')).toBe(true);
-    expect(isConsumableItem('one_night_inn_voucher')).toBe(true);
+    expect(isConsumableItem('one_night_inn_pass')).toBe(true);
     expect(isStackableItem('slime_gel')).toBe(true);
     expect(isStackableItem('rusty_sword')).toBe(false);
   });
 
-  it('should treat inn pass as voucher category with consumable capability', () => {
-    const voucher = getItemDefinitionById('one_night_inn_voucher');
+  it('should treat inn pass as pass category with consumable capability', () => {
+    const pass = getItemDefinitionById('one_night_inn_pass');
 
-    expect(voucher.category).toBe('voucher');
-    expect(voucher.consumable).toBeDefined();
-    expect(voucher.consumable?.usableInBattle).toBe(false);
-    expect(voucher.consumable?.usableOutOfBattle).toBe(true);
-    expect(isConsumableItem('one_night_inn_voucher')).toBe(true);
+    expect(pass.category).toBe('pass');
+    expect(pass.consumable).toBeDefined();
+    expect(pass.consumable?.usableInBattle).toBe(false);
+    expect(pass.consumable?.usableOutOfBattle).toBe(true);
+    expect(isConsumableItem('one_night_inn_pass')).toBe(true);
   });
 
   it('should define unique item ids', () => {

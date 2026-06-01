@@ -137,7 +137,7 @@ function createMockCharacter(
       'stamina_bread',
       'minor_hp_potion',
       'minor_mp_potion',
-      'one_night_inn_voucher',
+      'one_night_inn_pass',
     ],
     equippedItemIds: ['rusty_sword'],
 
@@ -166,14 +166,14 @@ function createMockBattleActorState(
       'rusty_sword',
       'minor_mp_potion',
       'stamina_bread',
-      'one_night_inn_voucher',
+      'one_night_inn_pass',
     ],
     battleStartInventoryItemIds: [
       'rusty_sword',
       'minor_hp_potion',
       'minor_mp_potion',
       'stamina_bread',
-      'one_night_inn_voucher',
+      'one_night_inn_pass',
     ],
 
     baseStats: MOCK_BASE_STATS,

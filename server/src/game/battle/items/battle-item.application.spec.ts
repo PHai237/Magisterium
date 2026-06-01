@@ -201,7 +201,7 @@ describe('battle item application', () => {
     const actor = createActor();
 
     expect(() =>
-      applyBattleConsumableItemEffectsToActor(actor, 'one_night_inn_voucher'),
-    ).toThrow('Item one_night_inn_voucher cannot be used in battle.');
+      applyBattleConsumableItemEffectsToActor(actor, 'one_night_inn_pass'),
+    ).toThrow('Item one_night_inn_pass cannot be used in battle.');
   });
 });
