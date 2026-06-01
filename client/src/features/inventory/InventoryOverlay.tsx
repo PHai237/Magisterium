@@ -396,14 +396,6 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     description:
       "A sharp fang used for small blades, charms, and predatory craft parts.",
   },
-  beast_thread: {
-    id: "beast_thread",
-    name: "Beast Thread",
-    icon: "⌁",
-    category: "material",
-    description:
-      "Rare beast thread for bindings, seams, and rough bowstring work.",
-  },
   goblin_ear: {
     id: "goblin_ear",
     name: "Goblin Ear",
@@ -455,14 +447,6 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "material",
     description:
       "A plain rough stone for sharpening, crude molds, and simple reinforcement.",
-  },
-  basic_thread: {
-    id: "basic_thread",
-    name: "Basic Thread",
-    icon: "⌁",
-    category: "material",
-    description:
-      "Simple thread for stitching cloth, leather, wraps, and crafted goods.",
   },
 };
 

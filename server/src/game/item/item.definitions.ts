@@ -568,18 +568,6 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
     tags: ['loot', 'material', 'beast', 'wolf', 'fang', 'crafting'],
   },
   {
-    id: 'beast_thread',
-    name: 'Beast Thread',
-    description:
-      'Rarely preserved beast sinew refined into a strong natural thread for bindings, seams, and rough bowstring work.',
-    category: 'material',
-    rarity: 'rare',
-    stackable: true,
-    maxStackSize: 99,
-    sellPriceBronze: 6,
-    tags: ['loot', 'material', 'beast', 'thread', 'sinew', 'crafting'],
-  },
-  {
     id: 'goblin_ear',
     name: 'Goblin Ear',
     description:
@@ -662,18 +650,6 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
     maxStackSize: 99,
     sellPriceBronze: 1,
     tags: ['material', 'stone', 'mold', 'sharpening', 'crafting'],
-  },
-  {
-    id: 'basic_thread',
-    name: 'Basic Thread',
-    description:
-      'Simple thread for stitching cloth, leather, wraps, and other beginner crafted goods.',
-    category: 'material',
-    rarity: 'common',
-    stackable: true,
-    maxStackSize: 99,
-    sellPriceBronze: 1,
-    tags: ['material', 'thread', 'tailoring', 'leatherwork', 'crafting'],
   },
   {
     id: 'str_fragment',

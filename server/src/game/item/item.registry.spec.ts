@@ -231,7 +231,6 @@ describe('item registry', () => {
       boar_meat: 'common',
       tough_hide: 'common',
       boar_tusk: 'uncommon',
-      beast_thread: 'rare',
       wolf_pelt: 'common',
       wolf_fang: 'uncommon',
       goblin_scrap: 'common',
@@ -240,7 +239,6 @@ describe('item registry', () => {
       rough_wood: 'common',
       rough_stone: 'common',
       coal: 'common',
-      basic_thread: 'common',
       copper_nugget: 'uncommon',
     } as const;
 
@@ -259,6 +257,8 @@ describe('item registry', () => {
       ['common', 'wood'],
       ['bent', 'rivet'],
       ['dull', 'iron', 'shard'],
+      ['beast', 'thread'],
+      ['basic', 'thread'],
     ].map((parts) => parts.join('_'));
 
     for (const itemId of retiredMaterialIds) {
