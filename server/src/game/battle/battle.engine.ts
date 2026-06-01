@@ -1,4 +1,5 @@
 import { resolveBasicAttack } from './actions/basic-attack.action';
+import { resolveFlee } from './actions/flee.action';
 import { resolveSkipTurn } from './actions/skip-turn.action';
 import { resolveUseSkill } from './actions/use-skill.action';
 import { resolveUseItem } from './actions/use-item.action';
@@ -93,6 +94,9 @@ export function resolveBattleAction(
 
     case 'skip_turn':
       return resolveSkipTurn(battleState, command);
+
+    case 'flee':
+      return resolveFlee(battleState, command);
 
     default:
       return resolveUnsupportedAction(battleState, command);

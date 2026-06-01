@@ -159,7 +159,6 @@ export class BattleController {
         battle: committedClaim.battle,
         character: appliedReward.character,
         reward: appliedReward.reward,
-        progression: appliedReward.progression,
       };
     } catch (error) {
       this.battleService.rollbackBattleRewardClaim({

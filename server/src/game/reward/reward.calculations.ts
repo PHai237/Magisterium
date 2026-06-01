@@ -410,11 +410,9 @@ export function calculateBattleReward(
 ): BattleRewardSummary {
   const lootRolls: LootRollResult[] = [];
 
-  let exp = 0;
   let moneyBronze = 0;
 
   for (const defeatedMonster of input.defeatedMonsters) {
-    exp += toSafeNonNegativeInteger(defeatedMonster.reward.exp);
     moneyBronze += toSafeNonNegativeInteger(defeatedMonster.reward.moneyBronze);
 
     for (const entry of defeatedMonster.reward.lootTable) {
@@ -443,7 +441,6 @@ export function calculateBattleReward(
   }
 
   return {
-    exp,
     moneyBronze,
 
     items: aggregateItemStacks(lootRolls),

@@ -256,7 +256,6 @@ describe('BattleService', () => {
 
       expect(result.battle.rewardClaim?.claimedAt).toBeDefined();
 
-      expect(result.reward.exp).toBeGreaterThan(0);
       expect(result.reward.moneyBronze).toBeGreaterThanOrEqual(0);
 
       expect(result.reward.defeatedMonsters).toEqual([

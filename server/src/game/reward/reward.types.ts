@@ -46,7 +46,6 @@ export interface BattleRewardCalculationInput {
 }
 
 export interface BattleRewardSummary {
-  exp: number;
   moneyBronze: number;
 
   items: RewardItemStack[];
@@ -56,20 +55,6 @@ export interface BattleRewardSummary {
   lootRolls: LootRollResult[];
 }
 
-export interface CharacterProgressionRewardResult {
-  previousLevel: number;
-  nextLevel: number;
-
-  previousExp: number;
-  nextExp: number;
-
-  expGained: number;
-
-  leveledUp: boolean;
-  levelsGained: number;
-}
-
 export interface AppliedBattleRewardResult {
   reward: BattleRewardSummary;
-  progression: CharacterProgressionRewardResult;
 }

@@ -43,7 +43,6 @@ export interface MonsterRandomLootPool {
 }
 
 export interface MonsterRewardDefinition {
-  exp: number;
   moneyBronze: number;
   lootTable: readonly MonsterLootEntry[];
   randomLootPools?: readonly MonsterRandomLootPool[];

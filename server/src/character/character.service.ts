@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -18,6 +20,8 @@ import {
 } from './character.validation';
 
 import { DatabaseService } from '../database/database.service';
+
+import { BattleService } from '../game/battle/battle.service';
 
 import { createCharacter } from '../game/character/character.factory';
 
@@ -94,7 +98,6 @@ import type {
 import type {
   AppliedBattleRewardResult,
   BattleRewardSummary,
-  CharacterProgressionRewardResult,
 } from '../game/reward/reward.types';
 
 type CreateCharacterCommand = CreateCharacterDto & {
@@ -174,14 +177,9 @@ export interface CharacterMarketTransactionResult {
   };
 }
 
-const BASE_EXP_REQUIRED_FOR_LEVEL_UP = 100;
-const EXP_LEVEL_GROWTH_FACTOR = 1.5;
-const MAX_CHARACTER_LEVEL = 100;
 const BASIC_INN_REST_PRICE_BRONZE = 3;
 const ONE_NIGHT_INN_VOUCHER_ID: ItemId = 'one_night_inn_voucher';
 
-const MAX_SAFE_TOTAL_EXP = 100_000_000;
-const MAX_SAFE_REWARD_EXP = 1_000_000;
 const MAX_CHARACTERS_PER_USER = 3;
 
 @Injectable()
@@ -194,6 +192,10 @@ export class CharacterService implements OnModuleInit {
   constructor(
     @Optional()
     private readonly databaseService?: DatabaseService,
+
+    @Optional()
+    @Inject(forwardRef(() => BattleService))
+    private readonly battleService?: BattleService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -336,12 +338,6 @@ export class CharacterService implements OnModuleInit {
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
 
-    const progressionResult = this.calculateProgressionReward(
-      existingCharacter.progression.level,
-      existingCharacter.progression.exp,
-      reward.exp,
-    );
-
     const inventoryAfterBattle = this.reconcileInventoryAfterBattle(
       existingCharacter.inventoryItemIds,
       options,
@@ -353,12 +349,6 @@ export class CharacterService implements OnModuleInit {
 
     const nextCharacter: Character = {
       ...existingCharacter,
-
-      progression: {
-        ...existingCharacter.progression,
-        level: progressionResult.nextLevel,
-        exp: progressionResult.nextExp,
-      },
 
       moneyBronze: addBronze(existingCharacter.moneyBronze, reward.moneyBronze),
 
@@ -384,7 +374,6 @@ export class CharacterService implements OnModuleInit {
     return {
       character: createCharacterSnapshot(nextCharacter),
       reward,
-      progression: progressionResult,
     };
   }
 
@@ -1030,7 +1019,6 @@ export class CharacterService implements OnModuleInit {
     const nextRank = rankStatus.nextRank;
     const nextProgression = {
       ...existingCharacter.progression,
-      level: nextRank.index + 1,
       rankIndex: nextRank.index,
       rankId: nextRank.id,
     };
@@ -1074,6 +1062,7 @@ export class CharacterService implements OnModuleInit {
     this.assertCharacterBelongsToUserScope(character, userScope);
 
     this.characters.delete(id);
+    this.battleService?.deleteBattlesForCharacterForUserScope(id, userScope);
     this.deletePersistedCharacter(id);
     this.repairCurrentCharacterForUserScope(userScope);
 
@@ -1231,84 +1220,6 @@ export class CharacterService implements OnModuleInit {
     };
   }
 
-  private calculateTotalExpRequiredForLevel(level: number): number {
-    const normalizedLevel = Math.max(1, Math.floor(level));
-
-    if (normalizedLevel <= 1) {
-      return 0;
-    }
-
-    let totalExp = 0;
-
-    for (
-      let currentLevel = 1;
-      currentLevel < normalizedLevel;
-      currentLevel += 1
-    ) {
-      totalExp += Math.floor(
-        BASE_EXP_REQUIRED_FOR_LEVEL_UP *
-          currentLevel *
-          EXP_LEVEL_GROWTH_FACTOR ** (currentLevel - 1),
-      );
-    }
-
-    return totalExp;
-  }
-
-  private calculateLevelFromTotalExp(totalExp: number): number {
-    const safeTotalExp = Math.max(0, Math.floor(totalExp));
-    let nextLevel = 1;
-
-    while (
-      nextLevel < MAX_CHARACTER_LEVEL &&
-      safeTotalExp >= this.calculateTotalExpRequiredForLevel(nextLevel + 1)
-    ) {
-      nextLevel += 1;
-    }
-
-    return nextLevel;
-  }
-
-  private calculateProgressionReward(
-    previousLevel: number,
-    previousExp: number,
-    expGained: number,
-  ): CharacterProgressionRewardResult {
-    const safePreviousLevel = Math.min(
-      MAX_CHARACTER_LEVEL,
-      Math.max(1, this.assertSafeExperienceInteger(previousLevel, 'Level')),
-    );
-
-    const safePreviousExp = this.assertSafeExperienceTotal(
-      previousExp,
-      'Previous EXP',
-    );
-
-    const safeExpGained = this.assertSafeExperienceGain(expGained);
-
-    const nextExp = safePreviousExp + safeExpGained;
-
-    this.assertSafeExperienceTotal(nextExp, 'Next EXP');
-
-    const nextLevel = Math.max(
-      safePreviousLevel,
-      this.calculateLevelFromTotalExp(nextExp),
-    );
-
-    return {
-      previousLevel: safePreviousLevel,
-      nextLevel,
-
-      previousExp: safePreviousExp,
-      nextExp,
-
-      expGained: safeExpGained,
-
-      leveledUp: nextLevel > safePreviousLevel,
-      levelsGained: Math.max(0, nextLevel - safePreviousLevel),
-    };
-  }
-
   private runInventoryOperationOrThrowBadRequest<T>(operation: () => T): T {
     try {
       return operation();
@@ -1423,51 +1334,6 @@ export class CharacterService implements OnModuleInit {
     }
 
     return normalizedStaminaCost;
-  }
-
-  private assertSafeExperienceInteger(value: number, label: string): number {
-    if (!Number.isFinite(value)) {
-      throw new BadRequestException(`${label} must be a finite number.`);
-    }
-
-    const normalizedValue = Math.floor(value);
-
-    if (!Number.isSafeInteger(normalizedValue)) {
-      throw new BadRequestException(`${label} must be a safe integer.`);
-    }
-
-    if (normalizedValue < 0) {
-      throw new BadRequestException(`${label} must not be negative.`);
-    }
-
-    return normalizedValue;
-  }
-
-  private assertSafeExperienceTotal(value: number, label: string): number {
-    const normalizedValue = this.assertSafeExperienceInteger(value, label);
-
-    if (normalizedValue > MAX_SAFE_TOTAL_EXP) {
-      throw new BadRequestException(
-        `${label} exceeds the safe EXP total limit.`,
-      );
-    }
-
-    return normalizedValue;
-  }
-
-  private assertSafeExperienceGain(expGained: number): number {
-    const normalizedValue = this.assertSafeExperienceInteger(
-      expGained,
-      'Reward EXP',
-    );
-
-    if (normalizedValue > MAX_SAFE_REWARD_EXP) {
-      throw new BadRequestException(
-        'Reward EXP exceeds the safe reward EXP limit.',
-      );
-    }
-
-    return normalizedValue;
   }
 
   private normalizeSanctuaryStatKey(statKey: StatKey): StatKey {

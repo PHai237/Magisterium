@@ -42,7 +42,6 @@ function createBattleRewardSummary(
   overrides: Partial<BattleRewardSummary> = {},
 ): BattleRewardSummary {
   return {
-    exp: 25,
     moneyBronze: 7,
 
     items: [
@@ -173,8 +172,8 @@ describe('CharacterService', () => {
     expect(character.originId).toBe(scholarOrigin.id);
 
     expect(character.progression).toMatchObject({
-      level: 1,
-      exp: 0,
+      rankIndex: 0,
+      rankId: 'novice',
       milestoneIds: [],
     });
 
@@ -956,7 +955,7 @@ describe('CharacterService', () => {
   });
 
   describe('applyBattleReward', () => {
-    it('should apply exp, bronze, and reward items to a character', () => {
+    it('should apply bronze and reward items to a character', () => {
       const created = service.create({
         name: 'Rewarded',
         originId: 'mercenary',
@@ -975,8 +974,7 @@ describe('CharacterService', () => {
       expect(result.character.id).toBe(created.id);
       expect(result.character.userId).toBe('user_1');
 
-      expect(result.character.progression.exp).toBe(25);
-      expect(result.character.progression.level).toBe(1);
+      expect(result.character.progression).toEqual(created.progression);
 
       expect(result.character.moneyBronze).toBe(initialMoneyBronze + 7);
 
@@ -996,21 +994,7 @@ describe('CharacterService', () => {
         ),
       ).toHaveLength(1);
 
-      expect(result.reward.exp).toBe(25);
       expect(result.reward.moneyBronze).toBe(7);
-
-      expect(result.progression).toEqual({
-        previousLevel: 1,
-        nextLevel: 1,
-
-        previousExp: 0,
-        nextExp: 25,
-
-        expGained: 25,
-
-        leveledUp: false,
-        levelsGained: 0,
-      });
     });
 
     it('should use battle inventory as the reward base when provided', () => {
@@ -1032,7 +1016,6 @@ describe('CharacterService', () => {
         created.id,
         'user_1',
         createBattleRewardSummary({
-          exp: 0,
           moneyBronze: 0,
           items: [
             {
@@ -1057,66 +1040,6 @@ describe('CharacterService', () => {
       ).toHaveLength(1);
     });
 
-    it('should level up when total exp reaches the next level threshold', () => {
-      const created = service.create({
-        name: 'Leveler',
-        originId: 'mercenary',
-        userId: 'user_1',
-      });
-
-      const result = service.applyBattleReward(
-        created.id,
-        'user_1',
-        createBattleRewardSummary({
-          exp: 100,
-          moneyBronze: 0,
-          items: [],
-        }),
-      );
-
-      expect(result.character.progression.exp).toBe(100);
-      expect(result.character.progression.level).toBe(2);
-
-      expect(result.progression).toEqual({
-        previousLevel: 1,
-        nextLevel: 2,
-
-        previousExp: 0,
-        nextExp: 100,
-
-        expGained: 100,
-
-        leveledUp: true,
-        levelsGained: 1,
-      });
-    });
-
-    it('should support multiple level gains from a large exp reward', () => {
-      const created = service.create({
-        name: 'PowerLeveler',
-        originId: 'mercenary',
-        userId: 'user_1',
-      });
-
-      const result = service.applyBattleReward(
-        created.id,
-        'user_1',
-        createBattleRewardSummary({
-          exp: 1000,
-          moneyBronze: 0,
-          items: [],
-        }),
-      );
-
-      expect(result.character.progression.exp).toBe(1000);
-      expect(result.character.progression.level).toBeGreaterThan(2);
-
-      expect(result.progression.leveledUp).toBe(true);
-      expect(result.progression.levelsGained).toBe(
-        result.character.progression.level - 1,
-      );
-    });
-
     it('should ignore non-positive reward item quantities', () => {
       const created = service.create({
         name: 'NoBadLoot',
@@ -1130,7 +1053,6 @@ describe('CharacterService', () => {
         created.id,
         'user_1',
         createBattleRewardSummary({
-          exp: 0,
           moneyBronze: 0,
           items: [
             {
@@ -1149,7 +1071,7 @@ describe('CharacterService', () => {
         initialInventoryLength,
       );
 
-      expect(result.character.progression.exp).toBe(0);
+      expect(result.character.progression).toEqual(created.progression);
       expect(result.character.moneyBronze).toBe(created.moneyBronze);
     });
 
@@ -1400,7 +1322,6 @@ describe('CharacterService', () => {
       created.id,
       'user_1',
       createBattleRewardSummary({
-        exp: 0,
         moneyBronze: 0,
         items: [],
       }),
@@ -1414,23 +1335,4 @@ describe('CharacterService', () => {
     expect(result.character.inventoryItemIds).toContain('goblin_ear');
   });
 
-  it('should reject non-finite reward EXP', () => {
-    const created = service.create({
-      name: 'BadExp',
-      originId: 'mercenary',
-      userId: 'user_1',
-    });
-
-    expect(() =>
-      service.applyBattleReward(
-        created.id,
-        'user_1',
-        createBattleRewardSummary({
-          exp: Number.POSITIVE_INFINITY,
-          moneyBronze: 0,
-          items: [],
-        }),
-      ),
-    ).toThrow(BadRequestException);
-  });
 });

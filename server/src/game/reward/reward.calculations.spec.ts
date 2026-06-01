@@ -14,7 +14,6 @@ function createRewardInput(
         actorId: 'slime_1',
         monsterId: 'slime',
         reward: {
-          exp: 5,
           moneyBronze: 2,
           lootTable: [
             {
@@ -30,7 +29,6 @@ function createRewardInput(
         actorId: 'goblin_1',
         monsterId: 'goblin',
         reward: {
-          exp: 12,
           moneyBronze: 6,
           lootTable: [
             {
@@ -50,10 +48,9 @@ function createRewardInput(
 
 describe('reward calculations', () => {
   describe('calculateBattleReward', () => {
-    it('should sum exp and bronze from defeated monsters', () => {
+    it('should sum bronze from defeated monsters', () => {
       const reward = calculateBattleReward(createRewardInput());
 
-      expect(reward.exp).toBe(17);
       expect(reward.moneyBronze).toBe(8);
 
       expect(reward.defeatedMonsters).toEqual([
@@ -125,7 +122,6 @@ describe('reward calculations', () => {
               actorId: 'slime_1',
               monsterId: 'slime',
               reward: {
-                exp: 5,
                 moneyBronze: 2,
                 lootTable: [
                   {
@@ -163,7 +159,6 @@ describe('reward calculations', () => {
               actorId: 'slime_1',
               monsterId: 'slime',
               reward: {
-                exp: 5,
                 moneyBronze: 2,
                 lootTable: [
                   {
@@ -179,7 +174,6 @@ describe('reward calculations', () => {
               actorId: 'slime_2',
               monsterId: 'slime',
               reward: {
-                exp: 5,
                 moneyBronze: 2,
                 lootTable: [
                   {
@@ -195,7 +189,6 @@ describe('reward calculations', () => {
         }),
       );
 
-      expect(reward.exp).toBe(10);
       expect(reward.moneyBronze).toBe(4);
 
       expect(reward.items).toEqual([
@@ -214,7 +207,6 @@ describe('reward calculations', () => {
               actorId: 'slime_1',
               monsterId: 'slime',
               reward: {
-                exp: -10,
                 moneyBronze: Number.NaN,
                 lootTable: [
                   {
@@ -230,7 +222,6 @@ describe('reward calculations', () => {
         }),
       );
 
-      expect(reward.exp).toBe(0);
       expect(reward.moneyBronze).toBe(0);
 
       expect(reward.lootRolls[0]).toMatchObject({
@@ -252,7 +243,6 @@ describe('reward calculations', () => {
               actorId: 'slime_1',
               monsterId: 'slime',
               reward: {
-                exp: 5,
                 moneyBronze: 2,
                 lootTable: [],
                 randomLootPools: [
@@ -303,7 +293,6 @@ describe('reward calculations', () => {
               actorId: 'slime_1',
               monsterId: 'slime',
               reward: {
-                exp: 5,
                 moneyBronze: 2,
                 lootTable: [],
                 randomLootPools: [
@@ -351,7 +340,6 @@ describe('reward calculations', () => {
               actorId: 'slime_1',
               monsterId: 'slime',
               reward: {
-                exp: 5,
                 moneyBronze: 2,
                 lootTable: [],
                 randomLootPools: [

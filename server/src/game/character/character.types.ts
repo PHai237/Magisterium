@@ -122,9 +122,8 @@ export interface OriginDefinition {
 }
 
 export interface CharacterProgression {
-  level: number;
-  exp: number;
-
+  rankIndex?: number;
+  rankId?: string;
   milestoneIds: MilestoneId[];
 }
 

@@ -1,10 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import {
-  STARTING_CHARACTER_EXP,
-  STARTING_CHARACTER_LEVEL,
-  STARTING_FATIGUE,
-} from './character.constants';
+import { STARTING_FATIGUE } from './character.constants';
 
 import {
   buildCurrentState,
@@ -70,8 +66,8 @@ export function createCharacter(input: CreateCharacterInput): Character {
     originId: originDef.id,
 
     progression: {
-      level: STARTING_CHARACTER_LEVEL,
-      exp: STARTING_CHARACTER_EXP,
+      rankIndex: 0,
+      rankId: 'novice',
       milestoneIds: [],
     },
 

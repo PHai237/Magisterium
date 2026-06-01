@@ -27,9 +27,6 @@ export const ZERO_STAT_PROGRESS: StatProgress = {
 export const FALNA_VISIBLE_STAT_MIN = 0;
 export const FALNA_VISIBLE_STAT_MAX = 999;
 
-export const STARTING_CHARACTER_LEVEL = 1;
-export const STARTING_CHARACTER_EXP = 0;
-
 export const STARTING_FATIGUE = 0;
 export const MAX_FATIGUE = 100;
 

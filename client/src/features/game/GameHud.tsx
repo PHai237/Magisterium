@@ -45,7 +45,7 @@ export function GameHud({
         <div className="gameshell-character-chip__copy">
           <strong>{currentCharacter.name}</strong>
           <span>
-            Lv. {currentCharacter.progression.level} ·{" "}
+            {compactLabel(currentCharacter.progression.rankId ?? "novice")} ·{" "}
             {compactLabel(currentCharacter.originId)}
           </span>
         </div>

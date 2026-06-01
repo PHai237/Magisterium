@@ -79,8 +79,8 @@ function createMockCharacter(
     originId: 'mercenary',
 
     progression: {
-      level: 1,
-      exp: 0,
+      rankIndex: 0,
+      rankId: 'novice',
       milestoneIds: [],
     },
 
@@ -234,7 +234,6 @@ function createMockBattleRewardSummary(
   overrides: Partial<BattleRewardSummary> = {},
 ): BattleRewardSummary {
   return {
-    exp: 5,
     moneyBronze: 2,
 
     items: [
@@ -267,10 +266,6 @@ function createMockAppliedBattleRewardResult(
   return {
     character: {
       ...character,
-      progression: {
-        ...character.progression,
-        exp: character.progression.exp + reward.exp,
-      },
       moneyBronze: character.moneyBronze + reward.moneyBronze,
       inventoryItemIds: [
         ...character.inventoryItemIds,
@@ -286,19 +281,6 @@ function createMockAppliedBattleRewardResult(
     },
 
     reward,
-
-    progression: {
-      previousLevel: character.progression.level,
-      nextLevel: character.progression.level,
-
-      previousExp: character.progression.exp,
-      nextExp: character.progression.exp + reward.exp,
-
-      expGained: reward.exp,
-
-      leveledUp: false,
-      levelsGained: 0,
-    },
 
     ...overrides,
   };
@@ -352,6 +334,7 @@ describe('BattleController', () => {
       | 'resolveActionForUserScope'
       | 'prepareBattleRewardClaim'
       | 'commitBattleRewardClaim'
+      | 'rollbackBattleRewardClaim'
       | 'deleteBattleForUserScope'
     >
   >;
@@ -369,6 +352,7 @@ describe('BattleController', () => {
       resolveActionForUserScope: jest.fn(),
       prepareBattleRewardClaim: jest.fn(),
       commitBattleRewardClaim: jest.fn(),
+      rollbackBattleRewardClaim: jest.fn(),
       deleteBattleForUserScope: jest.fn(),
     };
 
@@ -668,7 +652,6 @@ describe('BattleController', () => {
       battle: claimedBattle,
       character: appliedReward.character,
       reward: appliedReward.reward,
-      progression: appliedReward.progression,
     });
   });
 
@@ -706,7 +689,18 @@ describe('BattleController', () => {
       ),
     ).toThrow(BadRequestException);
 
-    expect(battleService.commitBattleRewardClaim).not.toHaveBeenCalled();
+    expect(battleService.commitBattleRewardClaim).toHaveBeenCalledWith({
+      battleId: 'battle_1',
+      characterId: character.id,
+      userId: 'user_1',
+      reward,
+    });
+
+    expect(battleService.rollbackBattleRewardClaim).toHaveBeenCalledWith({
+      battleId: 'battle_1',
+      characterId: character.id,
+      userId: 'user_1',
+    });
   });
 
   it('should delete battle in the request user scope', () => {

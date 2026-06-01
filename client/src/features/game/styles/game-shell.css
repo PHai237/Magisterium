@@ -730,7 +730,11 @@
 .gameshell-node {
   position: absolute;
   z-index: 4;
-  width: 7.6rem;
+  top: var(--node-top, auto);
+  right: var(--node-right, auto);
+  bottom: var(--node-bottom, auto);
+  left: var(--node-left, auto);
+  width: var(--node-width, 7.6rem);
   min-height: 6.25rem;
   border: 1.5px solid rgba(51, 65, 85, 0.92);
   border-radius: 0.95rem;
@@ -795,20 +799,14 @@
 }
 
 .gameshell-node--inn {
-  top: 12%;
-  left: 44%;
   border-color: rgba(245, 158, 11, 0.33);
 }
 
 .gameshell-node--forge {
-  bottom: 23%;
-  left: 14%;
   border-color: rgba(239, 68, 68, 0.32);
 }
 
 .gameshell-node--market {
-  left: 35%;
-  bottom: 15%;
   border-color: rgba(250, 204, 21, 0.4);
   background:
     radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.12), transparent 4.6rem),
@@ -820,8 +818,6 @@
 }
 
 .gameshell-node--sanctuary {
-  top: 34%;
-  left: 18%;
   border-color: rgba(212, 163, 89, 0.42);
   background:
     radial-gradient(circle at 50% 0%, rgba(212, 163, 89, 0.15), transparent 4.8rem),
@@ -837,15 +833,10 @@
 }
 
 .gameshell-node--archive {
-  top: 24%;
-  right: 10%;
   border-color: rgba(168, 85, 247, 0.38);
 }
 
 .gameshell-node--gate {
-  width: 8.8rem;
-  bottom: 11%;
-  right: 11%;
   border-color: rgba(56, 189, 248, 0.42);
   background:
     radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.13), transparent 4.8rem),
@@ -1294,7 +1285,7 @@
   .gameshell-node {
     position: absolute !important;
     z-index: 4;
-    width: 7.35rem !important;
+    width: var(--node-width, 7.35rem) !important;
     min-height: 6rem !important;
     border-radius: 0.95rem !important;
     padding: 0.66rem 0.48rem;

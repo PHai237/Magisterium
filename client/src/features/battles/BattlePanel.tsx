@@ -235,12 +235,19 @@ function isBattleFinished(battle: BattleState | null): boolean {
   return (
     battle?.status === "victory" ||
     battle?.status === "defeat" ||
-    battle?.status === "fled"
+    battle?.status === "escaped" ||
+    battle?.status === "cancelled"
   );
 }
 
 function shouldShowClaimReward(battle: BattleState | null): boolean {
   return battle?.status === "victory" && !battle.rewardClaim;
+}
+
+function getCharacterProgressionLabel(character: CharacterSnapshot): string {
+  return `${compactLabel(character.progression.rankId ?? "novice")} · ${compactLabel(
+    character.originId,
+  )}`;
 }
 
 function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
@@ -904,8 +911,8 @@ export function BattlePanel({
 
       setNotice(
         rewardItems
-          ? `Reward claimed: ${result.reward.exp} EXP, ${result.reward.moneyBronze} Bronze, ${rewardItems}.`
-          : `Reward claimed: ${result.reward.exp} EXP, ${result.reward.moneyBronze} Bronze.`,
+          ? `Reward claimed: ${result.reward.moneyBronze} Bronze, ${rewardItems}.`
+          : `Reward claimed: ${result.reward.moneyBronze} Bronze.`,
       );
     } catch (claimError) {
       setError(
@@ -1155,7 +1162,8 @@ export function BattlePanel({
             <button
               type="button"
               className="battle-drawer-button battle-drawer-button--danger battle-drawer-button--wide"
-              disabled
+              disabled={busy}
+              onClick={() => void runAction("flee")}
             >
               🏃 Flee From Battle
             </button>
@@ -1221,10 +1229,7 @@ export function BattlePanel({
 
           <div className="battle-mobile-identity__copy">
             <strong>{currentCharacter.name}</strong>
-            <span>
-              Lv. {currentCharacter.progression.level} ·{" "}
-              {compactLabel(currentCharacter.originId)}
-            </span>
+            <span>{getCharacterProgressionLabel(currentCharacter)}</span>
           </div>
 
           <div
@@ -1345,10 +1350,7 @@ export function BattlePanel({
             </div>
 
             <strong>{currentCharacter.name}</strong>
-            <span>
-              Lv. {currentCharacter.progression.level} ·{" "}
-              {compactLabel(currentCharacter.originId)}
-            </span>
+            <span>{getCharacterProgressionLabel(currentCharacter)}</span>
 
             <div className="battle-stat-grid">
               <div>

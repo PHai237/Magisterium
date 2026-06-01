@@ -14,6 +14,8 @@ interface CharacterCreationFormProps {
   error: string | null;
   busy: boolean;
   previewBusy: boolean;
+  characterSlotsUsed: number;
+  maxCharacterSlots: number;
   onNameChange: (name: string) => void;
   onOriginChange: (originId: OriginId) => void;
   onSubmit: () => void;
@@ -36,11 +38,15 @@ export function CharacterCreationForm({
   error,
   busy,
   previewBusy,
+  characterSlotsUsed,
+  maxCharacterSlots,
   onNameChange,
   onOriginChange,
   onSubmit,
   onReset,
 }: CharacterCreationFormProps) {
+  const slotsFull = characterSlotsUsed >= maxCharacterSlots;
+
   return (
     <main className="character-main">
       <form
@@ -89,6 +95,11 @@ export function CharacterCreationForm({
 
               <div className="character-field-message">
                 {error ? <span>{error}</span> : null}
+                {!error && slotsFull ? (
+                  <span>
+                    Character slots full ({characterSlotsUsed}/{maxCharacterSlots}).
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -136,8 +147,11 @@ export function CharacterCreationForm({
             Reset
           </Button>
 
-          <Button type="submit" disabled={busy || previewBusy || !name.trim()}>
-            Create Character
+          <Button
+            type="submit"
+            disabled={busy || previewBusy || !name.trim() || slotsFull}
+          >
+            {slotsFull ? "Character Slots Full" : "Create Character"}
           </Button>
         </footer>
       </form>

@@ -199,6 +199,7 @@ export const BATTLE_ACTION_TYPES = [
   'use_skill',
   'use_item',
   'skip_turn',
+  'flee',
 ] as const;
 
 export type BattleActionType = (typeof BATTLE_ACTION_TYPES)[number];

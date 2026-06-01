@@ -29,7 +29,7 @@ export type ActionType =
   | 'curse_spell'
   | 'trick_skill';
 
-export const ACTION_TYPE_STAT_EXP_TARGET: Record<ActionType, StatKey> = {
+export const ACTION_TYPE_STAT_TARGET: Record<ActionType, StatKey> = {
   basic_attack: 'STR',
   physical_skill: 'STR',
   finesse_skill: 'DEX',

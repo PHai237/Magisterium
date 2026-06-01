@@ -71,7 +71,9 @@ export function CharacterList({
                     <span>
                       <strong>{character.name}</strong>
                       <small>
-                        Lv. {character.progression.level} ·{" "}
+                        {compactLabel(
+                          character.progression.rankId ?? "novice"
+                        )} ·{" "}
                         {compactLabel(character.originId)}
                       </small>
                     </span>
@@ -85,10 +87,10 @@ export function CharacterList({
         <button
           className="character-new-button"
           type="button"
-          disabled={busy}
+          disabled={busy || characters.length >= 3}
           onClick={onPrepareNewCharacter}
         >
-          + New Character
+          {characters.length >= 3 ? "Character Slots Full" : "+ New Character"}
         </button>
       </div>
     </aside>

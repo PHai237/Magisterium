@@ -84,6 +84,9 @@ export function ExplorationZone({
     searchLogGroups.length > 0
       ? searchLogGroups[searchLogGroups.length - 1]!
       : null;
+  const currentStamina = currentCharacter.currentState.stamina;
+  const hasEnoughStamina = currentStamina >= zone.staminaCost;
+  const staminaShortfall = Math.max(0, zone.staminaCost - currentStamina);
 
   useEffect(() => {
     searchLockRef.current = false;
@@ -128,6 +131,13 @@ export function ExplorationZone({
 
   async function handleSearch() {
     if (searchLockRef.current) {
+      return;
+    }
+
+    if (!hasEnoughStamina) {
+      setError(
+        `Not enough stamina. Need ${zone.staminaCost} STA, current ${currentStamina}.`
+      );
       return;
     }
 
@@ -237,7 +247,7 @@ export function ExplorationZone({
             <button
               type="button"
               className="exploration-search-button"
-              disabled={isSearching}
+              disabled={isSearching || !hasEnoughStamina}
               onClick={() => void handleSearch()}
             >
               <strong>
@@ -245,6 +255,12 @@ export function ExplorationZone({
               </strong>
               <span>Cost: {zone.staminaCost} STA / Search</span>
             </button>
+
+            {!hasEnoughStamina ? (
+              <div className="exploration-error">
+                Need {staminaShortfall} more STA before searching.
+              </div>
+            ) : null}
 
             {error ? <div className="exploration-error">{error}</div> : null}
           </div>

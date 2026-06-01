@@ -31,6 +31,8 @@ interface ExplorationRewardInput {
   }>;
 }
 
+const EXPLORATION_SEARCH_COOLDOWN_MS = 900;
+
 function weightedPick<T extends { weight: number }>(entries: readonly T[]): T {
   const totalWeight = entries.reduce(
     (total, entry) => total + Math.max(0, Math.floor(entry.weight)),
@@ -68,9 +70,13 @@ function randomInclusive(min: number, max: number): number {
 
 @Injectable()
 export class ExplorationService {
+  private readonly nextSearchAvailableAtByScope = new Map<string, number>();
+
   constructor(private readonly characterService: CharacterService) {}
 
   searchZone(input: SearchZoneInput): ExplorationSearchResult {
+    this.assertSearchCooldownAvailable(input);
+
     const zone = getExplorationZoneDefinitionById(input.zoneId);
     const outcome = weightedPick<ExplorationOutcomeWeight>(
       zone.outcomeWeights,
@@ -140,5 +146,31 @@ export class ExplorationService {
       bronzeFound,
       itemFound,
     };
+  }
+
+  private assertSearchCooldownAvailable(input: SearchZoneInput): void {
+    const cooldownScope = [
+      input.userId.trim(),
+      input.characterId.trim(),
+      input.zoneId,
+    ].join(':');
+    const now = Date.now();
+    const nextAvailableAt =
+      this.nextSearchAvailableAtByScope.get(cooldownScope) ?? 0;
+
+    if (now < nextAvailableAt) {
+      const retryAfterMs = nextAvailableAt - now;
+
+      throw new BadRequestException(
+        `Search is cooling down. Try again in ${Math.ceil(
+          retryAfterMs / 1000,
+        )}s.`,
+      );
+    }
+
+    this.nextSearchAvailableAtByScope.set(
+      cooldownScope,
+      now + EXPLORATION_SEARCH_COOLDOWN_MS,
+    );
   }
 }

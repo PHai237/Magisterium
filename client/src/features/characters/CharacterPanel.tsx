@@ -27,6 +27,8 @@ const initialLoadState: LoadState = {
   current: null
 };
 
+const MAX_CHARACTER_SLOTS = 3;
+
 export function CharacterPanel({
   userId,
   onCurrentCharacterChange,
@@ -41,6 +43,8 @@ export function CharacterPanel({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [previewBusy, setPreviewBusy] = useState(false);
+  const characterSlotsUsed = data.characters.length;
+  const hasMaxCharacters = characterSlotsUsed >= MAX_CHARACTER_SLOTS;
 
   const loadCharacters = useCallback(async () => {
     setBusy(true);
@@ -111,6 +115,13 @@ export function CharacterPanel({
 
   async function createCharacter() {
     if (busy || previewBusy || !name.trim()) {
+      return;
+    }
+
+    if (hasMaxCharacters) {
+      setError(
+        `Character slots are full (${characterSlotsUsed}/${MAX_CHARACTER_SLOTS}).`
+      );
       return;
     }
 
@@ -253,6 +264,8 @@ export function CharacterPanel({
         error={error}
         busy={busy}
         previewBusy={previewBusy}
+        characterSlotsUsed={characterSlotsUsed}
+        maxCharacterSlots={MAX_CHARACTER_SLOTS}
         onNameChange={setName}
         onOriginChange={setOriginId}
         onSubmit={() => void createCharacter()}

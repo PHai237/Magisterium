@@ -201,7 +201,6 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     },
 
     reward: {
-      exp: 5,
       moneyBronze: 2,
       lootTable: [
         {
@@ -288,7 +287,6 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     },
 
     reward: {
-      exp: 8,
       moneyBronze: 3,
       lootTable: [
         {
@@ -375,7 +373,6 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     },
 
     reward: {
-      exp: 11,
       moneyBronze: 4,
       lootTable: [
         {
@@ -462,7 +459,6 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     },
 
     reward: {
-      exp: 12,
       moneyBronze: 5,
       lootTable: [
         {
@@ -549,7 +545,6 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     },
 
     reward: {
-      exp: 10,
       moneyBronze: 4,
       lootTable: [
         {

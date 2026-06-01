@@ -38,7 +38,6 @@ type EquipmentSlot =
   | "accessory";
 
 const ONE_NIGHT_INN_PASS_ITEM_IDS = new Set<ItemId>([
-  "one_night_inn_pass",
   "one_night_inn_voucher",
 ]);
 
@@ -224,13 +223,6 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     icon: "🔷",
     category: "consumable",
     description: "Restores a small amount of MP.",
-  },
-  one_night_inn_pass: {
-    id: "one_night_inn_pass",
-    name: "One-Night Inn Pass",
-    icon: "🎟️",
-    category: "pass",
-    description: "Redeem this at The Inn for one full overnight rest.",
   },
   one_night_inn_voucher: {
     id: "one_night_inn_voucher",

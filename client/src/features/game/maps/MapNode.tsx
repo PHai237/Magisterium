@@ -1,5 +1,8 @@
+import type { CSSProperties } from "react";
+
 interface MapNodeProps {
   className?: string;
+  style?: CSSProperties;
   icon: string;
   name: string;
   subtitle: string;
@@ -9,6 +12,7 @@ interface MapNodeProps {
 
 export function MapNode({
   className = "",
+  style,
   icon,
   name,
   subtitle,
@@ -19,6 +23,7 @@ export function MapNode({
     <button
       type="button"
       className={`gameshell-node ${className}`}
+      style={style}
       onClick={onClick}
       disabled={disabled}
     >

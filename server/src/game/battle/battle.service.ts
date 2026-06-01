@@ -436,6 +436,31 @@ export class BattleService {
     return this.deleteBattle(battleId);
   }
 
+  deleteBattlesForCharacterForUserScope(
+    characterId: string,
+    userId: string,
+  ): number {
+    const userScope = this.normalizeRequiredBattleUserId(userId);
+    let deletedCount = 0;
+
+    for (const [battleId, battle] of this.battles.entries()) {
+      if (battle.ownerUserId !== userScope) {
+        continue;
+      }
+
+      const characterActor = battle.actors[characterId];
+
+      if (!characterActor || characterActor.actorType !== 'character') {
+        continue;
+      }
+
+      this.battles.delete(battleId);
+      deletedCount += 1;
+    }
+
+    return deletedCount;
+  }
+
   clearBattles(): void {
     this.battles.clear();
   }

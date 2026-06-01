@@ -96,8 +96,8 @@ function createCharacterSnapshot(
     originId: 'scholar',
 
     progression: {
-      level: 1,
-      exp: 0,
+      rankIndex: 0,
+      rankId: 'novice',
       milestoneIds: [],
     },
 

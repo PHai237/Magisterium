@@ -91,8 +91,8 @@ export interface CurrentState {
 }
 
 export interface CharacterProgression {
-  level: number;
-  exp: number;
+  rankIndex?: number;
+  rankId?: string;
   milestoneIds: MilestoneId[];
 }
 
@@ -344,13 +344,15 @@ export type BattleStatus =
   | "in_progress"
   | "victory"
   | "defeat"
-  | "fled";
+  | "escaped"
+  | "cancelled";
 export type BattleActorType = "character" | "monster";
 export type BattleActionType =
   | "basic_attack"
   | "use_skill"
   | "use_item"
-  | "skip_turn";
+  | "skip_turn"
+  | "flee";
 export type DamageType = "physical" | "magical" | "true";
 export type ElementType =
   | "fire"
@@ -366,6 +368,7 @@ export type BattleActionPhase =
   | "damage_calculation"
   | "mitigation"
   | "apply_damage"
+  | "status_effects"
   | "completed"
   | "cancelled";
 
@@ -382,6 +385,7 @@ export interface BattleEvent {
   value?: number;
   damageType?: DamageType;
   elementType?: ElementType;
+  statusEffectType?: string;
   message?: string;
   metadata?: Record<string, unknown>;
 }
@@ -467,7 +471,6 @@ export interface BattleEngineResult {
 }
 
 export interface BattleRewardSummary {
-  exp: number;
   moneyBronze: number;
   items: Array<{
     itemId: ItemId;
@@ -484,15 +487,6 @@ export interface AppliedBattleRewardResponse {
   battle: BattleState;
   character: CharacterSnapshot;
   reward: BattleRewardSummary;
-  progression: {
-    previousLevel: number;
-    nextLevel: number;
-    previousExp: number;
-    nextExp: number;
-    expGained: number;
-    leveledUp: boolean;
-    levelsGained: number;
-  };
 }
 
 export type UserRole = "player";
