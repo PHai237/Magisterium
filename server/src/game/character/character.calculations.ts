@@ -406,7 +406,7 @@ function calculateRawDerivedStats(baseStats: BaseStats): DerivedStats {
 
   const actionSpeed = roundToTwoDecimals(10 + DEX);
 
-  const accuracy = roundToTwoDecimals(60 + DEX * 2.5);
+  const accuracy = roundToTwoDecimals(65 + DEX * 2.5);
 
   const evasionRate = roundToTwoDecimals(DEX * 1.5);
 

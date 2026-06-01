@@ -11,13 +11,15 @@ export type EncounterId =
   | "town_outskirts_wolf"
   | "town_outskirts_mixed"
   | "goblin_scout"
+  | "forest_edge_spider"
   | "forest_edge_mixed";
 
 export type MonsterId =
   | "slime"
   | "wild_boar"
   | "wild_wolf"
-  | "goblin";
+  | "goblin"
+  | "spider";
 
 export type ExplorationZoneId = "town_outskirts" | "forest_edge";
 
@@ -266,8 +268,7 @@ export interface CharacterSanctuaryStatusResult {
   runes: SanctuaryInventoryQuantity[];
 }
 
-export interface CharacterRuneRefinementResult
-  extends CharacterSanctuaryStatusResult {
+export interface CharacterRuneRefinementResult extends CharacterSanctuaryStatusResult {
   refinement: {
     statKey: StatKey;
     consumedItemId: ItemId;
@@ -277,8 +278,7 @@ export interface CharacterRuneRefinementResult
   };
 }
 
-export interface CharacterRuneImbueResult
-  extends CharacterSanctuaryStatusResult {
+export interface CharacterRuneImbueResult extends CharacterSanctuaryStatusResult {
   imbue: {
     statKey: StatKey;
     consumedItemId: ItemId;
@@ -321,8 +321,7 @@ export interface ConsumableEffectApplication {
   amountApplied: number;
 }
 
-export interface CharacterConsumableMutationResult
-  extends CharacterInventoryMutationResult {
+export interface CharacterConsumableMutationResult extends CharacterInventoryMutationResult {
   itemUse: {
     itemId: ItemId;
     context: "battle" | "out_of_battle";
@@ -340,11 +339,26 @@ export interface CharacterEquipmentMutationResult {
   };
 }
 
-export type BattleStatus = "created" | "in_progress" | "victory" | "defeat" | "fled";
+export type BattleStatus =
+  | "created"
+  | "in_progress"
+  | "victory"
+  | "defeat"
+  | "fled";
 export type BattleActorType = "character" | "monster";
-export type BattleActionType = "basic_attack" | "use_skill" | "use_item" | "skip_turn";
+export type BattleActionType =
+  | "basic_attack"
+  | "use_skill"
+  | "use_item"
+  | "skip_turn";
 export type DamageType = "physical" | "magical" | "true";
-export type ElementType = "fire" | "water" | "wind" | "earth" | "light" | "dark";
+export type ElementType =
+  | "fire"
+  | "water"
+  | "wind"
+  | "earth"
+  | "light"
+  | "dark";
 export type BattleActionPhase =
   | "initiation"
   | "resource_check"

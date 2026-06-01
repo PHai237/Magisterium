@@ -410,6 +410,27 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "material",
     description: "Scavenged metal and junk from goblin gear.",
   },
+  spider_silk: {
+    id: "spider_silk",
+    name: "Spider Silk",
+    icon: "S",
+    category: "material",
+    description: "Resilient silk for thread, wraps, bindings, and tailoring.",
+  },
+  spider_eye: {
+    id: "spider_eye",
+    name: "Spider Eye",
+    icon: "E",
+    category: "material",
+    description: "A glossy spider eye for charms, reagents, and alchemy.",
+  },
+  venom_sac: {
+    id: "venom_sac",
+    name: "Venom Sac",
+    icon: "V",
+    category: "material",
+    description: "A small sac of weak spider venom for early alchemy.",
+  },
   cracked_blade: {
     id: "cracked_blade",
     name: "Cracked Blade",

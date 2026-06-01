@@ -10,6 +10,7 @@ export const ENCOUNTER_IDS = [
   'town_outskirts_wolf',
   'town_outskirts_mixed',
   'goblin_scout',
+  'forest_edge_spider',
   'forest_edge_mixed',
 ] as const satisfies readonly EncounterId[];
 
@@ -143,6 +144,27 @@ const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
     ],
 
     tags: ['starter', 'forest-edge', 'single-monster', 'goblin'],
+  },
+  {
+    id: 'forest_edge_spider',
+    name: 'Forest Edge Spider',
+    description:
+      'A single forest spider encounter. Useful for farming spider silk, eyes, and venom sacs for early crafting and alchemy.',
+
+    zoneId: 'forest_edge',
+
+    rank: 'normal',
+    recommendedLevel: 2,
+
+    monsterGroups: [
+      {
+        monsterId: 'spider',
+        count: 1,
+        instanceIdPrefix: 'forest_spider',
+      },
+    ],
+
+    tags: ['starter', 'forest-edge', 'single-monster', 'spider'],
   },
   {
     id: 'forest_edge_mixed',

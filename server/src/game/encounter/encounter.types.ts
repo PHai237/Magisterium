@@ -6,6 +6,7 @@ export type EncounterId =
   | 'town_outskirts_wolf'
   | 'town_outskirts_mixed'
   | 'goblin_scout'
+  | 'forest_edge_spider'
   | 'forest_edge_mixed';
 
 export type EncounterZoneId = 'town_outskirts' | 'forest_edge';

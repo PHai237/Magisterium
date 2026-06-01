@@ -10,7 +10,12 @@ import type { ActiveStatusEffect } from '../battle/battle.types';
 
 import type { StatModifier } from '../passive/passive.types';
 
-export type MonsterId = 'slime' | 'wild_boar' | 'wild_wolf' | 'goblin';
+export type MonsterId =
+  | 'slime'
+  | 'wild_boar'
+  | 'wild_wolf'
+  | 'goblin'
+  | 'spider';
 
 export type MonsterRank = 'normal' | 'elite' | 'boss';
 

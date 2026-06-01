@@ -104,6 +104,18 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     label: "Stamina Bread",
     icon: "🍞",
   },
+  spider_silk: {
+    label: "Spider Silk",
+    icon: "S",
+  },
+  spider_eye: {
+    label: "Spider Eye",
+    icon: "E",
+  },
+  venom_sac: {
+    label: "Venom Sac",
+    icon: "V",
+  },
 };
 
 const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> =
@@ -126,6 +138,11 @@ const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> =
     goblin: {
       label: "Goblin",
       icon: "👺",
+      level: 2,
+    },
+    spider: {
+      label: "Spider",
+      icon: "S",
       level: 2,
     },
   };
@@ -267,7 +284,9 @@ function groupBattleEvents(battle: BattleState | null): BattleLogGroup[] {
   return groups.filter((group) => group.events.length > 0 || group.current);
 }
 
-function groupBattleEventsByRound(battle: BattleState | null): BattleLogGroup[] {
+function groupBattleEventsByRound(
+  battle: BattleState | null,
+): BattleLogGroup[] {
   if (!battle) {
     return [];
   }
@@ -710,7 +729,10 @@ export function BattlePanel({
         mobileBattleLogGroups[groupIndex]!.events,
       );
 
-      if (visibleEvents.length > 0 || mobileBattleLogGroups[groupIndex]!.current) {
+      if (
+        visibleEvents.length > 0 ||
+        mobileBattleLogGroups[groupIndex]!.current
+      ) {
         return mobileBattleLogGroups[groupIndex]!;
       }
     }

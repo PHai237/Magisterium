@@ -592,6 +592,42 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
     tags: ['loot', 'material', 'goblin', 'metal', 'crafting'],
   },
   {
+    id: 'spider_silk',
+    name: 'Spider Silk',
+    description:
+      'Sticky but resilient silk harvested from forest spiders. Useful for thread, wraps, bindings, and early tailoring.',
+    category: 'material',
+    rarity: 'common',
+    stackable: true,
+    maxStackSize: 99,
+    sellPriceBronze: 2,
+    tags: ['loot', 'material', 'spider', 'silk', 'thread', 'crafting'],
+  },
+  {
+    id: 'spider_eye',
+    name: 'Spider Eye',
+    description:
+      'A glossy eye from a forest spider. Useful for perception charms, reagents, and unsettling alchemy work.',
+    category: 'material',
+    rarity: 'uncommon',
+    stackable: true,
+    maxStackSize: 99,
+    sellPriceBronze: 3,
+    tags: ['loot', 'material', 'spider', 'eye', 'alchemy'],
+  },
+  {
+    id: 'venom_sac',
+    name: 'Venom Sac',
+    description:
+      'A small sac of weak spider venom. Useful for poison reagents, antidote practice, and early alchemy recipes.',
+    category: 'material',
+    rarity: 'uncommon',
+    stackable: true,
+    maxStackSize: 99,
+    sellPriceBronze: 4,
+    tags: ['loot', 'material', 'spider', 'venom', 'alchemy'],
+  },
+  {
     id: 'cracked_blade',
     name: 'Cracked Blade',
     description:

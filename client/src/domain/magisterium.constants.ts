@@ -89,6 +89,12 @@ export const ENCOUNTER_OPTIONS: Array<{
     description: "A sharper forest-edge encounter against a goblin scout.",
   },
   {
+    id: "forest_edge_spider",
+    label: "Forest Edge Spider",
+    description:
+      "A forest-edge spider encounter for silk, eyes, and venom sacs.",
+  },
+  {
     id: "forest_edge_mixed",
     label: "Forest Edge Mixed",
     description:

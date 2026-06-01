@@ -11,6 +11,7 @@ export const MONSTER_IDS = [
   'wild_boar',
   'wild_wolf',
   'goblin',
+  'spider',
 ] as const satisfies readonly MonsterId[];
 
 function freezeLootEntry(entry: MonsterLootEntry): Readonly<MonsterLootEntry> {
@@ -475,6 +476,105 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     },
 
     tags: ['monster', 'starter', 'humanoid', 'goblin', 'forest-edge'],
+  },
+  {
+    id: 'spider',
+    name: 'Spider',
+    description:
+      'A low forest spider that binds prey with sticky silk and carries weak venom. Useful for early tailoring and alchemy materials.',
+
+    rank: 'normal',
+    level: 2,
+
+    aiTargetingMode: 'random',
+
+    baseStats: {
+      STR: 4,
+      DEX: 9,
+      CON: 4,
+      INT: 1,
+      WIS: 2,
+      LUK: 4,
+    },
+
+    derivedStatOverrides: {
+      maxHp: 34,
+      maxMp: 0,
+      maxStamina: 52,
+
+      pAtk: 12,
+      mAtk: 0,
+      healingPotency: 0,
+
+      pDef: 1,
+      mDef: 1,
+
+      actionSpeed: 16,
+      accuracy: 83,
+      evasionRate: 8,
+
+      critRate: 4,
+      critDamageBonus: 30,
+
+      fleeRate: 8,
+
+      statusResist: 1,
+      spiritualPotency: 0,
+
+      mpRegen: 0,
+      staminaRegen: 4,
+
+      secondChanceRate: 0,
+      procRate: 1,
+    },
+
+    resistances: {
+      physical: 0,
+      magical: 0,
+      fire: -0.15,
+      water: 0,
+    },
+
+    currentState: {
+      hp: 34,
+      mp: 0,
+      stamina: 52,
+    },
+
+    shield: 0,
+
+    basicAttackDamageRange: {
+      min: 6,
+      max: 11,
+    },
+
+    reward: {
+      exp: 10,
+      moneyBronze: 4,
+      lootTable: [
+        {
+          itemId: 'spider_silk',
+          chancePercent: 65,
+          minQuantity: 1,
+          maxQuantity: 2,
+        },
+        {
+          itemId: 'spider_eye',
+          chancePercent: 25,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+        {
+          itemId: 'venom_sac',
+          chancePercent: 20,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+      ],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
+    },
+
+    tags: ['monster', 'starter', 'arachnid', 'spider', 'forest-edge'],
   },
 ];
 

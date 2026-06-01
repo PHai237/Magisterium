@@ -137,11 +137,15 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
     encounterPool: [
       {
         encounterId: 'goblin_scout',
-        weight: 55,
+        weight: 40,
+      },
+      {
+        encounterId: 'forest_edge_spider',
+        weight: 35,
       },
       {
         encounterId: 'forest_edge_mixed',
-        weight: 45,
+        weight: 25,
       },
     ],
     itemPool: [

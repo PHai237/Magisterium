@@ -45,7 +45,7 @@ describe('character calculations', () => {
       mDef: 10,
 
       actionSpeed: 20,
-      accuracy: 85,
+      accuracy: 90,
       evasionRate: 15,
 
       critRate: 3.5,
