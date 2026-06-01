@@ -44,6 +44,11 @@ export interface MonsterRewardDefinition {
   randomLootPools?: readonly MonsterRandomLootPool[];
 }
 
+export interface MonsterBasicAttackDamageRange {
+  min: number;
+  max: number;
+}
+
 export interface MonsterDefinition {
   id: MonsterId;
   name: string;
@@ -61,6 +66,8 @@ export interface MonsterDefinition {
 
   currentState?: Partial<CurrentState>;
   shield?: number;
+
+  basicAttackDamageRange?: MonsterBasicAttackDamageRange;
 
   reward: MonsterRewardDefinition;
 

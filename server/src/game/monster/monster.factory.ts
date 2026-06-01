@@ -196,6 +196,7 @@ export function createMonsterBattleActorFromDefinition(
     actorId,
     monsterId: monster.id,
     aiTargetingMode: monster.aiTargetingMode,
+    basicAttackDamageRange: monster.basicAttackDamageRange,
 
     baseStats: {
       ...monster.baseStats,

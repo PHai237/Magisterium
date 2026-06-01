@@ -23,6 +23,7 @@ import type {
 import type { StatusEffectType } from '../status/status.types';
 
 import type {
+  MonsterBasicAttackDamageRange,
   MonsterAiTargetingMode,
   MonsterId,
 } from '../monster/monster.types';
@@ -129,6 +130,7 @@ export interface BattleActorState {
 
   monsterId?: MonsterId;
   aiTargetingMode?: MonsterAiTargetingMode;
+  basicAttackDamageRange?: MonsterBasicAttackDamageRange;
 
   skillIds: SkillId[];
   inventoryItemIds: ItemId[];

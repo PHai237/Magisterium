@@ -30,6 +30,7 @@ import type {
 } from '../../encounter/encounter.types';
 
 import type {
+  MonsterBasicAttackDamageRange,
   MonsterAiTargetingMode,
   MonsterId,
 } from '../../monster/monster.types';
@@ -46,6 +47,7 @@ export interface CreateBattleActorStateInput {
 
   monsterId?: MonsterId;
   aiTargetingMode?: MonsterAiTargetingMode;
+  basicAttackDamageRange?: MonsterBasicAttackDamageRange;
 
   skillIds?: SkillId[];
   inventoryItemIds?: ItemId[];
@@ -74,6 +76,7 @@ export interface CreateBattleActorFromMonsterInput {
   actorId: string;
   monsterId: MonsterId;
   aiTargetingMode?: MonsterAiTargetingMode;
+  basicAttackDamageRange?: MonsterBasicAttackDamageRange;
 
   skillIds?: SkillId[];
 
@@ -230,6 +233,7 @@ export function createBattleActorState(
 
     monsterId: input.monsterId,
     aiTargetingMode: input.aiTargetingMode,
+    basicAttackDamageRange: input.basicAttackDamageRange,
 
     skillIds: cloneSkillIds(input.skillIds),
     inventoryItemIds: cloneInventoryItemIds(input.inventoryItemIds),
@@ -292,6 +296,7 @@ export function createBattleActorFromMonsterInput(
 
     monsterId: input.monsterId,
     aiTargetingMode: input.aiTargetingMode,
+    basicAttackDamageRange: input.basicAttackDamageRange,
 
     skillIds: input.skillIds ?? [],
     inventoryItemIds: [],

@@ -14,6 +14,8 @@ import { startBattle } from '../turn/battle-turn.engine';
 
 import type { BattleActorState, BattleActorType } from '../battle.types';
 
+import type { MonsterBasicAttackDamageRange } from '../../monster/monster.types';
+
 import type {
   BaseStats,
   DerivedStats,
@@ -64,6 +66,8 @@ const DEFAULT_DERIVED_STATS: DerivedStats = {
 interface CreateActorInput {
   actorId: string;
   actorType?: BattleActorType;
+  monsterId?: BattleActorState['monsterId'];
+  basicAttackDamageRange?: MonsterBasicAttackDamageRange;
 
   skillIds?: SkillId[];
 
@@ -86,6 +90,8 @@ function createActor(input: CreateActorInput): BattleActorState {
   return createBattleActorState({
     actorId: input.actorId,
     actorType: input.actorType ?? 'character',
+    monsterId: input.monsterId,
+    basicAttackDamageRange: input.basicAttackDamageRange,
 
     skillIds: input.skillIds ?? [],
 
@@ -230,6 +236,70 @@ describe('resolveBasicAttack', () => {
       'crit',
       'damage_variance',
     ]);
+  });
+
+  it('should keep monster basic attack damage inside its configured range', () => {
+    const battleId = 'basic_attack_monster_damage_range_test';
+
+    const wolf = createActor({
+      actorId: 'wolf',
+      actorType: 'monster',
+      monsterId: 'wild_wolf',
+      basicAttackDamageRange: {
+        min: 5,
+        max: 10,
+      },
+      derivedStats: {
+        actionSpeed: 100,
+        accuracy: 98,
+        critRate: 99,
+        pAtk: 999,
+      },
+    });
+
+    const hero = createActor({
+      actorId: 'hero',
+      actorType: 'character',
+      derivedStats: {
+        actionSpeed: 10,
+        evasionRate: 0,
+        pDef: 7.3,
+      },
+      hp: 100,
+    });
+
+    const hitChance = calculateHitChance(wolf, hero);
+    const seed = findSeedForBasicAttackHitOutcome({
+      battleId,
+      actorId: wolf.actorId,
+      targetId: hero.actorId,
+      finalChance: hitChance,
+      shouldHit: true,
+    });
+
+    const startedBattle = createStartedBattle({
+      battleId,
+      seed,
+      actors: [wolf, hero],
+    });
+
+    expect(startedBattle.activeActorId).toBe('wolf');
+
+    const result = resolveBasicAttack(startedBattle, {
+      battleId,
+      actorId: 'wolf',
+      targetIds: ['hero'],
+      actionType: 'basic_attack',
+    });
+
+    const damageTaken = 100 - result.battleState.actors.hero.hp;
+    const damageCalculatedEvent = result.actionResult.events.find(
+      (event) => event.type === 'DAMAGE_CALCULATED',
+    );
+
+    expect(damageTaken).toBeGreaterThanOrEqual(5);
+    expect(damageTaken).toBeLessThanOrEqual(10);
+    expect(damageCalculatedEvent?.metadata?.intendedDamage).toBe(damageTaken);
   });
 
   it('should complete the turn without damage when attack misses', () => {

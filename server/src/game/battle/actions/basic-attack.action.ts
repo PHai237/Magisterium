@@ -2,7 +2,9 @@ import {
   advanceRandomContext,
   calculateCritChance,
   calculateDamage,
+  calculateDamageVarianceMultiplier,
   calculateHitChance,
+  getDefenseForDamageType,
   resolveRandomRoll,
 } from '../calculations/battle.calculations';
 
@@ -43,6 +45,70 @@ import type {
   BattleState,
   RandomRollResult,
 } from '../battle.types';
+
+const DAMAGE_RANGE_FLOOR_EPSILON = 0.01;
+
+function normalizeBasicAttackDamageRange(
+  actor: BattleActorState,
+): { min: number; max: number } | undefined {
+  const range = actor.basicAttackDamageRange;
+
+  if (!range) {
+    return undefined;
+  }
+
+  const min = Math.max(0, Math.floor(range.min));
+  const max = Math.max(min, Math.floor(range.max));
+
+  return { min, max };
+}
+
+function rollIntegerDamageInRange(
+  range: { min: number; max: number },
+  rollUnit: number,
+): number {
+  const span = range.max - range.min + 1;
+  const normalizedRollUnit = Math.min(Math.max(rollUnit, 0), 1);
+  const offset = Math.min(span - 1, Math.floor(normalizedRollUnit * span));
+
+  return range.min + offset;
+}
+
+function calculateBasicAttackBasePower(input: {
+  actor: BattleActorState;
+  target: BattleActorState;
+  varianceRollUnit: number;
+}): {
+  basePower: number;
+  intendedDamage?: number;
+} {
+  const monsterDamageRange =
+    input.actor.actorType === 'monster'
+      ? normalizeBasicAttackDamageRange(input.actor)
+      : undefined;
+
+  if (!monsterDamageRange) {
+    return {
+      basePower: input.actor.derivedStats.pAtk,
+    };
+  }
+
+  const intendedDamage = rollIntegerDamageInRange(
+    monsterDamageRange,
+    input.varianceRollUnit,
+  );
+  const varianceMultiplier = calculateDamageVarianceMultiplier(
+    input.varianceRollUnit,
+  );
+  const targetDefense = getDefenseForDamageType(input.target, 'physical');
+
+  return {
+    basePower:
+      (targetDefense + intendedDamage + DAMAGE_RANGE_FLOOR_EPSILON) /
+      varianceMultiplier,
+    intendedDamage,
+  };
+}
 
 function createBasicAttackCancelledResult(
   battleState: BattleState,
@@ -226,7 +292,12 @@ export function resolveBasicAttack(
     }),
   );
 
-  const critChance = calculateCritChance(actor);
+  const monsterDamageRange =
+    actor.actorType === 'monster'
+      ? normalizeBasicAttackDamageRange(actor)
+      : undefined;
+
+  const critChance = monsterDamageRange ? 0 : calculateCritChance(actor);
 
   const critRoll = resolveRandomRoll({
     type: 'crit',
@@ -269,6 +340,11 @@ export function resolveBasicAttack(
   randomContext = advanceRandomContext(randomContext);
 
   const varianceRollUnit = varianceRoll.roll / 100;
+  const basicAttackPower = calculateBasicAttackBasePower({
+    actor,
+    target,
+    varianceRollUnit,
+  });
 
   const damageResult = calculateDamage(
     {
@@ -277,7 +353,7 @@ export function resolveBasicAttack(
 
       damageType: 'physical',
 
-      basePower: actor.derivedStats.pAtk,
+      basePower: basicAttackPower.basePower,
       scalingValue: 0,
 
       isCritical: critRoll.success,
@@ -297,6 +373,7 @@ export function resolveBasicAttack(
       message: 'Damage calculated.',
       metadata: {
         isCritical: damageResult.isCritical,
+        intendedDamage: basicAttackPower.intendedDamage,
         varianceRoll: varianceRoll.roll,
         varianceRollUnit,
       },
