@@ -172,7 +172,7 @@ export function GameShell({
     if (activePanel === "smith") {
       return (
         <LocationStage
-          returnLabel="← Return to Town"
+          returnLabel="Return"
           onBack={returnToTownMap}
           className="gameshell-location-stage--smith"
         >
@@ -204,7 +204,7 @@ export function GameShell({
     if (activePanel === "sanctuary") {
       return (
         <LocationStage
-          returnLabel="â† Return to Town"
+          returnLabel="← Return to Town"
           onBack={returnToTownMap}
           className="gameshell-location-stage--sanctuary"
         >

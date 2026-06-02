@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "../../components/ui/Button";
-import type { CharacterSnapshot, EquipmentSlot, OriginId } from "../../domain/magisterium.types";
+import type { CharacterSnapshot, EquipmentSlot } from "../../domain/magisterium.types";
 import { formatNumber } from "../../lib/format";
 import { smithApi, type SmithRecipeView } from "./smith.api";
 import "./smith.css";
@@ -38,12 +38,23 @@ const SLOT_LABEL_BY_ID: Record<EquipmentSlot, string> = {
   accessory: "Accessory"
 };
 
-const ORIGIN_LABELS: Record<OriginId, string> = {
-  scholar: "Scholar",
-  mercenary: "Mercenary",
-  wanderer: "Wanderer",
-  street_urchin: "Street Urchin",
-  acolyte: "Acolyte"
+const MODIFIER_TARGET_LABELS: Record<string, string> = {
+  pAtk: "Physical Attack",
+  mAtk: "Magical Attack",
+  pDef: "Physical Defense",
+  mDef: "Magical Defense",
+  maxHp: "Max HP",
+  maxMp: "Max MP",
+  maxStamina: "Max Stamina",
+  healingPotency: "Healing Potency",
+  actionSpeed: "Action Speed",
+  accuracy: "Accuracy",
+  evasionRate: "Evasion",
+  critRate: "Critical Rate",
+  critDamageBonus: "Critical Damage",
+  fleeRate: "Flee Rate",
+  statusResist: "Status Resist",
+  procRate: "Proc Rate"
 };
 
 const MATERIAL_ICONS: Record<string, string> = {
@@ -109,6 +120,10 @@ function toTitleCase(value: string): string {
 }
 
 function formatModifierTarget(target: string): string {
+  if (MODIFIER_TARGET_LABELS[target]) {
+    return MODIFIER_TARGET_LABELS[target];
+  }
+
   return target
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -122,16 +137,12 @@ function formatModifierValue(value: number): string {
   return formatNumber(value);
 }
 
-function formatRecommendedOrigins(originIds: readonly OriginId[]): string {
-  if (originIds.length === 0) {
-    return "Any Origin";
-  }
-
-  return originIds.map((originId) => ORIGIN_LABELS[originId] ?? originId).join(" / ");
-}
-
 function getRecipeCodename(recipe: SmithRecipeView): string {
   return recipe.output.itemId.toUpperCase().split("_").join("-");
+}
+
+function formatMissingReason(reason: string | undefined): string | undefined {
+  return reason?.replace(/\.$/, "");
 }
 
 export function SmithPanel({
@@ -253,27 +264,40 @@ export function SmithPanel({
   return (
     <section className="smith-panel" aria-label="Iron and Ember Smithy">
       <header className="smith-console-header">
-        <nav className="smith-category-strip" aria-label="Smith categories">
-          {SMITH_CATEGORIES.map((category) => (
-            <button
-              key={category.slot}
-              type="button"
-              className={`smith-category-button ${
-                activeCategory === category.slot ? "smith-category-button--active" : ""
-              }`}
-              onClick={() => setActiveCategory(category.slot)}
+        <div className="smith-filter-group" aria-label="Smith filters">
+          <label className="smith-filter-control">
+            <span>Slot</span>
+            <select
+              value={activeCategory}
+              onChange={(event) =>
+                setActiveCategory(event.target.value as EquipmentSlot)
+              }
             >
-              <span aria-hidden="true">{category.icon}</span>
-              <strong>{category.label}</strong>
-            </button>
-          ))}
-        </nav>
+              {SMITH_CATEGORIES.map((category) => (
+                <option key={category.slot} value={category.slot}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            className="smith-filter-control smith-filter-control--button"
+            disabled
+          >
+            <span>Rarity</span>
+            <strong>Common</strong>
+          </button>
+        </div>
+
+        <strong className="smith-panel-title">Smith</strong>
       </header>
 
       <div className="smith-workbench">
         <section className="smith-blueprint-bay">
           {loading ? (
-            <div className="smith-empty-state">Loading blueprint matrix...</div>
+            <div className="smith-empty-state">Loading blueprints...</div>
           ) : error && catalog.length === 0 ? (
             <div className="smith-empty-state smith-empty-state--error">{error}</div>
           ) : (
@@ -316,9 +340,7 @@ export function SmithPanel({
                   {getItemIcon(selectedRecipe)}
                 </div>
                 <div>
-                  <span>Target Blueprint</span>
                   <h2>{getRecipeCodename(selectedRecipe)}</h2>
-                  <p>{selectedRecipe.output.description}</p>
                 </div>
               </div>
 
@@ -332,17 +354,13 @@ export function SmithPanel({
                   <strong>{toTitleCase(selectedRecipe.output.rarity)}</strong>
                 </div>
                 <div>
-                  <span>Origin Fit</span>
-                  <strong>{formatRecommendedOrigins(selectedRecipe.recommendedOriginIds)}</strong>
-                </div>
-                <div>
                   <span>Success</span>
                   <strong>100%</strong>
                 </div>
               </div>
 
               <section className="smith-output-modifiers">
-                <div className="smith-subheader">Estimated Output Specs</div>
+                <div className="smith-subheader">Item Stats</div>
                 {selectedRecipe.output.modifiers.length > 0 ? (
                   <div className="smith-modifier-grid">
                     {selectedRecipe.output.modifiers.map((modifier) => (
@@ -360,7 +378,7 @@ export function SmithPanel({
               </section>
 
               <section className="smith-reagents">
-                <div className="smith-subheader">Required Reagents</div>
+                <div className="smith-subheader">Required Materials</div>
                 <div className="smith-reagent-list">
                   {selectedRecipe.requirements.map((requirement) => (
                     <div
@@ -383,7 +401,7 @@ export function SmithPanel({
 
               <footer className="smith-action-footer">
                 <div>
-                  <span>Striking Charge</span>
+                  <span>Forge Fee</span>
                   <strong>{formatNumber(selectedRecipe.bronzeCost)} Bronze</strong>
                 </div>
                 <Button
@@ -393,10 +411,10 @@ export function SmithPanel({
                   onClick={() => void craftSelectedRecipe()}
                 >
                   {busyRecipeId === selectedRecipe.id
-                    ? "Running..."
+                    ? "Forging..."
                     : selectedRecipe.canCraft
-                      ? "Initialize Smithing Sequence"
-                      : selectedRecipe.missingReason ?? "Cannot Craft"}
+                      ? "Forge Item"
+                      : formatMissingReason(selectedRecipe.missingReason) ?? "Cannot Craft"}
                 </Button>
                 {notice || error ? (
                   <span
