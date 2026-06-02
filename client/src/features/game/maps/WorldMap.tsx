@@ -25,7 +25,7 @@ export function WorldMap({
         className="gameshell-node--outskirts"
         icon="🌾"
         name="Town Outskirts"
-        subtitle="Lv. 1 - 2 Search"
+        subtitle="Search Area"
         onClick={onOpenTownOutskirts}
       />
 
@@ -33,7 +33,7 @@ export function WorldMap({
         className="gameshell-node--shadowfen"
         icon="🌲"
         name="Forest Edge"
-        subtitle="Lv. 2 - 4 Search"
+        subtitle="Search Area"
         onClick={onOpenForestEdge}
       />
 
@@ -41,7 +41,7 @@ export function WorldMap({
         className="gameshell-node--locked"
         icon="🌋"
         name="Dragon's Teeth"
-        subtitle="Lv. 30+ Locked"
+        subtitle="Locked"
         disabled
         onClick={() => undefined}
       />
