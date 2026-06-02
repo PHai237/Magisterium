@@ -396,6 +396,88 @@
   }
 }
 
+@media (min-width: 1440px) and (min-height: 760px) {
+  .auth-page {
+    padding: clamp(1.5rem, 2.2vw, 3.25rem);
+    background:
+      radial-gradient(circle at 50% 18%, rgba(183, 124, 255, 0.16), transparent clamp(30rem, 34vw, 42rem)),
+      radial-gradient(circle at 15% 82%, rgba(131, 247, 193, 0.07), transparent clamp(24rem, 28vw, 34rem)),
+      radial-gradient(circle at 86% 74%, rgba(56, 189, 248, 0.06), transparent clamp(26rem, 30vw, 36rem)),
+      var(--bg);
+  }
+
+  .auth-container {
+    width: clamp(28.5rem, 28vw, 36rem);
+  }
+
+  .auth-flip,
+  .auth-flip__inner,
+  .auth-card {
+    min-height: clamp(32.4rem, 69vh, 40.5rem);
+  }
+
+  .auth-card {
+    border-radius: clamp(1rem, 0.72rem + 0.22vw, 1.35rem);
+    padding: clamp(1.65rem, 1.18rem + 0.46vw, 2.25rem);
+  }
+
+  .auth-flip-button {
+    top: clamp(0.95rem, 0.64rem + 0.24vw, 1.35rem);
+    right: clamp(0.95rem, 0.64rem + 0.24vw, 1.35rem);
+    width: clamp(2.15rem, 1.65rem + 0.38vw, 2.8rem);
+    height: clamp(2.15rem, 1.65rem + 0.38vw, 2.8rem);
+  }
+
+  .auth-flip-button span {
+    font-size: clamp(1.05rem, 0.86rem + 0.14vw, 1.28rem);
+  }
+
+  .auth-header {
+    margin-bottom: clamp(1.35rem, 0.92rem + 0.34vw, 1.92rem);
+  }
+
+  .auth-title {
+    font-size: clamp(1.35rem, 1rem + 0.28vw, 1.82rem);
+  }
+
+  .auth-subtitle {
+    font-size: clamp(0.86rem, 0.72rem + 0.12vw, 1.05rem);
+  }
+
+  .auth-sigil {
+    width: clamp(5.35rem, 3.9rem + 1.05vw, 7.2rem);
+    height: clamp(5.35rem, 3.9rem + 1.05vw, 7.2rem);
+    margin-bottom: clamp(1rem, 0.68rem + 0.24vw, 1.42rem);
+  }
+
+  .auth-sigil__glyph {
+    width: clamp(2.45rem, 1.9rem + 0.4vw, 3.18rem);
+    height: clamp(2.45rem, 1.9rem + 0.4vw, 3.18rem);
+    font-size: clamp(1.25rem, 0.94rem + 0.24vw, 1.66rem);
+  }
+
+  .auth-form {
+    gap: clamp(0.9rem, 0.62rem + 0.22vw, 1.28rem);
+  }
+
+  .form-label,
+  .auth-field label {
+    font-size: clamp(0.72rem, 0.58rem + 0.1vw, 0.88rem);
+  }
+
+  .auth-field input {
+    height: clamp(2.55rem, 1.9rem + 0.48vw, 3.42rem);
+    border-radius: clamp(0.62rem, 0.45rem + 0.14vw, 0.86rem);
+    padding-inline: clamp(0.8rem, 0.58rem + 0.18vw, 1.1rem);
+    font-size: clamp(0.88rem, 0.72rem + 0.12vw, 1.08rem);
+  }
+
+  .auth-submit-btn {
+    min-height: clamp(2.65rem, 2rem + 0.48vw, 3.5rem);
+    font-size: clamp(0.88rem, 0.72rem + 0.12vw, 1.08rem);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-container,
   .auth-flip__inner,

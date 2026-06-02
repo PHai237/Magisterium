@@ -755,6 +755,245 @@
   border-radius: 999px;
 }
 
+@media (min-width: 1440px) and (min-height: 760px) {
+  .character-page {
+    grid-template-columns: minmax(20rem, clamp(20rem, 23vw, 28rem)) minmax(0, 1fr);
+  }
+
+  .character-sidebar-frame {
+    padding: clamp(1rem, 0.7rem + 0.24vw, 1.45rem);
+  }
+
+  .character-sidebar__header {
+    gap: clamp(0.75rem, 0.55rem + 0.16vw, 1rem);
+    margin-bottom: clamp(1rem, 0.72rem + 0.22vw, 1.38rem);
+  }
+
+  .character-sidebar__title {
+    font-size: clamp(0.74rem, 0.6rem + 0.1vw, 0.9rem);
+  }
+
+  .character-delete-icon-button {
+    width: clamp(2rem, 1.52rem + 0.36vw, 2.65rem);
+    height: clamp(2rem, 1.52rem + 0.36vw, 2.65rem);
+  }
+
+  .character-empty {
+    border-radius: clamp(0.85rem, 0.62rem + 0.18vw, 1.15rem);
+    padding: clamp(1rem, 0.75rem + 0.2vw, 1.36rem);
+  }
+
+  .character-empty strong {
+    font-size: clamp(1rem, 0.8rem + 0.16vw, 1.26rem);
+  }
+
+  .character-list {
+    gap: clamp(0.7rem, 0.48rem + 0.18vw, 1rem);
+  }
+
+  .character-list-card {
+    border-radius: clamp(0.65rem, 0.48rem + 0.14vw, 0.88rem);
+    padding: clamp(0.78rem, 0.56rem + 0.17vw, 1.08rem);
+    gap: clamp(0.8rem, 0.56rem + 0.18vw, 1.12rem);
+  }
+
+  .character-avatar {
+    width: clamp(2.25rem, 1.66rem + 0.44vw, 3rem);
+    height: clamp(2.25rem, 1.66rem + 0.44vw, 3rem);
+    margin-right: clamp(0.65rem, 0.46rem + 0.14vw, 0.92rem);
+    font-size: clamp(0.9rem, 0.72rem + 0.14vw, 1.15rem);
+  }
+
+  .character-list-card__main strong {
+    font-size: clamp(0.82rem, 0.66rem + 0.12vw, 1.02rem);
+  }
+
+  .character-list-card__main small {
+    font-size: clamp(0.7rem, 0.56rem + 0.1vw, 0.86rem);
+  }
+
+  .character-new-button,
+  .character-enter-button {
+    margin-top: clamp(0.9rem, 0.62rem + 0.22vw, 1.28rem);
+    border-radius: clamp(0.65rem, 0.48rem + 0.14vw, 0.9rem);
+    min-height: clamp(2.5rem, 1.9rem + 0.45vw, 3.3rem);
+    font-size: clamp(0.74rem, 0.58rem + 0.12vw, 0.94rem);
+  }
+
+  .character-main {
+    padding:
+      clamp(1.05rem, 0.4rem + 0.8vw, 2.4rem)
+      clamp(3rem, 1.3rem + 1.8vw, 6rem)
+      clamp(0.9rem, 0.4rem + 0.7vw, 2rem);
+  }
+
+  .character-create-form {
+    gap: clamp(0.8rem, 0.54rem + 0.2vw, 1.15rem);
+  }
+
+  .character-create-header h2 {
+    font-size: clamp(1.45rem, 1.06rem + 0.32vw, 1.98rem);
+  }
+
+  .character-create-grid {
+    grid-template-rows:
+      minmax(clamp(9.4rem, 7rem + 2.1vw, 13rem), 0.88fr)
+      minmax(clamp(12.4rem, 9.2rem + 2.7vw, 17rem), 1fr);
+    gap: clamp(1rem, 0.68rem + 0.24vw, 1.42rem);
+  }
+
+  .character-top-row {
+    gap: clamp(1rem, 0.68rem + 0.24vw, 1.42rem);
+  }
+
+  .character-create-card {
+    border-radius: clamp(0.8rem, 0.58rem + 0.18vw, 1.12rem);
+    padding:
+      clamp(0.9rem, 0.58rem + 0.28vw, 1.35rem)
+      clamp(1rem, 0.62rem + 0.32vw, 1.52rem);
+  }
+
+  .character-card-title {
+    margin-bottom: clamp(0.6rem, 0.42rem + 0.14vw, 0.86rem);
+    font-size: clamp(0.9rem, 0.72rem + 0.14vw, 1.15rem);
+  }
+
+  .character-info-card input {
+    height: clamp(2.25rem, 1.7rem + 0.42vw, 3rem);
+    font-size: clamp(0.9rem, 0.72rem + 0.14vw, 1.15rem);
+  }
+
+  .resource-preview {
+    gap: clamp(0.55rem, 0.38rem + 0.14vw, 0.8rem);
+    margin-top: clamp(0.95rem, 0.62rem + 0.26vw, 1.42rem);
+  }
+
+  .resource-preview__item {
+    border-radius: clamp(0.55rem, 0.4rem + 0.12vw, 0.76rem);
+    padding: clamp(0.5rem, 0.36rem + 0.12vw, 0.72rem) clamp(0.4rem, 0.28rem + 0.1vw, 0.58rem);
+  }
+
+  .resource-preview__item span,
+  .stats-cell span {
+    font-size: clamp(0.64rem, 0.52rem + 0.09vw, 0.8rem);
+  }
+
+  .resource-preview__item strong {
+    font-size: clamp(0.9rem, 0.72rem + 0.14vw, 1.16rem);
+  }
+
+  .character-field-message {
+    font-size: clamp(0.72rem, 0.58rem + 0.1vw, 0.88rem);
+  }
+
+  .starting-kit-list {
+    gap: clamp(0.45rem, 0.32rem + 0.11vw, 0.64rem);
+  }
+
+  .starting-kit-item {
+    border-radius: clamp(0.55rem, 0.4rem + 0.12vw, 0.78rem);
+    grid-template-columns:
+      clamp(1.25rem, 0.95rem + 0.22vw, 1.62rem)
+      clamp(2rem, 1.5rem + 0.38vw, 2.65rem)
+      minmax(0, 1fr)
+      auto;
+    gap: clamp(0.35rem, 0.24rem + 0.1vw, 0.52rem);
+    padding: clamp(0.4rem, 0.28rem + 0.1vw, 0.58rem) clamp(0.58rem, 0.42rem + 0.13vw, 0.8rem);
+  }
+
+  .starting-kit-icon {
+    width: clamp(1.25rem, 0.95rem + 0.22vw, 1.62rem);
+    font-size: clamp(0.86rem, 0.66rem + 0.15vw, 1.12rem);
+  }
+
+  .starting-kit-qty {
+    font-size: clamp(0.72rem, 0.58rem + 0.1vw, 0.9rem);
+  }
+
+  .starting-kit-name {
+    font-size: clamp(0.75rem, 0.6rem + 0.11vw, 0.94rem);
+  }
+
+  .character-origin-panel,
+  .character-stats-panel {
+    padding:
+      clamp(0.9rem, 0.58rem + 0.28vw, 1.35rem)
+      clamp(1rem, 0.62rem + 0.32vw, 1.52rem);
+  }
+
+  .origin-name {
+    gap: clamp(0.55rem, 0.38rem + 0.14vw, 0.78rem);
+    margin-bottom: clamp(0.5rem, 0.34rem + 0.12vw, 0.72rem);
+    font-size: clamp(1.05rem, 0.78rem + 0.24vw, 1.45rem);
+  }
+
+  .origin-focus {
+    padding: clamp(0.22rem, 0.16rem + 0.06vw, 0.32rem) clamp(0.55rem, 0.4rem + 0.12vw, 0.78rem);
+    font-size: clamp(0.7rem, 0.56rem + 0.1vw, 0.88rem);
+  }
+
+  .origin-content p {
+    margin-top: clamp(0.65rem, 0.42rem + 0.18vw, 0.95rem);
+    font-size: clamp(0.82rem, 0.66rem + 0.12vw, 1.04rem);
+    line-height: 1.45;
+  }
+
+  .origin-controls {
+    gap: clamp(0.75rem, 0.52rem + 0.18vw, 1.08rem);
+    margin-top: clamp(0.85rem, 0.56rem + 0.22vw, 1.25rem);
+  }
+
+  .origin-controls .ui-button {
+    min-height: clamp(2.05rem, 1.56rem + 0.38vw, 2.74rem);
+    border-radius: clamp(0.5rem, 0.36rem + 0.12vw, 0.72rem);
+    padding: clamp(0.35rem, 0.24rem + 0.1vw, 0.52rem) clamp(0.7rem, 0.48rem + 0.18vw, 1rem);
+    font-size: clamp(0.78rem, 0.62rem + 0.12vw, 1rem);
+  }
+
+  .origin-controls span {
+    font-size: clamp(0.72rem, 0.58rem + 0.1vw, 0.9rem);
+  }
+
+  .stats-grid,
+  .character-stats-panel .stats-grid {
+    gap: clamp(0.55rem, 0.38rem + 0.14vw, 0.82rem);
+  }
+
+  .stats-cell {
+    border-radius: clamp(0.55rem, 0.4rem + 0.12vw, 0.78rem);
+    padding: clamp(0.48rem, 0.32rem + 0.14vw, 0.72rem) clamp(0.32rem, 0.22rem + 0.1vw, 0.5rem);
+  }
+
+  .stats-cell strong {
+    font-size: clamp(1rem, 0.78rem + 0.18vw, 1.34rem);
+  }
+
+  .character-stats-panel .stats-cell strong {
+    font-size: clamp(1.08rem, 0.82rem + 0.22vw, 1.48rem);
+  }
+
+  .character-create-actions {
+    gap: clamp(1rem, 0.68rem + 0.24vw, 1.42rem);
+    padding-top: clamp(0.25rem, 0.1rem + 0.14vw, 0.5rem);
+  }
+
+  .character-create-actions .ui-button {
+    min-height: clamp(2.35rem, 1.75rem + 0.44vw, 3.15rem);
+    font-size: clamp(0.84rem, 0.68rem + 0.12vw, 1.05rem);
+  }
+
+  .character-info-dot {
+    width: clamp(1.05rem, 0.82rem + 0.18vw, 1.38rem);
+    height: clamp(1.05rem, 0.82rem + 0.18vw, 1.38rem);
+    font-size: clamp(0.62rem, 0.5rem + 0.09vw, 0.78rem);
+  }
+
+  .character-stat-info-dot {
+    top: clamp(0.34rem, 0.24rem + 0.08vw, 0.5rem);
+    right: clamp(0.34rem, 0.24rem + 0.08vw, 0.5rem);
+  }
+}
+
 @media (max-width: 1180px) {
   .character-page {
     height: auto;
