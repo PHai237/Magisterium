@@ -985,6 +985,269 @@
   }
 }
 
+@media (min-width: 1440px) and (min-height: 760px) {
+  .battle-topbar {
+    height: clamp(3.5rem, 2.65rem + 0.66vw, 4.65rem);
+    flex-basis: clamp(3.5rem, 2.65rem + 0.66vw, 4.65rem);
+  }
+
+  .battle-topbar__vitals {
+    gap: clamp(1.35rem, 0.9rem + 0.42vw, 2rem);
+    padding-inline: clamp(10px, 0.45rem + 0.36vw, 20px);
+  }
+
+  .battle-resource {
+    gap: clamp(0.5rem, 0.34rem + 0.14vw, 0.72rem);
+  }
+
+  .battle-resource__label {
+    font-size: clamp(0.66rem, 0.52rem + 0.1vw, 0.82rem);
+  }
+
+  .battle-resource__track {
+    height: clamp(1.22rem, 0.92rem + 0.24vw, 1.62rem);
+  }
+
+  .battle-resource__value {
+    font-size: clamp(0.7rem, 0.56rem + 0.11vw, 0.88rem);
+  }
+
+  .battle-shell {
+    grid-template-columns: minmax(20rem, 24%) minmax(0, 52%) minmax(20rem, 24%);
+  }
+
+  .battle-side {
+    padding: clamp(1rem, 0.66rem + 0.32vw, 1.5rem);
+    gap: clamp(1rem, 0.66rem + 0.32vw, 1.5rem);
+  }
+
+  .battle-panel-eyebrow {
+    font-size: clamp(0.68rem, 0.54rem + 0.11vw, 0.86rem);
+  }
+
+  .battle-character-card {
+    border-radius: clamp(0.28rem, 0.2rem + 0.08vw, 0.42rem);
+    padding: clamp(1rem, 0.7rem + 0.28vw, 1.45rem);
+  }
+
+  .battle-character-card__avatar {
+    width: clamp(3.5rem, 2.58rem + 0.72vw, 4.65rem);
+    height: clamp(3.5rem, 2.58rem + 0.72vw, 4.65rem);
+    margin-bottom: clamp(0.75rem, 0.52rem + 0.22vw, 1.08rem);
+    font-size: clamp(1.1rem, 0.82rem + 0.22vw, 1.42rem);
+  }
+
+  .battle-character-card > strong {
+    font-size: clamp(0.88rem, 0.68rem + 0.16vw, 1.16rem);
+  }
+
+  .battle-character-card > span {
+    font-size: clamp(0.74rem, 0.58rem + 0.12vw, 0.94rem);
+  }
+
+  .battle-stat-grid {
+    gap: clamp(0.5rem, 0.34rem + 0.16vw, 0.78rem);
+    margin-top: clamp(1rem, 0.66rem + 0.32vw, 1.45rem);
+    padding-top: clamp(0.75rem, 0.52rem + 0.22vw, 1.08rem);
+  }
+
+  .battle-stat-grid div {
+    border-radius: clamp(0.32rem, 0.22rem + 0.1vw, 0.48rem);
+    padding: clamp(0.42rem, 0.28rem + 0.14vw, 0.62rem);
+  }
+
+  .battle-stat-grid span,
+  .battle-effect-chip small {
+    font-size: clamp(0.62rem, 0.5rem + 0.09vw, 0.78rem);
+  }
+
+  .battle-stat-grid strong {
+    font-size: clamp(0.72rem, 0.56rem + 0.12vw, 0.92rem);
+  }
+
+  .battle-effect-box {
+    border-radius: clamp(0.28rem, 0.2rem + 0.08vw, 0.42rem);
+    padding: clamp(0.78rem, 0.52rem + 0.24vw, 1.12rem);
+    gap: clamp(0.62rem, 0.42rem + 0.2vw, 0.92rem);
+  }
+
+  .battle-enemy-effect-box {
+    top: clamp(1rem, 0.68rem + 0.3vw, 1.48rem);
+    right: clamp(1rem, 0.68rem + 0.3vw, 1.48rem);
+    width: clamp(11.5rem, 9.5rem + 1.6vw, 14.5rem);
+    border-radius: clamp(0.28rem, 0.2rem + 0.08vw, 0.42rem);
+    padding: clamp(0.68rem, 0.46rem + 0.22vw, 1rem);
+  }
+
+  .battle-effect-title,
+  .battle-enemy-health .battle-resource__label {
+    font-size: clamp(0.68rem, 0.54rem + 0.11vw, 0.86rem);
+  }
+
+  .battle-effects-empty,
+  .battle-effect-chip {
+    font-size: clamp(0.74rem, 0.58rem + 0.12vw, 0.94rem);
+  }
+
+  .battle-center {
+    padding: clamp(1.5rem, 0.95rem + 0.5vw, 2.25rem);
+  }
+
+  .battlefield-focus {
+    gap: clamp(0.75rem, 0.5rem + 0.24vw, 1.12rem);
+  }
+
+  .battlefield-label {
+    font-size: clamp(0.72rem, 0.56rem + 0.12vw, 0.92rem);
+  }
+
+  .battle-enemy-orb {
+    width: clamp(5.25rem, 3.9rem + 1.02vw, 7rem);
+    height: clamp(5.25rem, 3.9rem + 1.02vw, 7rem);
+    font-size: clamp(2.15rem, 1.55rem + 0.48vw, 2.95rem);
+  }
+
+  .battle-enemy-orb--image .monster-pixel-icon {
+    width: clamp(3.2rem, 2.3rem + 0.68vw, 4.35rem);
+    height: clamp(3.2rem, 2.3rem + 0.68vw, 4.35rem);
+  }
+
+  .battlefield-focus h2,
+  .battlefield-loading h2 {
+    font-size: clamp(2rem, 1.42rem + 0.52vw, 2.9rem);
+  }
+
+  .battlefield-focus > span,
+  .battlefield-loading span {
+    font-size: clamp(0.72rem, 0.56rem + 0.12vw, 0.92rem);
+  }
+
+  .battle-enemy-health {
+    width: min(80%, clamp(24.8rem, 22rem + 2.6vw, 32rem));
+  }
+
+  .battle-enemy-health .battle-resource__track {
+    height: clamp(1.83rem, 1.34rem + 0.38vw, 2.45rem);
+  }
+
+  .battle-enemy-health .battle-resource__value {
+    font-size: clamp(0.76rem, 0.6rem + 0.13vw, 0.98rem);
+  }
+
+  .battle-target-strip {
+    width: min(100%, clamp(28rem, 24rem + 3.4vw, 36rem));
+    grid-template-columns: repeat(auto-fit, minmax(clamp(8.25rem, 7rem + 1vw, 10.5rem), 1fr));
+    gap: clamp(0.5rem, 0.34rem + 0.16vw, 0.75rem);
+  }
+
+  .battle-target-card {
+    border-radius: clamp(0.36rem, 0.26rem + 0.1vw, 0.54rem);
+    padding: clamp(0.5rem, 0.34rem + 0.16vw, 0.76rem);
+    gap: clamp(0.48rem, 0.32rem + 0.14vw, 0.7rem);
+  }
+
+  .battle-target-card__icon {
+    width: clamp(1.85rem, 1.38rem + 0.36vw, 2.45rem);
+    height: clamp(1.85rem, 1.38rem + 0.36vw, 2.45rem);
+    font-size: clamp(1rem, 0.76rem + 0.18vw, 1.32rem);
+  }
+
+  .battle-target-card__copy strong {
+    font-size: clamp(0.72rem, 0.56rem + 0.12vw, 0.92rem);
+  }
+
+  .battle-target-card__copy em {
+    font-size: clamp(0.62rem, 0.5rem + 0.09vw, 0.78rem);
+  }
+
+  .battle-command-panel {
+    padding-top: clamp(1rem, 0.66rem + 0.32vw, 1.5rem);
+    gap: clamp(0.75rem, 0.5rem + 0.24vw, 1.12rem);
+  }
+
+  .battle-command-top div {
+    font-size: clamp(0.68rem, 0.54rem + 0.11vw, 0.86rem);
+  }
+
+  .battle-command-back {
+    font-size: clamp(0.75rem, 0.58rem + 0.13vw, 0.96rem);
+  }
+
+  .battle-main-actions {
+    gap: clamp(0.75rem, 0.5rem + 0.24vw, 1.1rem);
+  }
+
+  .battle-main-action {
+    min-height: clamp(4rem, 3rem + 0.76vw, 5.35rem);
+    border-radius: clamp(0.25rem, 0.18rem + 0.08vw, 0.42rem);
+    padding: clamp(0.55rem, 0.38rem + 0.16vw, 0.78rem);
+  }
+
+  .battle-main-action strong {
+    font-size: clamp(0.82rem, 0.64rem + 0.14vw, 1.08rem);
+  }
+
+  .battle-main-action span {
+    font-size: clamp(0.62rem, 0.5rem + 0.09vw, 0.78rem);
+  }
+
+  .battle-drawer-grid {
+    gap: clamp(0.5rem, 0.34rem + 0.16vw, 0.78rem);
+  }
+
+  .battle-drawer-button {
+    min-height: clamp(2.75rem, 2.05rem + 0.52vw, 3.55rem);
+    border-radius: clamp(0.25rem, 0.18rem + 0.08vw, 0.42rem);
+    padding:
+      clamp(0.42rem, 0.3rem + 0.12vw, 0.62rem)
+      clamp(0.65rem, 0.44rem + 0.2vw, 0.98rem);
+    gap: clamp(0.35rem, 0.24rem + 0.1vw, 0.52rem);
+    font-size: clamp(0.75rem, 0.58rem + 0.13vw, 0.96rem);
+  }
+
+  .battle-drawer-button em,
+  .battle-log-turn__tag,
+  .battle-log-awaiting {
+    font-size: clamp(0.62rem, 0.5rem + 0.09vw, 0.78rem);
+  }
+
+  .battle-result-card {
+    border-radius: clamp(0.36rem, 0.26rem + 0.1vw, 0.54rem);
+    padding: clamp(0.85rem, 0.58rem + 0.24vw, 1.24rem);
+    gap: clamp(0.55rem, 0.36rem + 0.18vw, 0.82rem);
+  }
+
+  .battle-result-card strong {
+    font-size: clamp(0.9rem, 0.7rem + 0.16vw, 1.16rem);
+  }
+
+  .battle-result-card span,
+  .battle-primary-button,
+  .battle-secondary-button {
+    font-size: clamp(0.75rem, 0.58rem + 0.13vw, 0.96rem);
+  }
+
+  .battle-primary-button,
+  .battle-secondary-button {
+    min-height: clamp(2.45rem, 1.82rem + 0.46vw, 3.25rem);
+    border-radius: clamp(0.28rem, 0.2rem + 0.08vw, 0.44rem);
+    padding:
+      clamp(0.45rem, 0.32rem + 0.12vw, 0.66rem)
+      clamp(0.7rem, 0.48rem + 0.2vw, 1rem);
+  }
+
+  .battle-log-scroll {
+    gap: clamp(1rem, 0.66rem + 0.32vw, 1.45rem);
+    font-size: clamp(0.72rem, 0.56rem + 0.12vw, 0.92rem);
+    line-height: 1.62;
+  }
+
+  .battle-log-turn {
+    gap: clamp(0.35rem, 0.24rem + 0.1vw, 0.52rem);
+    padding-bottom: clamp(0.78rem, 0.52rem + 0.24vw, 1.12rem);
+  }
+}
+
 @media (max-width: 1180px) {
   .battle-topbar {
     grid-template-columns: 1fr;

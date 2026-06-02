@@ -297,6 +297,107 @@
   }
 }
 
+@media (min-width: 1440px) and (min-height: 760px) {
+  .exploration-layout {
+    grid-template-columns: minmax(0, 2.08fr) minmax(clamp(18rem, 16rem + 3vw, 25rem), 0.92fr);
+  }
+
+  .exploration-main {
+    padding: clamp(1.5rem, 0.95rem + 0.6vw, 2.35rem);
+  }
+
+  .exploration-back-button {
+    top: clamp(0.85rem, 0.54rem + 0.34vw, 1.45rem);
+    left: clamp(1.25rem, 0.78rem + 0.52vw, 2rem);
+    min-height: clamp(2.45rem, 1.82rem + 0.46vw, 3.2rem);
+    padding-inline: clamp(1rem, 0.72rem + 0.26vw, 1.42rem);
+    font-size: clamp(0.86rem, 0.68rem + 0.13vw, 1.08rem);
+  }
+
+  .exploration-ambient {
+    max-width: clamp(44rem, 40vw, 58rem);
+    gap: clamp(0.68rem, 0.44rem + 0.24vw, 1rem);
+  }
+
+  .exploration-ambient__icon {
+    font-size: clamp(3.7rem, 2.65rem + 0.8vw, 5.1rem);
+  }
+
+  .exploration-ambient__eyebrow {
+    font-size: clamp(0.68rem, 0.54rem + 0.12vw, 0.86rem);
+  }
+
+  .exploration-ambient h2 {
+    font-size: clamp(2rem, 1.45rem + 0.5vw, 2.85rem);
+  }
+
+  .exploration-zone-meta {
+    border-radius: clamp(0.28rem, 0.2rem + 0.08vw, 0.42rem);
+    padding:
+      clamp(0.38rem, 0.26rem + 0.12vw, 0.58rem)
+      clamp(0.75rem, 0.52rem + 0.22vw, 1.08rem);
+    gap: clamp(0.7rem, 0.46rem + 0.22vw, 1.08rem);
+    font-size: clamp(0.72rem, 0.56rem + 0.12vw, 0.92rem);
+  }
+
+  .exploration-control {
+    width: min(100%, clamp(23rem, 20rem + 3vw, 31rem));
+    padding-top: clamp(1.25rem, 0.82rem + 0.42vw, 1.85rem);
+    gap: clamp(0.65rem, 0.42rem + 0.22vw, 0.98rem);
+  }
+
+  .exploration-search-button {
+    min-height: clamp(3.45rem, 2.58rem + 0.68vw, 4.65rem);
+    border-radius: clamp(0.28rem, 0.2rem + 0.08vw, 0.42rem);
+    padding:
+      clamp(0.55rem, 0.38rem + 0.16vw, 0.78rem)
+      clamp(0.7rem, 0.48rem + 0.2vw, 1rem);
+  }
+
+  .exploration-search-button strong {
+    font-size: clamp(0.82rem, 0.64rem + 0.14vw, 1.05rem);
+  }
+
+  .exploration-search-button span {
+    font-size: clamp(0.64rem, 0.5rem + 0.1vw, 0.8rem);
+  }
+
+  .exploration-error {
+    border-radius: clamp(0.35rem, 0.26rem + 0.08vw, 0.52rem);
+    padding:
+      clamp(0.58rem, 0.4rem + 0.16vw, 0.82rem)
+      clamp(0.7rem, 0.48rem + 0.2vw, 1rem);
+    font-size: clamp(0.74rem, 0.58rem + 0.12vw, 0.94rem);
+  }
+
+  .exploration-journal {
+    padding: clamp(1.25rem, 0.82rem + 0.42vw, 1.9rem);
+  }
+
+  .exploration-journal__header {
+    margin-bottom: clamp(1rem, 0.66rem + 0.32vw, 1.48rem);
+    font-size: clamp(0.68rem, 0.54rem + 0.11vw, 0.86rem);
+  }
+
+  .exploration-journal__scroll {
+    font-size: clamp(0.72rem, 0.56rem + 0.12vw, 0.92rem);
+    line-height: 1.62;
+  }
+
+  .exploration-journal-group {
+    gap: clamp(0.36rem, 0.24rem + 0.12vw, 0.54rem);
+    padding:
+      clamp(0.72rem, 0.48rem + 0.24vw, 1.08rem)
+      0.1rem;
+  }
+
+  .exploration-journal-empty {
+    padding:
+      clamp(0.58rem, 0.4rem + 0.16vw, 0.84rem)
+      0.1rem;
+  }
+}
+
 @media (max-width: 1180px) {
   .exploration-layout {
     grid-template-columns: 1fr;
