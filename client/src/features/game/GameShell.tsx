@@ -81,7 +81,7 @@ function PlaceholderPanel({
   subtitle,
   description,
   onBack,
-  returnLabel = "← Return to Town"
+  returnLabel = "Return"
 }: PlaceholderPanelProps) {
   return (
     <LocationStage returnLabel={returnLabel} onBack={onBack}>
@@ -159,7 +159,7 @@ export function GameShell({
 
     if (activePanel === "inn") {
       return (
-        <LocationStage returnLabel="← Return to Town" onBack={returnToTownMap}>
+        <LocationStage returnLabel="Return" onBack={returnToTownMap}>
           <InnPanel
             userId={userId}
             currentCharacter={currentCharacter}
@@ -188,7 +188,7 @@ export function GameShell({
     if (activePanel === "market") {
       return (
         <LocationStage
-          returnLabel="← Return to Town"
+          returnLabel="Return"
           onBack={returnToTownMap}
           className="gameshell-location-stage--market"
         >
@@ -204,7 +204,7 @@ export function GameShell({
     if (activePanel === "sanctuary") {
       return (
         <LocationStage
-          returnLabel="← Return to Town"
+          returnLabel="Return"
           onBack={returnToTownMap}
           className="gameshell-location-stage--sanctuary"
         >
