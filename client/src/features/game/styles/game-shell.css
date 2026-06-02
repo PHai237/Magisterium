@@ -1128,6 +1128,231 @@
   opacity: 1;
 }
 
+@media (min-width: 1440px) and (min-height: 760px) {
+  .gameshell-header {
+    height: clamp(65px, 4.8vw, 84px);
+    flex-basis: clamp(65px, 4.8vw, 84px);
+    padding-inline: clamp(2rem, 1.2rem + 1vw, 3.5rem);
+  }
+
+  .gameshell-hud {
+    gap: clamp(0.85rem, 0.55rem + 0.28vw, 1.25rem);
+  }
+
+  .gameshell-vitals {
+    gap: clamp(0.45rem, 0.28rem + 0.16vw, 0.72rem);
+  }
+
+  .gameshell-vital {
+    border-radius: clamp(0.7rem, 0.52rem + 0.16vw, 0.95rem);
+    padding:
+      clamp(0.34rem, 0.22rem + 0.12vw, 0.52rem)
+      clamp(0.54rem, 0.36rem + 0.18vw, 0.82rem);
+  }
+
+  .gameshell-vital span {
+    font-size: clamp(0.58rem, 0.48rem + 0.08vw, 0.72rem);
+  }
+
+  .gameshell-vital strong {
+    font-size: clamp(0.7rem, 0.58rem + 0.1vw, 0.88rem);
+  }
+
+  .gameshell-character-chip {
+    gap: clamp(0.62rem, 0.42rem + 0.18vw, 0.92rem);
+  }
+
+  .gameshell-character-chip__copy strong {
+    max-width: clamp(11rem, 9rem + 3vw, 16rem);
+    font-size: clamp(0.82rem, 0.66rem + 0.13vw, 1.05rem);
+  }
+
+  .gameshell-character-chip__copy span {
+    max-width: clamp(12rem, 10rem + 3vw, 17rem);
+    font-size: clamp(0.66rem, 0.54rem + 0.1vw, 0.84rem);
+  }
+
+  .gameshell-account__avatar {
+    width: clamp(2.3rem, 1.72rem + 0.44vw, 3.05rem);
+    height: clamp(2.3rem, 1.72rem + 0.44vw, 3.05rem);
+    font-size: clamp(0.78rem, 0.62rem + 0.13vw, 1rem);
+  }
+
+  .gameshell-account-menu {
+    min-width: clamp(11.9rem, 9rem + 2.3vw, 15.5rem);
+    border-radius: clamp(0.72rem, 0.52rem + 0.16vw, 1rem);
+    padding: clamp(0.36rem, 0.24rem + 0.1vw, 0.52rem);
+  }
+
+  .gameshell-account-menu button {
+    border-radius: clamp(0.48rem, 0.36rem + 0.1vw, 0.68rem);
+    padding:
+      clamp(0.56rem, 0.38rem + 0.15vw, 0.8rem)
+      clamp(0.62rem, 0.42rem + 0.16vw, 0.9rem);
+    gap: clamp(0.52rem, 0.36rem + 0.13vw, 0.75rem);
+    font-size: clamp(0.76rem, 0.62rem + 0.11vw, 0.96rem);
+  }
+
+  .gameshell-map {
+    background:
+      radial-gradient(circle at 50% 44%, rgba(244, 214, 142, 0.16), transparent clamp(16rem, 18vw, 25rem)),
+      radial-gradient(circle at 18% 24%, rgba(80, 160, 96, 0.15), transparent clamp(22rem, 24vw, 32rem)),
+      radial-gradient(circle at 80% 72%, rgba(56, 189, 248, 0.11), transparent clamp(20rem, 23vw, 31rem)),
+      linear-gradient(135deg, #182116 0%, #24201a 52%, #141916 100%);
+  }
+
+  .gameshell-map__grid {
+    background-size:
+      clamp(42px, 3.4vw, 58px) clamp(42px, 3.4vw, 58px),
+      clamp(42px, 3.4vw, 58px) clamp(42px, 3.4vw, 58px),
+      100% 100%,
+      100% 100%;
+  }
+
+  .gameshell-river {
+    border-bottom-width: clamp(42px, 3.2vw, 60px);
+  }
+
+  .gameshell-town-road--main {
+    height: clamp(1.15rem, 0.82rem + 0.34vw, 1.72rem);
+  }
+
+  .gameshell-town-road--cross {
+    width: clamp(1rem, 0.72rem + 0.25vw, 1.42rem);
+  }
+
+  .gameshell-town-road--archive {
+    height: clamp(0.82rem, 0.58rem + 0.2vw, 1.16rem);
+  }
+
+  .gameshell-town-road--gate {
+    height: clamp(0.9rem, 0.62rem + 0.22vw, 1.26rem);
+  }
+
+  .gameshell-district,
+  .gameshell-world-region {
+    border-radius: clamp(1rem, 0.72rem + 0.24vw, 1.42rem);
+    font-size: clamp(0.72rem, 0.56rem + 0.13vw, 0.96rem);
+  }
+
+  .gameshell-district--residential {
+    width: clamp(16rem, 15vw, 22rem);
+    height: clamp(10rem, 9vw, 14rem);
+  }
+
+  .gameshell-district--market {
+    width: clamp(14rem, 13vw, 19rem);
+    height: clamp(7rem, 7vw, 10rem);
+  }
+
+  .gameshell-world-region--forest {
+    width: clamp(14rem, 13vw, 20rem);
+    height: clamp(10rem, 9vw, 14rem);
+  }
+
+  .gameshell-world-region--mountain {
+    width: clamp(15rem, 14vw, 21rem);
+    height: clamp(11rem, 10vw, 15rem);
+  }
+
+  .gameshell-plaza {
+    width: clamp(13.5rem, 18vw, 21rem);
+  }
+
+  .gameshell-plaza__label {
+    padding:
+      clamp(0.34rem, 0.22rem + 0.12vw, 0.52rem)
+      clamp(0.7rem, 0.46rem + 0.22vw, 1.08rem);
+    font-size: clamp(0.64rem, 0.5rem + 0.11vw, 0.82rem);
+  }
+
+  .gameshell-node {
+    width: clamp(8.7rem, 7.05rem + 1.25vw, 10.2rem);
+    min-height: clamp(6.25rem, 4.8rem + 1.05vw, 8.8rem);
+    border-radius: clamp(0.95rem, 0.7rem + 0.22vw, 1.35rem);
+    padding:
+      clamp(0.72rem, 0.5rem + 0.2vw, 1.08rem)
+      clamp(0.5rem, 0.34rem + 0.14vw, 0.76rem);
+    gap: clamp(0.18rem, 0.1rem + 0.08vw, 0.3rem);
+  }
+
+  .gameshell-node--gate {
+    width: clamp(9.8rem, 7.8rem + 1.55vw, 11.8rem);
+  }
+
+  .gameshell-node--outskirts {
+    width: clamp(7.4rem, 6rem + 1.15vw, 9.8rem);
+    min-height: clamp(7.4rem, 6rem + 1.15vw, 9.8rem);
+  }
+
+  .gameshell-node--shadowfen,
+  .gameshell-node--locked {
+    width: clamp(6.8rem, 5.4rem + 1vw, 9rem);
+    min-height: clamp(6.8rem, 5.4rem + 1vw, 9rem);
+  }
+
+  .gameshell-node__icon {
+    margin-bottom: clamp(0.25rem, 0.16rem + 0.1vw, 0.42rem);
+    font-size: clamp(1.55rem, 1.12rem + 0.34vw, 2.2rem);
+  }
+
+  .gameshell-node strong {
+    font-size: clamp(0.72rem, 0.56rem + 0.13vw, 0.94rem);
+  }
+
+  .gameshell-node small {
+    font-size: clamp(0.56rem, 0.44rem + 0.1vw, 0.72rem);
+  }
+
+  .gameshell-location-stage {
+    padding: clamp(0.85rem, 0.5rem + 0.45vw, 1.6rem);
+  }
+
+  .gameshell-location-back {
+    top: clamp(0.85rem, 0.52rem + 0.4vw, 1.5rem);
+    left: clamp(1.25rem, 0.76rem + 0.62vw, 2.2rem);
+    min-height: clamp(2.45rem, 1.85rem + 0.45vw, 3.25rem);
+    padding-inline: clamp(1rem, 0.7rem + 0.28vw, 1.45rem);
+    font-size: clamp(0.86rem, 0.68rem + 0.13vw, 1.08rem);
+  }
+
+  .gameshell-location-stage--market .gameshell-location-back,
+  .gameshell-location-stage--sanctuary .gameshell-location-back {
+    top: clamp(2rem, 1.36rem + 0.62vw, 3rem);
+    left: clamp(2.05rem, 1.36rem + 0.72vw, 3.2rem);
+  }
+
+  .gameshell-placeholder-card {
+    max-width: clamp(34rem, 31vw, 46rem);
+    border-radius: clamp(1rem, 0.72rem + 0.24vw, 1.42rem);
+    padding: clamp(1.4rem, 0.92rem + 0.42vw, 2.05rem);
+  }
+
+  .gameshell-placeholder-card p {
+    font-size: clamp(0.7rem, 0.56rem + 0.11vw, 0.9rem);
+  }
+
+  .gameshell-placeholder-card h2 {
+    font-size: clamp(1.5rem, 1.1rem + 0.36vw, 2.15rem);
+  }
+
+  .gameshell-placeholder-card span {
+    font-size: clamp(0.9rem, 0.72rem + 0.13vw, 1.12rem);
+  }
+
+  .gameshell-actionbar {
+    height: clamp(58px, 4vw, 76px);
+    flex-basis: clamp(58px, 4vw, 76px);
+  }
+
+  .gameshell-actionbar__inventory {
+    width: clamp(2.7rem, 2rem + 0.55vw, 3.65rem);
+    height: clamp(2.7rem, 2rem + 0.55vw, 3.65rem);
+    border-radius: clamp(0.85rem, 0.62rem + 0.2vw, 1.2rem);
+    font-size: clamp(1.25rem, 0.9rem + 0.28vw, 1.72rem);
+  }
+}
+
 @media (max-width: 980px) {
   .gameshell-header {
     height: auto;

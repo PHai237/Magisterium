@@ -415,6 +415,143 @@
   }
 }
 
+@media (min-width: 1440px) and (min-height: 760px) {
+  .inn-basic-card {
+    width: min(100%, clamp(34rem, 32vw, 45rem));
+    max-height: calc(100% - clamp(1.7rem, 1rem + 1vw, 3.2rem));
+    border-radius: clamp(1.15rem, 0.82rem + 0.28vw, 1.62rem);
+    padding: clamp(0.9rem, 0.56rem + 0.3vw, 1.35rem);
+    gap: clamp(0.72rem, 0.46rem + 0.22vw, 1.08rem);
+  }
+
+  .inn-basic-card__header {
+    gap: clamp(0.82rem, 0.54rem + 0.24vw, 1.24rem);
+    padding-top: clamp(0.1rem, 0.06rem + 0.08vw, 0.24rem);
+  }
+
+  .inn-basic-card__visual {
+    width: clamp(4.25rem, 3.2rem + 0.8vw, 5.9rem);
+    height: clamp(4.25rem, 3.2rem + 0.8vw, 5.9rem);
+    flex-basis: clamp(4.25rem, 3.2rem + 0.8vw, 5.9rem);
+  }
+
+  .inn-basic-card__sigil {
+    width: clamp(3.28rem, 2.45rem + 0.62vw, 4.55rem);
+    height: clamp(3.28rem, 2.45rem + 0.62vw, 4.55rem);
+    font-size: clamp(1.42rem, 1.05rem + 0.28vw, 1.98rem);
+  }
+
+  .inn-basic-card__copy {
+    gap: clamp(0.22rem, 0.14rem + 0.08vw, 0.36rem);
+  }
+
+  .inn-basic-card__copy p {
+    font-size: clamp(0.7rem, 0.54rem + 0.13vw, 0.92rem);
+  }
+
+  .inn-basic-card__copy h2 {
+    font-size: clamp(1.38rem, 1rem + 0.32vw, 1.95rem);
+  }
+
+  .inn-service-box {
+    border-radius: clamp(0.95rem, 0.68rem + 0.23vw, 1.35rem);
+    padding: clamp(0.64rem, 0.42rem + 0.2vw, 0.98rem);
+    gap: clamp(0.48rem, 0.32rem + 0.14vw, 0.72rem);
+  }
+
+  .inn-service-summary {
+    min-height: clamp(2.05rem, 1.56rem + 0.4vw, 2.84rem);
+    border-radius: clamp(0.68rem, 0.48rem + 0.18vw, 0.98rem);
+    padding:
+      clamp(0.44rem, 0.3rem + 0.13vw, 0.66rem)
+      clamp(0.62rem, 0.42rem + 0.18vw, 0.92rem);
+    gap: clamp(0.85rem, 0.58rem + 0.22vw, 1.25rem);
+  }
+
+  .inn-service-summary span {
+    font-size: clamp(0.7rem, 0.54rem + 0.13vw, 0.92rem);
+  }
+
+  .inn-service-summary strong {
+    font-size: clamp(0.78rem, 0.62rem + 0.13vw, 1.02rem);
+  }
+
+  .inn-restore-list {
+    border-radius: clamp(0.78rem, 0.56rem + 0.18vw, 1.12rem);
+    padding: clamp(0.46rem, 0.3rem + 0.14vw, 0.7rem);
+    gap: clamp(0.36rem, 0.24rem + 0.1vw, 0.56rem);
+  }
+
+  .inn-restore-row {
+    min-height: clamp(1.95rem, 1.5rem + 0.36vw, 2.68rem);
+    border-radius: clamp(0.64rem, 0.46rem + 0.15vw, 0.9rem);
+    padding:
+      clamp(0.38rem, 0.24rem + 0.12vw, 0.58rem)
+      clamp(0.52rem, 0.36rem + 0.14vw, 0.78rem);
+    gap: clamp(0.54rem, 0.36rem + 0.16vw, 0.82rem);
+  }
+
+  .inn-restore-row span {
+    width: clamp(1.08rem, 0.82rem + 0.2vw, 1.46rem);
+    font-size: clamp(0.94rem, 0.72rem + 0.18vw, 1.32rem);
+  }
+
+  .inn-restore-row strong {
+    font-size: clamp(0.76rem, 0.6rem + 0.13vw, 1rem);
+  }
+
+  .inn-restore-row em {
+    font-size: clamp(0.7rem, 0.54rem + 0.13vw, 0.92rem);
+  }
+
+  .inn-action-panel {
+    grid-template-columns: clamp(4.9rem, 3.8rem + 0.8vw, 6.5rem) minmax(0, 1fr);
+    gap: clamp(0.58rem, 0.4rem + 0.15vw, 0.86rem);
+  }
+
+  .inn-action-panel .ui-button,
+  .inn-payment-trigger {
+    min-height: clamp(2.55rem, 1.92rem + 0.48vw, 3.42rem);
+    border-radius: clamp(0.72rem, 0.52rem + 0.18vw, 1.02rem);
+    font-size: clamp(0.78rem, 0.62rem + 0.13vw, 1rem);
+  }
+
+  .inn-payment-trigger span {
+    font-size: clamp(0.9rem, 0.68rem + 0.18vw, 1.24rem);
+  }
+
+  .inn-payment-dropdown {
+    width: clamp(11.8rem, 9.2rem + 2vw, 15.8rem);
+    border-radius: clamp(0.72rem, 0.52rem + 0.18vw, 1.02rem);
+    padding: clamp(0.35rem, 0.22rem + 0.12vw, 0.54rem);
+    gap: clamp(0.2rem, 0.12rem + 0.08vw, 0.34rem);
+  }
+
+  .inn-payment-option {
+    border-radius: clamp(0.5rem, 0.36rem + 0.12vw, 0.72rem);
+    padding:
+      clamp(0.55rem, 0.38rem + 0.14vw, 0.78rem)
+      clamp(0.62rem, 0.42rem + 0.16vw, 0.92rem);
+    gap: clamp(0.5rem, 0.34rem + 0.14vw, 0.74rem);
+  }
+
+  .inn-payment-option strong {
+    font-size: clamp(0.74rem, 0.58rem + 0.13vw, 0.98rem);
+  }
+
+  .inn-payment-option em {
+    font-size: clamp(0.7rem, 0.54rem + 0.13vw, 0.92rem);
+  }
+
+  .inn-basic-result {
+    border-radius: clamp(0.68rem, 0.48rem + 0.18vw, 0.98rem);
+    padding:
+      clamp(0.58rem, 0.38rem + 0.16vw, 0.84rem)
+      clamp(0.68rem, 0.46rem + 0.18vw, 1rem);
+    font-size: clamp(0.74rem, 0.58rem + 0.13vw, 0.96rem);
+  }
+}
+
 @media (max-width: 760px) {
   .inn-basic-card {
     width: min(100%, 36rem);
