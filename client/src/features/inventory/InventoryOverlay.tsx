@@ -336,9 +336,9 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     description:
       "Sticky residue from a slime. Mostly used as a low-grade crafting material.",
   },
-  clear_slime_core: {
-    id: "clear_slime_core",
-    name: "Clear Slime Core",
+  slime_core: {
+    id: "slime_core",
+    name: "Slime Core",
     icon: "◇",
     category: "material",
     description:

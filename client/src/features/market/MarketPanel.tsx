@@ -35,7 +35,7 @@ const ITEM_ICONS: Record<string, string> = {
   cooking_salt: "🧂",
   pressed_seed_oil: "🫙",
   slime_gel: "🟢",
-  clear_slime_core: "◇",
+  slime_core: "◇",
   slime_membrane: "◌",
   boar_meat: "🥩",
   boar_tusk: "△",

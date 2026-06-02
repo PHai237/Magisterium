@@ -508,8 +508,8 @@ const RAW_ITEM_DEFINITIONS: readonly ItemDefinition[] = [
     tags: ['loot', 'material', 'beast', 'wolf', 'pelt', 'leather'],
   },
   {
-    id: 'clear_slime_core',
-    name: 'Clear Slime Core',
+    id: 'slime_core',
+    name: 'Slime Core',
     description:
       'A translucent core sometimes found inside stable slimes. Useful for basic alchemy and flexible craft bindings.',
     category: 'material',

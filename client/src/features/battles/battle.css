@@ -357,6 +357,11 @@
     0 0 44px rgba(0, 0, 0, 0.34);
 }
 
+.battle-enemy-orb--image .monster-pixel-icon {
+  width: 3.2rem;
+  height: 3.2rem;
+}
+
 .battlefield-focus h2,
 .battlefield-loading h2 {
   margin: 0;
@@ -887,6 +892,11 @@
   display: grid;
   place-items: center;
   font-size: 1rem;
+}
+
+.battle-target-card__icon--image .monster-pixel-icon {
+  width: 1.22rem;
+  height: 1.22rem;
 }
 
 .battle-target-card__copy {

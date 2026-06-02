@@ -13,6 +13,7 @@ import type {
   SkillId,
 } from "../../domain/magisterium.types";
 import { compactLabel, formatNumber, uniqueValues } from "../../lib/format";
+import { hasMonsterImage, renderMonsterIcon } from "../monsters/monsterAssets";
 import { battlesApi } from "./battles.api";
 import { MobileBattleLog } from "./MobileBattleLog";
 import "./battle.css";
@@ -1426,8 +1427,21 @@ export function BattlePanel({
               <>
                 <div className="battlefield-label">Encounter</div>
 
-                <div className="battle-enemy-orb" aria-hidden="true">
-                  {focusedEnemyDisplay.icon}
+                <div
+                  className={[
+                    "battle-enemy-orb",
+                    hasMonsterImage(focusedEnemy?.monsterId)
+                      ? "battle-enemy-orb--image"
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-hidden="true"
+                >
+                  {renderMonsterIcon({
+                    monsterId: focusedEnemy?.monsterId,
+                    fallback: focusedEnemyDisplay.icon,
+                  })}
                 </div>
 
                 <h2>{focusedEnemyDisplay.label}</h2>
@@ -1468,10 +1482,20 @@ export function BattlePanel({
                           onClick={() => setTargetId(enemy.actorId)}
                         >
                           <span
-                            className="battle-target-card__icon"
+                            className={[
+                              "battle-target-card__icon",
+                              hasMonsterImage(enemy.monsterId)
+                                ? "battle-target-card__icon--image"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
                             aria-hidden="true"
                           >
-                            {enemyDisplay.icon}
+                            {renderMonsterIcon({
+                              monsterId: enemy.monsterId,
+                              fallback: enemyDisplay.icon,
+                            })}
                           </span>
 
                           <span className="battle-target-card__copy">

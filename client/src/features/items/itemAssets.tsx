@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 
 import slimeGelImage from "../../assets/items/slime/slime_gel.png";
+import slimeCoreImage from "../../assets/items/slime/slime_core.png";
 import type { ItemId } from "../../domain/magisterium.types";
 
 const ITEM_IMAGE_BY_ID: Partial<Record<ItemId, string>> = {
   slime_gel: slimeGelImage,
+  slime_core: slimeCoreImage,
 };
 
 interface ItemIconProps {

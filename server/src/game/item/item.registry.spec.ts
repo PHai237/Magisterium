@@ -226,7 +226,7 @@ describe('item registry', () => {
   it('should use canonical early crafting material ids and rarities', () => {
     const canonicalMaterialRarityById = {
       slime_gel: 'common',
-      clear_slime_core: 'uncommon',
+      slime_core: 'uncommon',
       slime_membrane: 'uncommon',
       boar_meat: 'common',
       tough_hide: 'common',

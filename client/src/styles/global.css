@@ -70,6 +70,14 @@ button:disabled {
   image-rendering: pixelated;
 }
 
+.monster-pixel-icon {
+  display: block;
+  width: 1.8em;
+  height: 1.8em;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
 input,
 select {
   width: 100%;
