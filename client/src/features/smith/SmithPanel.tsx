@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "../../components/ui/Button";
-import type { CharacterSnapshot, EquipmentSlot } from "../../domain/magisterium.types";
+import type {
+  CharacterSnapshot,
+  EquipmentSlot,
+  ItemRarity
+} from "../../domain/magisterium.types";
 import { formatNumber } from "../../lib/format";
 import { smithApi, type SmithRecipeView } from "./smith.api";
 import "./smith.css";
@@ -17,6 +21,9 @@ interface SmithCategoryDefinition {
   label: string;
   icon: string;
 }
+
+type SmithSlotFilter = "all" | EquipmentSlot;
+type SmithRarityFilter = Extract<ItemRarity, "common">;
 
 const SMITH_CATEGORIES: SmithCategoryDefinition[] = [
   { slot: "weapon", label: "Hand", icon: "⚔️" },
@@ -37,6 +44,18 @@ const SLOT_LABEL_BY_ID: Record<EquipmentSlot, string> = {
   boots: "Boots",
   accessory: "Accessory"
 };
+
+const SMITH_SLOT_FILTERS: Array<{ value: SmithSlotFilter; label: string }> = [
+  { value: "all", label: "All" },
+  ...SMITH_CATEGORIES.map((category) => ({
+    value: category.slot,
+    label: category.label
+  }))
+];
+
+const SMITH_RARITY_FILTERS: Array<{ value: SmithRarityFilter; label: string }> = [
+  { value: "common", label: "Common" }
+];
 
 const MODIFIER_TARGET_LABELS: Record<string, string> = {
   pAtk: "Physical Attack",
@@ -151,7 +170,9 @@ export function SmithPanel({
   onCharacterUpdated
 }: SmithPanelProps) {
   const [catalog, setCatalog] = useState<SmithRecipeView[]>([]);
-  const [activeCategory, setActiveCategory] = useState<EquipmentSlot>("weapon");
+  const [activeSlotFilter, setActiveSlotFilter] = useState<SmithSlotFilter>("all");
+  const [activeRarityFilter, setActiveRarityFilter] =
+    useState<SmithRarityFilter>("common");
   const [selectedRecipeId, setSelectedRecipeId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [busyRecipeId, setBusyRecipeId] = useState<string | null>(null);
@@ -159,8 +180,15 @@ export function SmithPanel({
   const [error, setError] = useState<string | null>(null);
 
   const filteredRecipes = useMemo(
-    () => catalog.filter((recipe) => recipe.output.slot === activeCategory),
-    [activeCategory, catalog]
+    () =>
+      catalog.filter((recipe) => {
+        const matchesSlot =
+          activeSlotFilter === "all" || recipe.output.slot === activeSlotFilter;
+        const matchesRarity = recipe.output.rarity === activeRarityFilter;
+
+        return matchesSlot && matchesRarity;
+      }),
+    [activeRarityFilter, activeSlotFilter, catalog]
   );
 
   const selectedRecipe = useMemo(() => {
@@ -265,33 +293,43 @@ export function SmithPanel({
     <section className="smith-panel" aria-label="Iron and Ember Smithy">
       <header className="smith-console-header">
         <div className="smith-filter-group" aria-label="Smith filters">
-          <label className="smith-filter-control">
-            <span>Slot</span>
+          <label className="smith-filter-control" aria-label="Filter by slot">
             <select
-              value={activeCategory}
+              value={activeSlotFilter}
               onChange={(event) =>
-                setActiveCategory(event.target.value as EquipmentSlot)
+                setActiveSlotFilter(event.target.value as SmithSlotFilter)
               }
             >
-              {SMITH_CATEGORIES.map((category) => (
-                <option key={category.slot} value={category.slot}>
-                  {category.label}
+              {SMITH_SLOT_FILTERS.map((filter) => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.label}
                 </option>
               ))}
             </select>
           </label>
 
-          <button
-            type="button"
-            className="smith-filter-control smith-filter-control--button"
-            disabled
-          >
-            <span>Rarity</span>
-            <strong>Common</strong>
-          </button>
+          <label className="smith-filter-control" aria-label="Filter by rarity">
+            <select
+              value={activeRarityFilter}
+              onChange={(event) =>
+                setActiveRarityFilter(event.target.value as SmithRarityFilter)
+              }
+            >
+              {SMITH_RARITY_FILTERS.map((filter) => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
-        <strong className="smith-panel-title">Smith</strong>
+        <div className="smith-panel-title">
+          <span>The Smith</span>
+          <div className="smith-panel-title__icon" aria-hidden="true">
+            ⚒️
+          </div>
+        </div>
       </header>
 
       <div className="smith-workbench">
