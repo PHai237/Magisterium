@@ -16,6 +16,7 @@ import { BattleModule } from './game/battle/battle.module';
 import { ExplorationModule } from './game/exploration/exploration.module';
 import { MarketModule } from './game/market/market.module';
 import { SanctuaryModule } from './game/sanctuary/sanctuary.module';
+import { SmithModule } from './game/smith/smith.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SanctuaryModule } from './game/sanctuary/sanctuary.module';
     ExplorationModule,
     MarketModule,
     SanctuaryModule,
+    SmithModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -71,6 +73,14 @@ export class AppModule implements NestModule {
       },
       {
         path: 'sanctuary/(.*)',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'smith',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'smith/(.*)',
         method: RequestMethod.ALL,
       },
     );

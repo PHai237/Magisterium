@@ -1,0 +1,623 @@
+.smith-panel {
+  width: min(100%, 72rem);
+  height: min(100%, 41rem);
+  min-height: 0;
+  border: 1px solid rgba(251, 146, 60, 0.16);
+  border-radius: 0.42rem;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(234, 88, 12, 0.12), transparent 20rem),
+    radial-gradient(circle at 4% 90%, rgba(120, 53, 15, 0.14), transparent 18rem),
+    linear-gradient(180deg, rgba(17, 19, 23, 0.98), rgba(8, 9, 10, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(251, 146, 60, 0.035),
+    0 22px 70px rgba(0, 0, 0, 0.42);
+  color: #d6d3d1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.82rem;
+  padding: 0.85rem;
+  overflow: hidden;
+  font-family: var(--mono);
+}
+
+.smith-console-header,
+.smith-blueprint-bay,
+.smith-assembly-line,
+.smith-terminal {
+  border: 1px solid rgba(39, 43, 52, 0.92);
+  background: rgba(10, 12, 15, 0.86);
+}
+
+.smith-console-header {
+  min-height: 3.8rem;
+  border-radius: 0.26rem;
+  padding: 0.65rem 0.8rem;
+  display: grid;
+  grid-template-columns: minmax(13rem, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.82rem;
+}
+
+.smith-console-id {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.smith-console-id__lamp {
+  width: 0.58rem;
+  height: 0.58rem;
+  border-radius: 999px;
+  background: #ea580c;
+  box-shadow: 0 0 16px rgba(234, 88, 12, 0.78);
+  animation: smith-lamp-pulse 1.8s ease-in-out infinite;
+}
+
+.smith-console-id div {
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.smith-console-id strong {
+  overflow: hidden;
+  color: #f5f5f4;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.smith-console-id span:not(.smith-console-id__lamp) {
+  overflow: hidden;
+  color: #78716c;
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.smith-category-strip {
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.38rem;
+  overflow-x: auto;
+  padding-bottom: 0.12rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(234, 88, 12, 0.36) rgba(10, 12, 15, 0.8);
+}
+
+.smith-category-strip::-webkit-scrollbar,
+.smith-blueprint-grid::-webkit-scrollbar,
+.smith-assembly-line::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.smith-category-strip::-webkit-scrollbar-track,
+.smith-blueprint-grid::-webkit-scrollbar-track,
+.smith-assembly-line::-webkit-scrollbar-track {
+  background: rgba(10, 12, 15, 0.8);
+}
+
+.smith-category-strip::-webkit-scrollbar-thumb,
+.smith-blueprint-grid::-webkit-scrollbar-thumb,
+.smith-assembly-line::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(234, 88, 12, 0.34);
+}
+
+.smith-category-button {
+  flex: 0 0 auto;
+  min-height: 1.9rem;
+  border: 1px solid rgba(39, 43, 52, 0.95);
+  border-radius: 0.2rem;
+  background: rgba(15, 17, 21, 0.94);
+  color: #a8a29e;
+  padding: 0.3rem 0.56rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.6rem;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.smith-category-button:not(.smith-category-button--active):hover {
+  border-color: rgba(251, 146, 60, 0.44);
+  color: #fed7aa;
+  transform: translateY(-1px);
+}
+
+.smith-category-button--active {
+  border-color: rgba(249, 115, 22, 0.88);
+  background: linear-gradient(180deg, #f97316, #c2410c);
+  color: #0c0a09;
+  box-shadow: 0 0 18px rgba(234, 88, 12, 0.28);
+}
+
+.smith-workbench {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(20rem, 0.92fr);
+  gap: 0.82rem;
+  overflow: hidden;
+}
+
+.smith-blueprint-bay,
+.smith-assembly-line {
+  min-width: 0;
+  min-height: 0;
+  border-radius: 0.26rem;
+  padding: 0.78rem;
+  overflow: hidden;
+}
+
+.smith-blueprint-bay {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.65rem;
+}
+
+.smith-section-header {
+  min-width: 0;
+  border-bottom: 1px solid rgba(39, 43, 52, 0.8);
+  padding-bottom: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.smith-section-header span,
+.smith-subheader {
+  color: #d6d3d1;
+  font-size: 0.63rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.smith-section-header em {
+  color: #57534e;
+  font-size: 0.56rem;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.smith-blueprint-grid {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.18rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(6.8rem, auto);
+  align-content: start;
+  gap: 0.5rem;
+}
+
+.smith-blueprint-cell {
+  min-width: 0;
+  border: 1px solid rgba(39, 43, 52, 0.95);
+  border-radius: 0.24rem;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(234, 88, 12, 0.045), transparent 4.5rem),
+    rgba(15, 17, 21, 0.94);
+  color: #d6d3d1;
+  padding: 0.48rem;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.26rem;
+  text-align: center;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+button.smith-blueprint-cell:hover {
+  border-color: rgba(249, 115, 22, 0.58);
+  background-color: rgba(20, 18, 16, 0.98);
+  transform: translateY(-1px);
+}
+
+.smith-blueprint-cell--active {
+  border-color: rgba(249, 115, 22, 0.92);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(234, 88, 12, 0.12), transparent 4.8rem),
+    rgba(26, 20, 16, 0.98);
+  box-shadow: inset 0 0 18px rgba(234, 88, 12, 0.14);
+}
+
+.smith-blueprint-cell--incomplete:not(.smith-blueprint-cell--active) {
+  opacity: 0.68;
+}
+
+.smith-blueprint-cell--empty {
+  border-style: dashed;
+  color: #3f3f46;
+  opacity: 0.42;
+}
+
+.smith-blueprint-cell__icon {
+  color: #fb923c;
+  font-size: 1.65rem;
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(234, 88, 12, 0.24);
+}
+
+.smith-blueprint-cell strong {
+  overflow: hidden;
+  max-width: 100%;
+  color: #f5f5f4;
+  font-size: 0.65rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.smith-blueprint-cell small {
+  color: #78716c;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.smith-blueprint-footer {
+  border-top: 1px solid rgba(39, 43, 52, 0.8);
+  padding-top: 0.45rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  color: #57534e;
+  font-size: 0.56rem;
+  font-weight: 800;
+}
+
+.smith-assembly-line {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+}
+
+.smith-target-card {
+  border: 1px solid rgba(39, 43, 52, 0.92);
+  border-radius: 0.26rem;
+  background: rgba(17, 19, 23, 0.92);
+  padding: 0.72rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.72rem;
+}
+
+.smith-target-card__icon {
+  width: 3.6rem;
+  height: 3.6rem;
+  border: 1px solid rgba(154, 52, 18, 0.72);
+  border-radius: 0.28rem;
+  background: rgba(24, 18, 14, 0.92);
+  color: #fb923c;
+  display: grid;
+  place-items: center;
+  font-size: 1.82rem;
+  box-shadow: inset 0 0 16px rgba(234, 88, 12, 0.1);
+}
+
+.smith-target-card div:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 0.16rem;
+}
+
+.smith-target-card span,
+.smith-action-footer span,
+.smith-spec-grid span,
+.smith-modifier-card span {
+  color: #78716c;
+  font-size: 0.56rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.smith-target-card h2 {
+  overflow: hidden;
+  margin: 0;
+  color: #f5f5f4;
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.smith-target-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: #a8a29e;
+  font-size: 0.62rem;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.smith-spec-grid,
+.smith-modifier-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+.smith-spec-grid div,
+.smith-modifier-card {
+  min-width: 0;
+  border: 1px solid rgba(39, 43, 52, 0.9);
+  border-radius: 0.22rem;
+  background: rgba(15, 17, 21, 0.86);
+  padding: 0.55rem 0.62rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.smith-spec-grid strong,
+.smith-modifier-card strong {
+  overflow: hidden;
+  color: #fdba74;
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smith-output-modifiers,
+.smith-reagents {
+  display: grid;
+  gap: 0.48rem;
+}
+
+.smith-reagent-list {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.smith-reagent-row {
+  border: 1px solid rgba(154, 52, 18, 0.28);
+  border-radius: 0.22rem;
+  background: rgba(18, 17, 16, 0.88);
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.72rem;
+}
+
+.smith-reagent-row--missing {
+  border-color: rgba(127, 29, 29, 0.5);
+  background: rgba(26, 17, 18, 0.86);
+  opacity: 0.72;
+}
+
+.smith-reagent-row__name {
+  min-width: 0;
+  overflow: hidden;
+  color: #d6d3d1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smith-reagent-row__name em {
+  width: 1.2rem;
+  color: #fb923c;
+  font-style: normal;
+  text-align: center;
+}
+
+.smith-reagent-row strong {
+  color: #fb923c;
+  font-size: 0.64rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.smith-reagent-row--missing strong {
+  color: #f87171;
+}
+
+.smith-action-footer {
+  margin-top: auto;
+  border-top: 1px solid rgba(39, 43, 52, 0.88);
+  padding-top: 0.72rem;
+  display: grid;
+  gap: 0.62rem;
+}
+
+.smith-action-footer > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.smith-action-footer strong {
+  color: #f59e0b;
+  font-size: 0.68rem;
+  font-weight: 950;
+}
+
+.smith-craft-button {
+  width: 100%;
+  min-height: 2.55rem;
+  border-color: rgba(249, 115, 22, 0.64) !important;
+  background: linear-gradient(90deg, #9a3412, #ea580c) !important;
+  color: #fff7ed !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.smith-craft-button:disabled {
+  filter: grayscale(0.6);
+}
+
+.smith-terminal {
+  min-height: 2.1rem;
+  border-radius: 0.22rem;
+  padding: 0.46rem 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  color: #78716c;
+  font-size: 0.62rem;
+  font-weight: 800;
+  overflow: hidden;
+}
+
+.smith-terminal strong {
+  color: rgba(251, 146, 60, 0.9);
+  white-space: nowrap;
+}
+
+.smith-terminal span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smith-empty-state,
+.smith-empty-assembly {
+  min-height: 8rem;
+  border: 1px dashed rgba(63, 63, 70, 0.85);
+  border-radius: 0.28rem;
+  background: rgba(8, 9, 10, 0.48);
+  color: #78716c;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  font-size: 0.7rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.smith-empty-state--error {
+  color: #fecaca;
+  border-color: rgba(127, 29, 29, 0.58);
+}
+
+.smith-empty-state--compact {
+  min-height: auto;
+  padding: 0.65rem;
+}
+
+.smith-empty-assembly {
+  height: 100%;
+  align-content: center;
+  gap: 0.45rem;
+}
+
+.smith-empty-assembly span {
+  color: #57534e;
+  font-size: 2rem;
+}
+
+.smith-empty-assembly strong {
+  color: #a8a29e;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+}
+
+.smith-empty-assembly p {
+  margin: 0;
+  color: #78716c;
+  font-size: 0.66rem;
+}
+
+@keyframes smith-lamp-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@media (max-width: 980px) {
+  .smith-panel {
+    height: 100%;
+    width: 100%;
+  }
+
+  .smith-console-header {
+    grid-template-columns: 1fr;
+  }
+
+  .smith-category-strip {
+    justify-content: flex-start;
+  }
+
+  .smith-workbench {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .smith-blueprint-bay,
+  .smith-assembly-line {
+    min-height: 22rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .smith-panel {
+    padding: 0.58rem;
+    gap: 0.58rem;
+  }
+
+  .smith-blueprint-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(6.2rem, auto);
+  }
+
+  .smith-spec-grid,
+  .smith-modifier-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .smith-blueprint-footer {
+    display: none;
+  }
+
+  .smith-terminal span {
+    white-space: normal;
+  }
+}

@@ -177,6 +177,32 @@ export interface CharacterMarketTransactionResult {
   };
 }
 
+export interface CharacterCraftInventoryItemCommand {
+  outputItemId: ItemId;
+  outputQuantity: number;
+  requiredItems: Array<{
+    itemId: ItemId;
+    quantity: number;
+  }>;
+  bronzeCost: number;
+}
+
+export interface CharacterCraftInventoryItemResult {
+  character: CharacterSnapshot;
+
+  craft: {
+    outputItemId: ItemId;
+    outputQuantity: number;
+    consumedItems: Array<{
+      itemId: ItemId;
+      quantity: number;
+    }>;
+    consumedBronze: number;
+    previousMoneyBronze: number;
+    nextMoneyBronze: number;
+  };
+}
+
 const BASIC_INN_REST_PRICE_BRONZE = 2;
 const ONE_NIGHT_INN_PASS_ID: ItemId = 'one_night_inn_pass';
 
@@ -573,6 +599,101 @@ export class CharacterService implements OnModuleInit {
     itemId: ItemId,
   ): CharacterInventoryMutationResult {
     return this.removeInventoryItem(characterId, userId, itemId, 1);
+  }
+
+  craftInventoryItem(
+    characterId: string,
+    userId: string,
+    command: CharacterCraftInventoryItemCommand,
+  ): CharacterCraftInventoryItemResult {
+    const userScope = normalizeRequiredUserId(userId);
+    const existingCharacter = this.findEntityById(characterId);
+    const outputQuantity = this.normalizePositiveInventoryMutationQuantity(
+      command.outputQuantity,
+    );
+    const bronzeCost = this.normalizeNonNegativeBronzeAmount(
+      command.bronzeCost,
+      'Smithing fee',
+    );
+
+    this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
+    this.assertKnownInventoryItem(command.outputItemId);
+    this.assertInventoryItemIsEquipment(command.outputItemId);
+
+    const requiredQuantityByItemId = new Map<ItemId, number>();
+
+    for (const requiredItem of command.requiredItems) {
+      this.assertKnownInventoryItem(requiredItem.itemId);
+
+      const requiredQuantity = this.normalizePositiveInventoryMutationQuantity(
+        requiredItem.quantity,
+      );
+
+      requiredQuantityByItemId.set(
+        requiredItem.itemId,
+        (requiredQuantityByItemId.get(requiredItem.itemId) ?? 0) +
+          requiredQuantity,
+      );
+    }
+
+    if (existingCharacter.moneyBronze < bronzeCost) {
+      throw new BadRequestException(
+        `Not enough bronze. Required ${bronzeCost}, available ${existingCharacter.moneyBronze}.`,
+      );
+    }
+
+    for (const [itemId, quantity] of requiredQuantityByItemId.entries()) {
+      this.assertInventoryHasQuantity(existingCharacter, itemId, quantity);
+    }
+
+    let nextInventoryItemIds = [...existingCharacter.inventoryItemIds];
+
+    for (const [itemId, quantity] of requiredQuantityByItemId.entries()) {
+      nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(() =>
+        removeItemQuantityFromInventory(nextInventoryItemIds, itemId, quantity),
+      ).inventoryItemIds;
+    }
+
+    const outputInventoryChange = this.runInventoryOperationOrThrowBadRequest(
+      () =>
+        addItemQuantityToInventory(
+          nextInventoryItemIds,
+          command.outputItemId,
+          outputQuantity,
+        ),
+    );
+
+    const nextCharacter: Character = {
+      ...existingCharacter,
+      moneyBronze: existingCharacter.moneyBronze - bronzeCost,
+      inventoryItemIds: outputInventoryChange.inventoryItemIds,
+      equippedItemIds: existingCharacter.equippedItemIds.filter(
+        (equippedItemId) =>
+          outputInventoryChange.inventoryItemIds.includes(equippedItemId),
+      ),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.characters.set(characterId, nextCharacter);
+    this.persistCharacter(nextCharacter);
+    this.repairCurrentCharacterForUserScope(userScope);
+
+    return {
+      character: createCharacterSnapshot(nextCharacter),
+      craft: {
+        outputItemId: command.outputItemId,
+        outputQuantity,
+        consumedItems: Array.from(requiredQuantityByItemId.entries()).map(
+          ([itemId, quantity]) => ({
+            itemId,
+            quantity,
+          }),
+        ),
+        consumedBronze: bronzeCost,
+        previousMoneyBronze: existingCharacter.moneyBronze,
+        nextMoneyBronze: nextCharacter.moneyBronze,
+      },
+    };
   }
 
   buyMarketItem(

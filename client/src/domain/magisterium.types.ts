@@ -36,6 +36,17 @@ export type StatKey = "STR" | "DEX" | "CON" | "INT" | "WIS" | "LUK";
 export type SkillId = string;
 export type ItemId = string;
 export type PassiveId = string;
+
+export type EquipmentSlot =
+  | "weapon"
+  | "off_hand"
+  | "helmet"
+  | "armor"
+  | "legging"
+  | "boots"
+  | "accessory";
+
+export type ItemRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 export type MilestoneId = string;
 
 export interface StatProgress {
@@ -93,6 +104,8 @@ export interface CurrentState {
 export interface CharacterProgression {
   rankIndex?: number;
   rankId?: string;
+  level?: number;
+  exp?: number;
   milestoneIds: MilestoneId[];
 }
 
@@ -230,72 +243,6 @@ export interface MarketTransactionResult {
   };
 }
 
-export type RankId =
-  | "novice"
-  | "initiate"
-  | "acolyte"
-  | "adept"
-  | "magus"
-  | "magister"
-  | "archmagister";
-
-export interface RankDefinition {
-  id: RankId;
-  index: number;
-  name: string;
-  averageStatRequired: number;
-}
-
-export interface RankProgressionStatus {
-  currentRank: RankDefinition;
-  nextRank?: RankDefinition;
-  averageStatValue: number;
-  averageStatRequiredForNextRank?: number;
-  progressPercentToNextRank: number;
-  isEligibleForRankUp: boolean;
-}
-
-export interface SanctuaryInventoryQuantity {
-  statKey: StatKey;
-  itemId: ItemId;
-  quantity: number;
-}
-
-export interface CharacterSanctuaryStatusResult {
-  character: CharacterSnapshot;
-  rankStatus: RankProgressionStatus;
-  fragments: SanctuaryInventoryQuantity[];
-  runes: SanctuaryInventoryQuantity[];
-}
-
-export interface CharacterRuneRefinementResult extends CharacterSanctuaryStatusResult {
-  refinement: {
-    statKey: StatKey;
-    consumedItemId: ItemId;
-    consumedQuantity: number;
-    createdItemId: ItemId;
-    createdQuantity: number;
-  };
-}
-
-export interface CharacterRuneImbueResult extends CharacterSanctuaryStatusResult {
-  imbue: {
-    statKey: StatKey;
-    consumedItemId: ItemId;
-    consumedQuantity: number;
-    previousAccumulatedBonus: number;
-    nextAccumulatedBonus: number;
-  };
-}
-
-export interface CharacterRankUpResult extends CharacterSanctuaryStatusResult {
-  rankUp: {
-    previousRank: RankDefinition;
-    nextRank: RankDefinition;
-    averageStatValue: number;
-  };
-}
-
 export interface CharacterInnRestResult {
   character: CharacterSnapshot;
 
@@ -321,7 +268,8 @@ export interface ConsumableEffectApplication {
   amountApplied: number;
 }
 
-export interface CharacterConsumableMutationResult extends CharacterInventoryMutationResult {
+export interface CharacterConsumableMutationResult
+  extends CharacterInventoryMutationResult {
   itemUse: {
     itemId: ItemId;
     context: "battle" | "out_of_battle";
@@ -354,13 +302,7 @@ export type BattleActionType =
   | "skip_turn"
   | "flee";
 export type DamageType = "physical" | "magical" | "true";
-export type ElementType =
-  | "fire"
-  | "water"
-  | "wind"
-  | "earth"
-  | "light"
-  | "dark";
+export type ElementType = "fire" | "water" | "wind" | "earth" | "light" | "dark";
 export type BattleActionPhase =
   | "initiation"
   | "resource_check"
@@ -368,7 +310,6 @@ export type BattleActionPhase =
   | "damage_calculation"
   | "mitigation"
   | "apply_damage"
-  | "status_effects"
   | "completed"
   | "cancelled";
 
@@ -385,7 +326,6 @@ export interface BattleEvent {
   value?: number;
   damageType?: DamageType;
   elementType?: ElementType;
-  statusEffectType?: string;
   message?: string;
   metadata?: Record<string, unknown>;
 }
@@ -403,6 +343,7 @@ export interface BattleActorState {
 
   baseStats: BaseStats;
   derivedStats: DerivedStats;
+  resistances?: Partial<Record<DamageType | ElementType, number>>;
 
   hp: number;
   mp: number;
@@ -471,6 +412,7 @@ export interface BattleEngineResult {
 }
 
 export interface BattleRewardSummary {
+  exp: number;
   moneyBronze: number;
   items: Array<{
     itemId: ItemId;
@@ -487,6 +429,83 @@ export interface AppliedBattleRewardResponse {
   battle: BattleState;
   character: CharacterSnapshot;
   reward: BattleRewardSummary;
+  progression: {
+    previousLevel: number;
+    nextLevel: number;
+    previousExp: number;
+    nextExp: number;
+    expGained: number;
+    leveledUp: boolean;
+    levelsGained: number;
+  };
+}
+
+export type RankId =
+  | "novice"
+  | "initiate"
+  | "acolyte"
+  | "adept"
+  | "magus"
+  | "magister"
+  | "archmagister";
+
+export interface RankDefinition {
+  id: RankId;
+  index: number;
+  name: string;
+  averageStatRequired: number;
+}
+
+export interface RankProgressionStatus {
+  currentRank: RankDefinition;
+  nextRank?: RankDefinition;
+  averageStatValue: number;
+  averageStatRequiredForNextRank?: number;
+  progressPercentToNextRank: number;
+  isEligibleForRankUp: boolean;
+}
+
+export interface SanctuaryInventoryQuantity {
+  statKey: StatKey;
+  itemId: ItemId;
+  quantity: number;
+}
+
+export interface CharacterSanctuaryStatusResult {
+  character: CharacterSnapshot;
+  rankStatus: RankProgressionStatus;
+  fragments: SanctuaryInventoryQuantity[];
+  runes: SanctuaryInventoryQuantity[];
+}
+
+export interface CharacterRuneRefinementResult
+  extends CharacterSanctuaryStatusResult {
+  refinement: {
+    statKey: StatKey;
+    consumedItemId: ItemId;
+    consumedQuantity: number;
+    createdItemId: ItemId;
+    createdQuantity: number;
+  };
+}
+
+export interface CharacterRuneImbueResult
+  extends CharacterSanctuaryStatusResult {
+  imbue: {
+    statKey: StatKey;
+    consumedItemId: ItemId;
+    consumedQuantity: number;
+    previousAccumulatedBonus: number;
+    nextAccumulatedBonus: number;
+  };
+}
+
+export interface CharacterRankUpResult extends CharacterSanctuaryStatusResult {
+  rankUp: {
+    previousRank: RankDefinition;
+    nextRank: RankDefinition;
+    averageStatValue: number;
+  };
 }
 
 export type UserRole = "player";

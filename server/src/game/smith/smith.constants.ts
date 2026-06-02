@@ -1,0 +1,96 @@
+import type { SmithRecipeDefinition } from './smith.types';
+
+export const SMITH_RECIPE_DEFINITIONS = Object.freeze([
+  {
+    id: 'smith_old_wooden_staff',
+    outputItemId: 'old_wooden_staff',
+    outputQuantity: 1,
+    requiredItems: [
+      { itemId: 'rough_wood', quantity: 3 },
+      { itemId: 'slime_gel', quantity: 2 },
+      { itemId: 'slime_core', quantity: 1 },
+    ],
+    bronzeCost: 8,
+    recommendedOriginIds: ['scholar'],
+    sortOrder: 10,
+  },
+  {
+    id: 'smith_rusty_sword',
+    outputItemId: 'rusty_sword',
+    outputQuantity: 1,
+    requiredItems: [
+      { itemId: 'goblin_scrap', quantity: 3 },
+      { itemId: 'coal', quantity: 1 },
+      { itemId: 'rough_stone', quantity: 1 },
+    ],
+    bronzeCost: 8,
+    recommendedOriginIds: ['mercenary', 'wanderer'],
+    sortOrder: 20,
+  },
+  {
+    id: 'smith_travelers_knife',
+    outputItemId: 'worn_travelers_knife',
+    outputQuantity: 1,
+    requiredItems: [
+      { itemId: 'cracked_blade', quantity: 1 },
+      { itemId: 'rough_stone', quantity: 2 },
+      { itemId: 'wolf_fang', quantity: 1 },
+    ],
+    bronzeCost: 9,
+    recommendedOriginIds: ['wanderer', 'street_urchin'],
+    sortOrder: 30,
+  },
+  {
+    id: 'smith_small_dagger',
+    outputItemId: 'small_dagger',
+    outputQuantity: 1,
+    requiredItems: [
+      { itemId: 'wolf_fang', quantity: 2 },
+      { itemId: 'cracked_blade', quantity: 1 },
+      { itemId: 'spider_silk', quantity: 1 },
+    ],
+    bronzeCost: 10,
+    recommendedOriginIds: ['street_urchin'],
+    sortOrder: 40,
+  },
+  {
+    id: 'smith_training_greatsword',
+    outputItemId: 'training_greatsword',
+    outputQuantity: 1,
+    requiredItems: [
+      { itemId: 'goblin_scrap', quantity: 5 },
+      { itemId: 'cracked_blade', quantity: 2 },
+      { itemId: 'coal', quantity: 2 },
+    ],
+    bronzeCost: 18,
+    recommendedOriginIds: ['mercenary'],
+    sortOrder: 50,
+  },
+  {
+    id: 'smith_worn_wooden_shield',
+    outputItemId: 'worn_wooden_shield',
+    outputQuantity: 1,
+    requiredItems: [
+      { itemId: 'rough_wood', quantity: 3 },
+      { itemId: 'tough_hide', quantity: 2 },
+      { itemId: 'slime_gel', quantity: 2 },
+    ],
+    bronzeCost: 9,
+    recommendedOriginIds: ['mercenary', 'acolyte', 'wanderer'],
+    sortOrder: 60,
+  },
+  {
+    id: 'smith_simple_wooden_charm',
+    outputItemId: 'simple_wooden_charm',
+    outputQuantity: 1,
+    requiredItems: [
+      { itemId: 'rough_wood', quantity: 1 },
+      { itemId: 'copper_nugget', quantity: 1 },
+      { itemId: 'slime_core', quantity: 1 },
+      { itemId: 'spider_silk', quantity: 1 },
+    ],
+    bronzeCost: 12,
+    recommendedOriginIds: ['acolyte', 'scholar'],
+    sortOrder: 70,
+  },
+] satisfies readonly SmithRecipeDefinition[]);
