@@ -815,6 +815,20 @@
   border-color: rgba(168, 85, 247, 0.38);
 }
 
+.gameshell-node--sanctuary {
+  top: 36%;
+  right: 28%;
+  border-color: rgba(212, 163, 89, 0.4);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(212, 163, 89, 0.13), transparent 4.8rem),
+    radial-gradient(circle at 50% 100%, rgba(59, 130, 246, 0.08), transparent 4.5rem),
+    rgba(11, 15, 23, 0.91);
+}
+
+.gameshell-node--sanctuary strong {
+  color: #fcd34d;
+}
+
 .gameshell-node--gate {
   width: 8.8rem;
   bottom: 11%;
@@ -947,6 +961,36 @@
 
 .gameshell-location-stage--market .market-basic-card {
   min-height: 0;
+}
+
+.gameshell-location-stage--sanctuary {
+  padding: 0.85rem 1rem;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.11), transparent 24rem),
+    radial-gradient(circle at 18% 72%, rgba(212, 163, 89, 0.08), transparent 20rem),
+    #070b12;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-main {
+  place-items: stretch;
+  padding-top: 0;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-back {
+  top: 2rem;
+  left: 2.05rem;
+  border-color: rgba(212, 163, 89, 0.24);
+  background: rgba(7, 11, 18, 0.72);
+  color: #fcd34d;
+}
+
+.gameshell-location-stage--sanctuary .sanctuary-panel {
+  min-height: 0;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-back:not(:disabled):hover {
+  border-color: rgba(212, 163, 89, 0.48);
+  background: rgba(120, 53, 15, 0.16);
 }
 
 .gameshell-placeholder-card {
@@ -1336,6 +1380,41 @@
     flex: 0 0 auto;
   }
 }
+
+@media (max-width: 760px) {
+  .gameshell-location-stage--sanctuary {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding:
+      3.55rem
+      0.72rem
+      calc(0.85rem + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gameshell-location-stage--sanctuary .gameshell-location-main {
+    height: auto;
+    min-height: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 0;
+  }
+
+  .gameshell-location-stage--sanctuary .gameshell-location-back {
+    position: fixed;
+    top: calc(58px + 0.55rem);
+    left: 0.72rem;
+    z-index: 160;
+    max-width: calc(100vw - 1.44rem);
+  }
+
+  .gameshell-location-stage--sanctuary .sanctuary-panel {
+    flex: 0 0 auto;
+  }
+}
+
 .gameshell-location-stage--smith {
   padding: 0.85rem 1rem;
   background:

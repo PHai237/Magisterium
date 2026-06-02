@@ -5,6 +5,7 @@ interface TownMapProps {
   onOpenSmith: () => void;
   onOpenArchive: () => void;
   onOpenMarket: () => void;
+  onOpenSanctuary: () => void;
   onOpenWorld: () => void;
 }
 
@@ -13,6 +14,7 @@ export function TownMap({
   onOpenSmith,
   onOpenArchive,
   onOpenMarket,
+  onOpenSanctuary,
   onOpenWorld
 }: TownMapProps) {
   return (
@@ -54,6 +56,14 @@ export function TownMap({
         name="Market"
         subtitle="Supplies & Trade"
         onClick={onOpenMarket}
+      />
+
+      <MapNode
+        className="gameshell-node--sanctuary"
+        icon="⛪"
+        name="The Sanctuary"
+        subtitle="Fragments / Runes"
+        onClick={onOpenSanctuary}
       />
 
       <MapNode

@@ -13,6 +13,7 @@ import { ExplorationZone } from "../exploration/ExplorationZone";
 import { InnPanel } from "../inn/InnPanel";
 import { InventoryOverlay } from "../inventory/InventoryOverlay";
 import { MarketPanel } from "../market/MarketPanel";
+import { SanctuaryPanel } from "../sanctuary/SanctuaryPanel";
 import { SmithPanel } from "../smith/SmithPanel";
 import { GameActionBar } from "./GameActionBar";
 import { GameHud } from "./GameHud";
@@ -35,6 +36,7 @@ type ActivePanel =
   | "battle"
   | "inn"
   | "market"
+  | "sanctuary"
   | "smith"
   | "archive";
 
@@ -199,6 +201,22 @@ export function GameShell({
       );
     }
 
+    if (activePanel === "sanctuary") {
+      return (
+        <LocationStage
+          returnLabel="â† Return to Town"
+          onBack={returnToTownMap}
+          className="gameshell-location-stage--sanctuary"
+        >
+          <SanctuaryPanel
+            userId={userId}
+            currentCharacter={currentCharacter}
+            onCharacterUpdated={onCharacterUpdated}
+          />
+        </LocationStage>
+      );
+    }
+
     if (activePanel === "archive") {
       return (
         <PlaceholderPanel
@@ -220,6 +238,7 @@ export function GameShell({
             onOpenSmith={() => openPanel("smith")}
             onOpenArchive={() => openPanel("archive")}
             onOpenMarket={() => openPanel("market")}
+            onOpenSanctuary={() => openPanel("sanctuary")}
             onOpenWorld={() => {
               setIsInventoryOpen(false);
               setMapView("world");
