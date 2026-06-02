@@ -105,11 +105,11 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
 
         damageType: 'physical',
 
-        baseValue: 3,
+        baseValue: 5,
         scaling: {
           mode: 'single_stat',
           primaryStat: 'pAtk',
-          primaryMultiplier: 0.65,
+          primaryMultiplier: 0.85,
         },
 
         tags: ['starter', 'damage', 'physical'],
@@ -146,13 +146,13 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
 
         damageType: 'physical',
 
-        baseValue: 3,
+        baseValue: 4,
         scaling: {
           mode: 'dual_stat',
           primaryStat: 'pAtk',
-          primaryMultiplier: 0.6,
+          primaryMultiplier: 0.7,
           secondaryStat: 'actionSpeed',
-          secondaryMultiplier: 0.08,
+          secondaryMultiplier: 0.1,
         },
 
         tags: ['starter', 'damage', 'physical'],

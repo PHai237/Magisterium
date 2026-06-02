@@ -72,14 +72,14 @@ const SKILL_DISPLAY_DEFINITIONS: Record<string, SkillDisplayDefinition> = {
   steady_strike: {
     label: "Steady Strike",
     icon: "⚔️",
-    cost: "Costs 8 Stamina",
+    cost: "Costs 7 Stamina",
     group: "attack",
     needsEnemyTarget: true,
   },
   quick_stab: {
     label: "Quick Stab",
     icon: "🗡️",
-    cost: "Costs 6 Stamina",
+    cost: "Costs 8 Stamina",
     group: "attack",
     needsEnemyTarget: true,
   },
