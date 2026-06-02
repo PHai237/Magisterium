@@ -62,6 +62,14 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.item-pixel-icon {
+  display: block;
+  width: 1.45em;
+  height: 1.45em;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
 input,
 select {
   width: 100%;

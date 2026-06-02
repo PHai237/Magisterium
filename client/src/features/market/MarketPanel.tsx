@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/ui/Button";
 import type { CharacterSnapshot, ItemId } from "../../domain/magisterium.types";
 import { formatNumber } from "../../lib/format";
+import { hasItemImage, renderItemIcon } from "../items/itemAssets";
 import {
   type MarketCatalog,
   type MarketCatalogItem,
@@ -427,10 +428,20 @@ export function MarketPanel({
                       return (
                         <article key={item.itemId} className="market-item-card">
                           <div
-                            className="market-item-card__icon"
+                            className={[
+                              "market-item-card__icon",
+                              hasItemImage(item.itemId)
+                                ? "market-item-card__icon--image"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
                             aria-hidden="true"
                           >
-                            {getItemIcon(item.itemId)}
+                            {renderItemIcon({
+                              itemId: item.itemId,
+                              fallback: ITEM_ICONS[item.itemId] ?? "â—‡",
+                            })}
                           </div>
 
                           <div className="market-item-card__copy">

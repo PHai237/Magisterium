@@ -8,6 +8,7 @@ import type {
 } from "../../domain/magisterium.types";
 import { compactLabel, formatNumber } from "../../lib/format";
 import { charactersApi } from "../characters/characters.api";
+import { hasItemImage, renderItemIcon } from "../items/itemAssets";
 import "./inventory.css";
 
 interface InventoryOverlayProps {
@@ -950,7 +951,12 @@ export function InventoryOverlay({
                     onClick={() => setSelectedItemId(stack.itemId)}
                     aria-label={`${item.name}, quantity ${stack.quantity}`}
                   >
-                    <span aria-hidden="true">{item.icon}</span>
+                    <span aria-hidden="true">
+                      {renderItemIcon({
+                        itemId: item.id,
+                        fallback: item.icon,
+                      })}
+                    </span>
                     {stack.quantity > 1 ? (
                       <span className="inventory-bag-cell__quantity">
                         {formatNumber(stack.quantity)}
@@ -974,10 +980,20 @@ export function InventoryOverlay({
                 <>
                   <div className="inventory-action-panel__item">
                     <span
-                      className="inventory-action-panel__icon"
+                      className={[
+                        "inventory-action-panel__icon",
+                        hasItemImage(selectedItem.id)
+                          ? "inventory-action-panel__icon--image"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                       aria-hidden="true"
                     >
-                      {selectedItem.icon}
+                      {renderItemIcon({
+                        itemId: selectedItem.id,
+                        fallback: selectedItem.icon,
+                      })}
                     </span>
 
                     <div>

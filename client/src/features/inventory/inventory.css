@@ -421,6 +421,11 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
 }
 
+.inventory-bag-cell .item-pixel-icon {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
 .inventory-type-tabs {
   min-width: 0;
   display: grid;
@@ -536,6 +541,11 @@
   place-items: center;
   flex: 0 0 auto;
   font-size: 1.15rem;
+}
+
+.inventory-action-panel__icon--image .item-pixel-icon {
+  width: 1.55rem;
+  height: 1.55rem;
 }
 
 .inventory-action-panel__item div {

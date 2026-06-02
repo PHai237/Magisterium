@@ -350,6 +350,11 @@
   font-size: 1.18rem;
 }
 
+.market-item-card__icon--image .item-pixel-icon {
+  width: 1.55rem;
+  height: 1.55rem;
+}
+
 .market-item-card__copy {
   min-width: 0;
   display: grid;
