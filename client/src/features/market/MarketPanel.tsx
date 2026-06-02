@@ -21,19 +21,6 @@ interface MarketPanelProps {
 type MarketFilter = "all" | string;
 
 const ITEM_ICONS: Record<string, string> = {
-  fresh_potato: "🥔",
-  plump_wheat: "🌾",
-  gathered_egg: "🥚",
-  sweet_carrot: "🥕",
-  red_onion: "🧅",
-  fresh_milk: "🥛",
-  hot_chili: "🌶️",
-  moon_turnip: "🌙",
-  green_herb: "🌿",
-  clear_glass_vial: "🧪",
-  basic_solvent: "💧",
-  cooking_salt: "🧂",
-  pressed_seed_oil: "🫙",
   slime_gel: "🟢",
   slime_core: "◇",
   slime_membrane: "◌",
