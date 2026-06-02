@@ -146,7 +146,6 @@ export function SmithPanel({
   const [busyRecipeId, setBusyRecipeId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [syncedCharacter, setSyncedCharacter] = useState<CharacterSnapshot>(currentCharacter);
 
   const filteredRecipes = useMemo(
     () => catalog.filter((recipe) => recipe.output.slot === activeCategory),
@@ -160,10 +159,6 @@ export function SmithPanel({
       null
     );
   }, [filteredRecipes, selectedRecipeId]);
-
-  useEffect(() => {
-    setSyncedCharacter(currentCharacter);
-  }, [currentCharacter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,7 +175,6 @@ export function SmithPanel({
         }
 
         setCatalog(result.recipes);
-        setSyncedCharacter(result.character);
         setSelectedRecipeId((current) =>
           result.recipes.some((recipe) => recipe.id === current)
             ? current
@@ -240,7 +234,6 @@ export function SmithPanel({
       const refreshed = await smithApi.getRecipes(userId, result.character.id);
 
       setCatalog(refreshed.recipes);
-      setSyncedCharacter(refreshed.character);
       onCharacterUpdated(refreshed.character);
       setNotice(`Forged 1x ${selectedRecipe.output.name}.`);
     } catch (craftError) {
@@ -255,22 +248,11 @@ export function SmithPanel({
   }
 
   const emptyCellCount = Math.max(12 - filteredRecipes.length, 4);
-  const activeCategoryLabel = SLOT_LABEL_BY_ID[activeCategory];
   const isBusy = Boolean(busyRecipeId);
 
   return (
     <section className="smith-panel" aria-label="Iron and Ember Smithy">
       <header className="smith-console-header">
-        <div className="smith-console-id">
-          <span className="smith-console-id__lamp" aria-hidden="true" />
-          <div>
-            <strong>SMITHING SYSTEM</strong>
-            <span>
-              Operator: {syncedCharacter.name} // Bronze: {formatNumber(syncedCharacter.moneyBronze)}
-            </span>
-          </div>
-        </div>
-
         <nav className="smith-category-strip" aria-label="Smith categories">
           {SMITH_CATEGORIES.map((category) => (
             <button
@@ -290,11 +272,6 @@ export function SmithPanel({
 
       <div className="smith-workbench">
         <section className="smith-blueprint-bay">
-          <header className="smith-section-header">
-            <span>MATRIX: {activeCategoryLabel.toUpperCase()} BLUEPRINTS</span>
-            <em>GRID SCALE: 4x3</em>
-          </header>
-
           {loading ? (
             <div className="smith-empty-state">Loading blueprint matrix...</div>
           ) : error && catalog.length === 0 ? (
@@ -329,11 +306,6 @@ export function SmithPanel({
               ))}
             </div>
           )}
-
-          <footer className="smith-blueprint-footer">
-            <span>* Select a blueprint cell to load the assembly line.</span>
-            <span>Filter: {activeCategoryLabel}</span>
-          </footer>
         </section>
 
         <aside className="smith-assembly-line">
@@ -426,6 +398,15 @@ export function SmithPanel({
                       ? "Initialize Smithing Sequence"
                       : selectedRecipe.missingReason ?? "Cannot Craft"}
                 </Button>
+                {notice || error ? (
+                  <span
+                    className={`smith-action-message ${
+                      error ? "smith-action-message--error" : ""
+                    }`}
+                  >
+                    {error ?? notice}
+                  </span>
+                ) : null}
               </footer>
             </>
           ) : (
@@ -437,13 +418,6 @@ export function SmithPanel({
           )}
         </aside>
       </div>
-
-      <footer className="smith-terminal">
-        <strong>[SMITH_LOG]:</strong>
-        <span>
-          {notice ?? error ?? "Station terminal loaded. Select grid coordinates to inspect designs."}
-        </span>
-      </footer>
     </section>
   );
 }

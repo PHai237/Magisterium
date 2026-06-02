@@ -1,9 +1,9 @@
 .smith-panel {
-  width: min(100%, 72rem);
-  height: min(100%, 41rem);
+  width: 100%;
+  height: 100%;
   min-height: 0;
   border: 1px solid rgba(251, 146, 60, 0.16);
-  border-radius: 0.42rem;
+  border-radius: 0.82rem;
   background:
     radial-gradient(circle at 82% 12%, rgba(234, 88, 12, 0.12), transparent 20rem),
     radial-gradient(circle at 4% 90%, rgba(120, 53, 15, 0.14), transparent 18rem),
@@ -13,7 +13,7 @@
     0 22px 70px rgba(0, 0, 0, 0.42);
   color: #d6d3d1;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 0.82rem;
   padding: 0.85rem;
   overflow: hidden;
@@ -22,8 +22,7 @@
 
 .smith-console-header,
 .smith-blueprint-bay,
-.smith-assembly-line,
-.smith-terminal {
+.smith-assembly-line {
   border: 1px solid rgba(39, 43, 52, 0.92);
   background: rgba(10, 12, 15, 0.86);
 }
@@ -32,54 +31,10 @@
   min-height: 3.8rem;
   border-radius: 0.26rem;
   padding: 0.65rem 0.8rem;
-  display: grid;
-  grid-template-columns: minmax(13rem, auto) minmax(0, 1fr);
-  align-items: center;
-  gap: 0.82rem;
-}
-
-.smith-console-id {
-  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-}
-
-.smith-console-id__lamp {
-  width: 0.58rem;
-  height: 0.58rem;
-  border-radius: 999px;
-  background: #ea580c;
-  box-shadow: 0 0 16px rgba(234, 88, 12, 0.78);
-  animation: smith-lamp-pulse 1.8s ease-in-out infinite;
-}
-
-.smith-console-id div {
-  min-width: 0;
-  display: grid;
-  gap: 0.15rem;
-}
-
-.smith-console-id strong {
-  overflow: hidden;
-  color: #f5f5f4;
-  font-size: 0.72rem;
-  font-weight: 950;
-  letter-spacing: 0.18em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.smith-console-id span:not(.smith-console-id__lamp) {
-  overflow: hidden;
-  color: #78716c;
-  font-size: 0.6rem;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
+  justify-content: flex-end;
+  padding-left: 11.5rem;
 }
 
 .smith-category-strip {
@@ -168,36 +123,15 @@
 
 .smith-blueprint-bay {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 0.65rem;
+  grid-template-rows: minmax(0, 1fr);
 }
 
-.smith-section-header {
-  min-width: 0;
-  border-bottom: 1px solid rgba(39, 43, 52, 0.8);
-  padding-bottom: 0.55rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.smith-section-header span,
 .smith-subheader {
   color: #d6d3d1;
   font-size: 0.63rem;
   font-weight: 950;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.smith-section-header em {
-  color: #57534e;
-  font-size: 0.56rem;
-  font-style: normal;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
 }
 
 .smith-blueprint-grid {
@@ -281,17 +215,6 @@ button.smith-blueprint-cell:hover {
   font-weight: 900;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-}
-
-.smith-blueprint-footer {
-  border-top: 1px solid rgba(39, 43, 52, 0.8);
-  padding-top: 0.45rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.8rem;
-  color: #57534e;
-  font-size: 0.56rem;
-  font-weight: 800;
 }
 
 .smith-assembly-line {
@@ -487,28 +410,16 @@ button.smith-blueprint-cell:hover {
   filter: grayscale(0.6);
 }
 
-.smith-terminal {
-  min-height: 2.1rem;
-  border-radius: 0.22rem;
-  padding: 0.46rem 0.65rem;
-  display: flex;
-  align-items: center;
-  gap: 0.48rem;
-  color: #78716c;
+.smith-action-message {
+  color: #fdba74;
   font-size: 0.62rem;
-  font-weight: 800;
-  overflow: hidden;
+  font-weight: 850;
+  line-height: 1.35;
+  text-align: center;
 }
 
-.smith-terminal strong {
-  color: rgba(251, 146, 60, 0.9);
-  white-space: nowrap;
-}
-
-.smith-terminal span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.smith-action-message--error {
+  color: #fecaca;
 }
 
 .smith-empty-state,
@@ -559,19 +470,6 @@ button.smith-blueprint-cell:hover {
   font-size: 0.66rem;
 }
 
-@keyframes smith-lamp-pulse {
-  0%,
-  100% {
-    opacity: 0.62;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
-}
-
 @media (max-width: 980px) {
   .smith-panel {
     height: 100%;
@@ -579,7 +477,7 @@ button.smith-blueprint-cell:hover {
   }
 
   .smith-console-header {
-    grid-template-columns: 1fr;
+    padding-left: 0.8rem;
   }
 
   .smith-category-strip {
@@ -613,11 +511,4 @@ button.smith-blueprint-cell:hover {
     grid-template-columns: 1fr;
   }
 
-  .smith-blueprint-footer {
-    display: none;
-  }
-
-  .smith-terminal span {
-    white-space: normal;
-  }
 }
