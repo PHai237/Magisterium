@@ -33,16 +33,16 @@ function createStatProgress(currentValue: number): StatProgress {
 describe('character calculations', () => {
   it('should calculate phase 6B derived stats from base stats', () => {
     expect(calculateDerivedStats(BASE_STATS, [])).toEqual({
-      maxHp: 130,
-      maxMp: 70,
-      maxStamina: 145,
+      maxHp: 77,
+      maxMp: 45,
+      maxStamina: 106,
 
-      pAtk: 26,
-      mAtk: 25,
-      healingPotency: 25,
+      pAtk: 13,
+      mAtk: 13,
+      healingPotency: 14,
 
-      pDef: 10,
-      mDef: 10,
+      pDef: 4,
+      mDef: 4,
 
       actionSpeed: 20,
       accuracy: 90,

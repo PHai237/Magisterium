@@ -393,16 +393,16 @@ export function addBaseStats(left: BaseStats, right: BaseStats): BaseStats {
 function calculateRawDerivedStats(baseStats: BaseStats): DerivedStats {
   const { STR, DEX, CON, INT, WIS, LUK } = baseStats;
 
-  const maxHp = Math.floor(50 + CON * 8);
-  const maxMp = Math.floor(20 + INT * 3 + WIS * 2);
-  const maxStamina = Math.floor(100 + (CON + DEX + STR) * 1.5);
+  const maxHp = Math.floor(22 + CON * 5 + STR * 0.5);
+  const maxMp = Math.floor(15 + INT * 2 + WIS);
+  const maxStamina = Math.floor(70 + (CON + DEX + STR) * 1.2);
 
-  const pAtk = roundToTwoDecimals(5 + STR * 1.3 + DEX * 0.8);
-  const mAtk = roundToTwoDecimals(5 + INT * 2);
-  const healingPotency = roundToTwoDecimals(5 + WIS * 2);
+  const pAtk = roundToTwoDecimals(2 + STR * 0.65 + DEX * 0.45);
+  const mAtk = roundToTwoDecimals(3 + INT);
+  const healingPotency = roundToTwoDecimals(3 + WIS * 1.1);
 
-  const pDef = roundToTwoDecimals(2 + CON * 0.8);
-  const mDef = roundToTwoDecimals(2 + WIS * 0.8);
+  const pDef = roundToTwoDecimals(0.5 + CON * 0.35);
+  const mDef = roundToTwoDecimals(0.5 + WIS * 0.35);
 
   const actionSpeed = roundToTwoDecimals(10 + DEX);
 

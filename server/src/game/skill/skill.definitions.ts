@@ -64,11 +64,11 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
         damageType: 'magical',
         elementType: 'fire',
 
-        baseValue: 6,
+        baseValue: 2,
         scaling: {
           mode: 'single_stat',
           primaryStat: 'mAtk',
-          primaryMultiplier: 1.25,
+          primaryMultiplier: 0.55,
         },
 
         tags: ['starter', 'damage', 'magic', 'fire'],
@@ -105,11 +105,11 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
 
         damageType: 'physical',
 
-        baseValue: 6,
+        baseValue: 3,
         scaling: {
           mode: 'single_stat',
           primaryStat: 'pAtk',
-          primaryMultiplier: 1.3,
+          primaryMultiplier: 0.65,
         },
 
         tags: ['starter', 'damage', 'physical'],
@@ -146,13 +146,13 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
 
         damageType: 'physical',
 
-        baseValue: 4,
+        baseValue: 3,
         scaling: {
           mode: 'dual_stat',
           primaryStat: 'pAtk',
-          primaryMultiplier: 0.9,
+          primaryMultiplier: 0.6,
           secondaryStat: 'actionSpeed',
-          secondaryMultiplier: 0.15,
+          secondaryMultiplier: 0.08,
         },
 
         tags: ['starter', 'damage', 'physical'],
@@ -189,13 +189,13 @@ const RAW_SKILL_DEFINITIONS: readonly SkillDefinition[] = [
 
         damageType: 'physical',
 
-        baseValue: 4,
+        baseValue: 2,
         scaling: {
           mode: 'dual_stat',
           primaryStat: 'actionSpeed',
-          primaryMultiplier: 1,
+          primaryMultiplier: 0.45,
           secondaryStat: 'pAtk',
-          secondaryMultiplier: 0.25,
+          secondaryMultiplier: 0.15,
         },
 
         tags: ['starter', 'damage', 'physical', 'precision'],
