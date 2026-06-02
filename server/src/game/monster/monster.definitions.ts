@@ -196,8 +196,8 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     shield: 0,
 
     basicAttackDamageRange: {
-      min: 2,
-      max: 5,
+      min: 1,
+      max: 3,
     },
 
     reward: {
@@ -282,8 +282,8 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     shield: 0,
 
     basicAttackDamageRange: {
-      min: 5,
-      max: 8,
+      min: 2,
+      max: 5,
     },
 
     reward: {
@@ -368,8 +368,8 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     shield: 0,
 
     basicAttackDamageRange: {
-      min: 7,
-      max: 10,
+      min: 4,
+      max: 7,
     },
 
     reward: {
@@ -454,8 +454,8 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     shield: 0,
 
     basicAttackDamageRange: {
-      min: 8,
-      max: 12,
+      min: 6,
+      max: 10,
     },
 
     reward: {
@@ -540,8 +540,8 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     shield: 0,
 
     basicAttackDamageRange: {
-      min: 6,
-      max: 11,
+      min: 5,
+      max: 8,
     },
 
     reward: {

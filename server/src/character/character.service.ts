@@ -177,7 +177,7 @@ export interface CharacterMarketTransactionResult {
   };
 }
 
-const BASIC_INN_REST_PRICE_BRONZE = 3;
+const BASIC_INN_REST_PRICE_BRONZE = 2;
 const ONE_NIGHT_INN_PASS_ID: ItemId = 'one_night_inn_pass';
 
 const MAX_CHARACTERS_PER_USER = 3;

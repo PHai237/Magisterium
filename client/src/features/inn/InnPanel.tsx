@@ -14,7 +14,7 @@ interface InnPanelProps {
 
 type InnPaymentMethod = "pass" | "bronze";
 
-const BASIC_INN_REST_PRICE_BRONZE = 3;
+const BASIC_INN_REST_PRICE_BRONZE = 2;
 
 const ONE_NIGHT_INN_PASS_ITEM_IDS = new Set<ItemId>([
   "one_night_inn_pass"
