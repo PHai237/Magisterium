@@ -301,7 +301,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'rabbit_meat',
-          chancePercent: 80,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
@@ -393,7 +393,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'hawk_feather',
-          chancePercent: 70,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
@@ -485,7 +485,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'boar_meat',
-          chancePercent: 80,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
@@ -583,7 +583,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'wolf_meat',
-          chancePercent: 80,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
@@ -681,7 +681,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'bear_meat',
-          chancePercent: 80,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
@@ -773,7 +773,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'goblin_scrap',
-          chancePercent: 80,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
@@ -963,7 +963,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'coal',
-          chancePercent: 70,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
