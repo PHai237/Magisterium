@@ -32,7 +32,7 @@ export const SMITH_RECIPE_DEFINITIONS = Object.freeze([
     outputItemId: 'worn_travelers_knife',
     outputQuantity: 1,
     requiredItems: [
-      { itemId: 'cracked_blade', quantity: 1 },
+      { itemId: 'goblin_scrap', quantity: 2 },
       { itemId: 'rough_stone', quantity: 2 },
       { itemId: 'wolf_fang', quantity: 1 },
     ],
@@ -46,7 +46,7 @@ export const SMITH_RECIPE_DEFINITIONS = Object.freeze([
     outputQuantity: 1,
     requiredItems: [
       { itemId: 'wolf_fang', quantity: 2 },
-      { itemId: 'cracked_blade', quantity: 1 },
+      { itemId: 'goblin_scrap', quantity: 2 },
       { itemId: 'spider_silk', quantity: 1 },
     ],
     bronzeCost: 10,
@@ -59,7 +59,7 @@ export const SMITH_RECIPE_DEFINITIONS = Object.freeze([
     outputQuantity: 1,
     requiredItems: [
       { itemId: 'goblin_scrap', quantity: 5 },
-      { itemId: 'cracked_blade', quantity: 2 },
+      { itemId: 'copper_nugget', quantity: 2 },
       { itemId: 'coal', quantity: 2 },
     ],
     bronzeCost: 18,

@@ -16,10 +16,14 @@ export type EncounterId =
 
 export type MonsterId =
   | "slime"
+  | "horned_rabbit"
+  | "razorwing_hawk"
   | "wild_boar"
   | "wild_wolf"
+  | "bear"
   | "goblin"
-  | "spider";
+  | "spider"
+  | "ore_mite";
 
 export type ExplorationZoneId = "town_outskirts" | "forest_edge";
 

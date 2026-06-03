@@ -226,23 +226,29 @@ describe('item registry', () => {
   it('should use canonical early crafting material ids and rarities', () => {
     const canonicalMaterialRarityById = {
       slime_gel: 'common',
-      slime_core: 'uncommon',
-      slime_membrane: 'uncommon',
+      slime_core: 'rare',
+      rabbit_meat: 'common',
+      rabbit_foot: 'rare',
+      hawk_feather: 'common',
+      hawk_egg: 'uncommon',
       boar_meat: 'common',
-      tough_hide: 'common',
+      tough_hide: 'uncommon',
       boar_tusk: 'uncommon',
-      wolf_pelt: 'common',
+      wolf_meat: 'common',
+      wolf_pelt: 'uncommon',
       wolf_fang: 'uncommon',
+      bear_meat: 'common',
+      bear_claw: 'rare',
       goblin_scrap: 'common',
       goblin_ear: 'uncommon',
       spider_silk: 'common',
       spider_eye: 'uncommon',
-      venom_sac: 'uncommon',
-      cracked_blade: 'uncommon',
+      venom_sac: 'rare',
       rough_wood: 'common',
       rough_stone: 'common',
       coal: 'common',
       copper_nugget: 'uncommon',
+      mineral_dust: 'rare',
     } as const;
 
     for (const [itemId, rarity] of Object.entries(
@@ -262,6 +268,8 @@ describe('item registry', () => {
       ['dull', 'iron', 'shard'],
       ['beast', 'thread'],
       ['basic', 'thread'],
+      ['slime', 'membrane'],
+      ['cracked', 'blade'],
     ].map((parts) => parts.join('_'));
 
     for (const itemId of retiredMaterialIds) {

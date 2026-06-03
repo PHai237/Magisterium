@@ -344,13 +344,33 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     description:
       "A translucent slime core for alchemy and flexible craft bindings.",
   },
-  slime_membrane: {
-    id: "slime_membrane",
-    name: "Slime Membrane",
-    icon: "◌",
+  rabbit_meat: {
+    id: "rabbit_meat",
+    name: "Rabbit Meat",
+    icon: "M",
     category: "material",
-    description:
-      "A stretchable membrane used for wraps, grips, and reagent work.",
+    description: "Lean rabbit meat used for simple cooking and light meals.",
+  },
+  rabbit_foot: {
+    id: "rabbit_foot",
+    name: "Rabbit Foot",
+    icon: "F",
+    category: "material",
+    description: "A lucky rabbit foot for charms and folk alchemy.",
+  },
+  hawk_feather: {
+    id: "hawk_feather",
+    name: "Hawk Feather",
+    icon: "F",
+    category: "material",
+    description: "A firm feather used for arrow fletching and light craft.",
+  },
+  hawk_egg: {
+    id: "hawk_egg",
+    name: "Hawk Egg",
+    icon: "E",
+    category: "material",
+    description: "A prized wild egg used by cooks and alchemists.",
   },
   boar_meat: {
     id: "boar_meat",
@@ -381,6 +401,13 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "material",
     description: "A rough pelt taken from a wild wolf.",
   },
+  wolf_meat: {
+    id: "wolf_meat",
+    name: "Wolf Meat",
+    icon: "M",
+    category: "material",
+    description: "Lean, gamey wolf meat for survival cooking.",
+  },
   wolf_fang: {
     id: "wolf_fang",
     name: "Wolf Fang",
@@ -388,6 +415,20 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "material",
     description:
       "A sharp fang used for small blades, charms, and predatory craft parts.",
+  },
+  bear_meat: {
+    id: "bear_meat",
+    name: "Bear Meat",
+    icon: "M",
+    category: "material",
+    description: "A heavy cut of bear meat for hearty meals.",
+  },
+  bear_claw: {
+    id: "bear_claw",
+    name: "Bear Claw",
+    icon: "C",
+    category: "material",
+    description: "A heavy claw used for weapons, talismans, and brutal craftwork.",
   },
   goblin_ear: {
     id: "goblin_ear",
@@ -424,13 +465,6 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "material",
     description: "A small sac of weak spider venom for early alchemy.",
   },
-  cracked_blade: {
-    id: "cracked_blade",
-    name: "Cracked Blade",
-    icon: "▱",
-    category: "material",
-    description: "A broken blade segment used as a smithing component.",
-  },
   coal: {
     id: "coal",
     name: "Coal",
@@ -445,6 +479,13 @@ const ITEM_DISPLAY_DEFINITIONS: Record<string, ItemDisplayDefinition> = {
     category: "material",
     description:
       "A small copper nugget for early fittings and simple metal goods.",
+  },
+  mineral_dust: {
+    id: "mineral_dust",
+    name: "Mineral Dust",
+    icon: "·",
+    category: "material",
+    description: "Fine mineral dust for alchemy, refining, and early enchantment.",
   },
   rough_wood: {
     id: "rough_wood",

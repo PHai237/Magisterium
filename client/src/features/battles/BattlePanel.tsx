@@ -126,6 +126,16 @@ const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> =
       icon: "🟢",
       level: 1,
     },
+    horned_rabbit: {
+      label: "Horned Rabbit",
+      icon: "R",
+      level: 1,
+    },
+    razorwing_hawk: {
+      label: "Razorwing Hawk",
+      icon: "H",
+      level: 1,
+    },
     wild_boar: {
       label: "Wild Boar",
       icon: "🐗",
@@ -136,6 +146,11 @@ const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> =
       icon: "🐺",
       level: 2,
     },
+    bear: {
+      label: "Bear",
+      icon: "B",
+      level: 3,
+    },
     goblin: {
       label: "Goblin",
       icon: "👺",
@@ -144,6 +159,11 @@ const MONSTER_DISPLAY_DEFINITIONS: Record<MonsterId, MonsterDisplayDefinition> =
     spider: {
       label: "Spider",
       icon: "S",
+      level: 2,
+    },
+    ore_mite: {
+      label: "Ore Mite",
+      icon: "O",
       level: 2,
     },
   };

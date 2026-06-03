@@ -12,10 +12,14 @@ import type { StatModifier } from '../passive/passive.types';
 
 export type MonsterId =
   | 'slime'
+  | 'horned_rabbit'
+  | 'razorwing_hawk'
   | 'wild_boar'
   | 'wild_wolf'
+  | 'bear'
   | 'goblin'
-  | 'spider';
+  | 'spider'
+  | 'ore_mite';
 
 export type MonsterRank = 'normal' | 'elite' | 'boss';
 

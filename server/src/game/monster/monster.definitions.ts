@@ -8,10 +8,14 @@ import type {
 
 export const MONSTER_IDS = [
   'slime',
+  'horned_rabbit',
+  'razorwing_hawk',
   'wild_boar',
   'wild_wolf',
+  'bear',
   'goblin',
   'spider',
+  'ore_mite',
 ] as const satisfies readonly MonsterId[];
 
 function freezeLootEntry(entry: MonsterLootEntry): Readonly<MonsterLootEntry> {
@@ -205,19 +209,13 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'slime_gel',
-          chancePercent: 65,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
         {
-          itemId: 'slime_membrane',
-          chancePercent: 30,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
-        {
           itemId: 'slime_core',
-          chancePercent: 20,
+          chancePercent: 5,
           minQuantity: 1,
           maxQuantity: 1,
         },
@@ -226,6 +224,190 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     },
 
     tags: ['monster', 'starter', 'beast', 'gelatinous', 'town-outskirts'],
+  },
+  {
+    id: 'horned_rabbit',
+    name: 'Horned Rabbit',
+    description:
+      'A skittish grassland rabbit with a sharp little horn. Weak alone, but quick enough to punish careless beginners.',
+
+    rank: 'normal',
+    level: 1,
+
+    aiTargetingMode: 'random',
+
+    baseStats: {
+      STR: 3,
+      DEX: 7,
+      CON: 3,
+      INT: 1,
+      WIS: 2,
+      LUK: 5,
+    },
+
+    derivedStatOverrides: {
+      maxHp: 24,
+      maxMp: 0,
+      maxStamina: 44,
+
+      pAtk: 7,
+      mAtk: 0,
+      healingPotency: 0,
+
+      pDef: 1,
+      mDef: 0,
+
+      actionSpeed: 14,
+      accuracy: 80,
+      evasionRate: 8,
+
+      critRate: 3,
+      critDamageBonus: 25,
+
+      fleeRate: 0,
+
+      statusResist: 0,
+      spiritualPotency: 0,
+
+      mpRegen: 0,
+      staminaRegen: 4,
+
+      secondChanceRate: 0,
+      procRate: 1,
+    },
+
+    resistances: {
+      physical: 0,
+      magical: 0,
+      fire: 0,
+      water: 0,
+    },
+
+    currentState: {
+      hp: 24,
+      mp: 0,
+      stamina: 44,
+    },
+
+    shield: 0,
+
+    basicAttackDamageRange: {
+      min: 1,
+      max: 3,
+    },
+
+    reward: {
+      moneyBronze: 2,
+      lootTable: [
+        {
+          itemId: 'rabbit_meat',
+          chancePercent: 80,
+          minQuantity: 1,
+          maxQuantity: 2,
+        },
+        {
+          itemId: 'rabbit_foot',
+          chancePercent: 5,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+      ],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
+    },
+
+    tags: ['monster', 'starter', 'beast', 'rabbit', 'town-outskirts'],
+  },
+  {
+    id: 'razorwing_hawk',
+    name: 'Razorwing Hawk',
+    description:
+      'A territorial hawk that dives at travelers near the open grasslands. Its feathers are prized for early arrows.',
+
+    rank: 'normal',
+    level: 1,
+
+    aiTargetingMode: 'lowest_hp',
+
+    baseStats: {
+      STR: 4,
+      DEX: 9,
+      CON: 3,
+      INT: 1,
+      WIS: 3,
+      LUK: 4,
+    },
+
+    derivedStatOverrides: {
+      maxHp: 26,
+      maxMp: 0,
+      maxStamina: 48,
+
+      pAtk: 8,
+      mAtk: 0,
+      healingPotency: 0,
+
+      pDef: 1,
+      mDef: 1,
+
+      actionSpeed: 16,
+      accuracy: 83,
+      evasionRate: 9,
+
+      critRate: 4,
+      critDamageBonus: 30,
+
+      fleeRate: 0,
+
+      statusResist: 1,
+      spiritualPotency: 0,
+
+      mpRegen: 0,
+      staminaRegen: 4,
+
+      secondChanceRate: 0,
+      procRate: 1,
+    },
+
+    resistances: {
+      physical: 0,
+      magical: 0,
+      fire: 0,
+      water: -0.1,
+    },
+
+    currentState: {
+      hp: 26,
+      mp: 0,
+      stamina: 48,
+    },
+
+    shield: 0,
+
+    basicAttackDamageRange: {
+      min: 2,
+      max: 4,
+    },
+
+    reward: {
+      moneyBronze: 3,
+      lootTable: [
+        {
+          itemId: 'hawk_feather',
+          chancePercent: 70,
+          minQuantity: 1,
+          maxQuantity: 2,
+        },
+        {
+          itemId: 'hawk_egg',
+          chancePercent: 40,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+      ],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
+    },
+
+    tags: ['monster', 'starter', 'beast', 'hawk', 'town-outskirts'],
   },
   {
     id: 'wild_boar',
@@ -303,19 +485,19 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'boar_meat',
-          chancePercent: 70,
+          chancePercent: 80,
           minQuantity: 1,
           maxQuantity: 2,
         },
         {
           itemId: 'tough_hide',
-          chancePercent: 45,
+          chancePercent: 30,
           minQuantity: 1,
           maxQuantity: 1,
         },
         {
           itemId: 'boar_tusk',
-          chancePercent: 25,
+          chancePercent: 30,
           minQuantity: 1,
           maxQuantity: 1,
         },
@@ -400,8 +582,14 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       moneyBronze: 4,
       lootTable: [
         {
+          itemId: 'wolf_meat',
+          chancePercent: 80,
+          minQuantity: 1,
+          maxQuantity: 2,
+        },
+        {
           itemId: 'wolf_pelt',
-          chancePercent: 55,
+          chancePercent: 30,
           minQuantity: 1,
           maxQuantity: 1,
         },
@@ -411,9 +599,95 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
           minQuantity: 1,
           maxQuantity: 1,
         },
+      ],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
+    },
+
+    tags: ['monster', 'starter', 'beast', 'wolf', 'forest-edge'],
+  },
+  {
+    id: 'bear',
+    name: 'Bear',
+    description:
+      'A heavy forest predator that can crush careless hunters. It is the strongest early beast in the forest edge.',
+
+    rank: 'normal',
+    level: 3,
+
+    aiTargetingMode: 'highest_threat',
+
+    baseStats: {
+      STR: 10,
+      DEX: 4,
+      CON: 10,
+      INT: 1,
+      WIS: 3,
+      LUK: 2,
+    },
+
+    derivedStatOverrides: {
+      maxHp: 58,
+      maxMp: 0,
+      maxStamina: 66,
+
+      pAtk: 16,
+      mAtk: 0,
+      healingPotency: 0,
+
+      pDef: 5,
+      mDef: 1,
+
+      actionSpeed: 11,
+      accuracy: 78,
+      evasionRate: 2,
+
+      critRate: 3,
+      critDamageBonus: 40,
+
+      fleeRate: 0,
+
+      statusResist: 2,
+      spiritualPotency: 0,
+
+      mpRegen: 0,
+      staminaRegen: 6,
+
+      secondChanceRate: 0,
+      procRate: 1,
+    },
+
+    resistances: {
+      physical: 0.08,
+      magical: 0,
+      fire: 0,
+      water: 0,
+    },
+
+    currentState: {
+      hp: 58,
+      mp: 0,
+      stamina: 66,
+    },
+
+    shield: 0,
+
+    basicAttackDamageRange: {
+      min: 7,
+      max: 11,
+    },
+
+    reward: {
+      moneyBronze: 7,
+      lootTable: [
         {
-          itemId: 'tough_hide',
-          chancePercent: 35,
+          itemId: 'bear_meat',
+          chancePercent: 80,
+          minQuantity: 1,
+          maxQuantity: 2,
+        },
+        {
+          itemId: 'bear_claw',
+          chancePercent: 5,
           minQuantity: 1,
           maxQuantity: 1,
         },
@@ -421,7 +695,7 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
     },
 
-    tags: ['monster', 'starter', 'beast', 'wolf', 'town-outskirts'],
+    tags: ['monster', 'starter', 'beast', 'bear', 'forest-edge'],
   },
   {
     id: 'goblin',
@@ -499,19 +773,13 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'goblin_scrap',
-          chancePercent: 50,
+          chancePercent: 80,
           minQuantity: 1,
           maxQuantity: 2,
         },
         {
           itemId: 'goblin_ear',
-          chancePercent: 30,
-          minQuantity: 1,
-          maxQuantity: 1,
-        },
-        {
-          itemId: 'cracked_blade',
-          chancePercent: 20,
+          chancePercent: 40,
           minQuantity: 1,
           maxQuantity: 1,
         },
@@ -597,19 +865,19 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
       lootTable: [
         {
           itemId: 'spider_silk',
-          chancePercent: 65,
+          chancePercent: 60,
           minQuantity: 1,
           maxQuantity: 2,
         },
         {
           itemId: 'spider_eye',
-          chancePercent: 25,
+          chancePercent: 30,
           minQuantity: 1,
           maxQuantity: 1,
         },
         {
           itemId: 'venom_sac',
-          chancePercent: 20,
+          chancePercent: 10,
           minQuantity: 1,
           maxQuantity: 1,
         },
@@ -618,6 +886,104 @@ const RAW_MONSTER_DEFINITIONS: readonly MonsterDefinition[] = [
     },
 
     tags: ['monster', 'starter', 'arachnid', 'spider', 'forest-edge'],
+  },
+  {
+    id: 'ore_mite',
+    name: 'Ore Mite',
+    description:
+      'A small mineral-eating creature found around old mine seams. Its body carries useful coal dust and copper traces.',
+
+    rank: 'normal',
+    level: 2,
+
+    aiTargetingMode: 'random',
+
+    baseStats: {
+      STR: 5,
+      DEX: 4,
+      CON: 8,
+      INT: 1,
+      WIS: 2,
+      LUK: 3,
+    },
+
+    derivedStatOverrides: {
+      maxHp: 40,
+      maxMp: 0,
+      maxStamina: 52,
+
+      pAtk: 11,
+      mAtk: 0,
+      healingPotency: 0,
+
+      pDef: 4,
+      mDef: 1,
+
+      actionSpeed: 10,
+      accuracy: 78,
+      evasionRate: 2,
+
+      critRate: 2,
+      critDamageBonus: 30,
+
+      fleeRate: 0,
+
+      statusResist: 2,
+      spiritualPotency: 0,
+
+      mpRegen: 0,
+      staminaRegen: 5,
+
+      secondChanceRate: 0,
+      procRate: 1,
+    },
+
+    resistances: {
+      physical: 0.06,
+      magical: 0,
+      fire: 0,
+      water: -0.1,
+    },
+
+    currentState: {
+      hp: 40,
+      mp: 0,
+      stamina: 52,
+    },
+
+    shield: 0,
+
+    basicAttackDamageRange: {
+      min: 4,
+      max: 7,
+    },
+
+    reward: {
+      moneyBronze: 4,
+      lootTable: [
+        {
+          itemId: 'coal',
+          chancePercent: 70,
+          minQuantity: 1,
+          maxQuantity: 2,
+        },
+        {
+          itemId: 'copper_nugget',
+          chancePercent: 40,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+        {
+          itemId: 'mineral_dust',
+          chancePercent: 5,
+          minQuantity: 1,
+          maxQuantity: 1,
+        },
+      ],
+      randomLootPools: STAT_FRAGMENT_RANDOM_LOOT_POOLS,
+    },
+
+    tags: ['monster', 'starter', 'mineral', 'ore-mite', 'abandoned-mine'],
   },
 ];
 
