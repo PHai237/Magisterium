@@ -26,6 +26,9 @@ interface ExplorationJournalGroup {
   messages: string[];
 }
 
+const SEARCH_COOLDOWN_LOCK_MS = 1100;
+const ENCOUNTER_TRANSITION_DELAY_MS = 850;
+
 function getLogClassName(message: string): string {
   if (
     message.includes("hostile") ||
@@ -74,8 +77,11 @@ export function ExplorationZone({
   const zone = EXPLORATION_ZONE_DEFINITIONS[zoneId];
   const journalScrollRef = useRef<HTMLDivElement | null>(null);
   const searchLockRef = useRef(false);
+  const searchCooldownTimerRef = useRef<number | null>(null);
+  const encounterTransitionTimerRef = useRef<number | null>(null);
 
   const [isSearching, setIsSearching] = useState(false);
+  const [isCoolingDown, setIsCoolingDown] = useState(false);
   const [searchLogGroups, setSearchLogGroups] = useState<
     ExplorationJournalGroup[]
   >([]);
@@ -87,12 +93,34 @@ export function ExplorationZone({
   const currentStamina = currentCharacter.currentState.stamina;
   const hasEnoughStamina = currentStamina >= zone.staminaCost;
   const staminaShortfall = Math.max(0, zone.staminaCost - currentStamina);
+  const isSearchDisabled = isSearching || isCoolingDown || !hasEnoughStamina;
 
   useEffect(() => {
+    if (searchCooldownTimerRef.current !== null) {
+      window.clearTimeout(searchCooldownTimerRef.current);
+      searchCooldownTimerRef.current = null;
+    }
+
+    if (encounterTransitionTimerRef.current !== null) {
+      window.clearTimeout(encounterTransitionTimerRef.current);
+      encounterTransitionTimerRef.current = null;
+    }
+
     searchLockRef.current = false;
     setIsSearching(false);
+    setIsCoolingDown(false);
     setSearchLogGroups([]);
     setError(null);
+
+    return () => {
+      if (searchCooldownTimerRef.current !== null) {
+        window.clearTimeout(searchCooldownTimerRef.current);
+      }
+
+      if (encounterTransitionTimerRef.current !== null) {
+        window.clearTimeout(encounterTransitionTimerRef.current);
+      }
+    };
   }, [zoneId]);
 
   useLayoutEffect(() => {
@@ -129,6 +157,33 @@ export function ExplorationZone({
     );
   }
 
+  function releaseSearchLockAfterCooldown(searchStartedAt: number) {
+    const remainingCooldownMs = Math.max(
+      0,
+      SEARCH_COOLDOWN_LOCK_MS - (Date.now() - searchStartedAt)
+    );
+
+    if (searchCooldownTimerRef.current !== null) {
+      window.clearTimeout(searchCooldownTimerRef.current);
+      searchCooldownTimerRef.current = null;
+    }
+
+    if (remainingCooldownMs <= 0) {
+      searchLockRef.current = false;
+      setIsSearching(false);
+      setIsCoolingDown(false);
+      return;
+    }
+
+    setIsSearching(false);
+    setIsCoolingDown(true);
+    searchCooldownTimerRef.current = window.setTimeout(() => {
+      searchLockRef.current = false;
+      searchCooldownTimerRef.current = null;
+      setIsCoolingDown(false);
+    }, remainingCooldownMs);
+  }
+
   async function handleSearch() {
     if (searchLockRef.current) {
       return;
@@ -143,7 +198,9 @@ export function ExplorationZone({
 
     searchLockRef.current = true;
     setIsSearching(true);
+    setIsCoolingDown(false);
     setError(null);
+    const searchStartedAt = Date.now();
     let shouldStayLocked = false;
 
     try {
@@ -169,9 +226,9 @@ export function ExplorationZone({
 
       if (result.outcomeType === "encounter" && result.encounterId) {
         shouldStayLocked = true;
-        window.setTimeout(() => {
+        encounterTransitionTimerRef.current = window.setTimeout(() => {
           onEncounterFound(result.encounterId as EncounterId);
-        }, 850);
+        }, ENCOUNTER_TRANSITION_DELAY_MS);
       }
     } catch (searchError) {
       setError(
@@ -179,8 +236,7 @@ export function ExplorationZone({
       );
     } finally {
       if (!shouldStayLocked) {
-        searchLockRef.current = false;
-        setIsSearching(false);
+        releaseSearchLockAfterCooldown(searchStartedAt);
       }
     }
   }
@@ -247,11 +303,15 @@ export function ExplorationZone({
             <button
               type="button"
               className="exploration-search-button"
-              disabled={isSearching || !hasEnoughStamina}
+              disabled={isSearchDisabled}
               onClick={() => void handleSearch()}
             >
               <strong>
-                {isSearching ? "Searching..." : "Search Area"}
+                {isSearching
+                  ? "Searching..."
+                  : isCoolingDown
+                    ? "Cooling Down..."
+                    : "Search Area"}
               </strong>
               <span>Cost: {zone.staminaCost} STA / Search</span>
             </button>

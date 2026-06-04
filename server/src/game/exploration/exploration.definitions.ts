@@ -108,15 +108,15 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
     encounterPool: [
       {
         encounterId: 'town_outskirts_slime',
-        weight: 50,
+        weight: 40,
       },
       {
         encounterId: 'town_outskirts_rabbit',
-        weight: 25,
+        weight: 30,
       },
       {
         encounterId: 'town_outskirts_hawk',
-        weight: 25,
+        weight: 30,
       },
     ],
     itemPool: BASIC_SUPPLY_ITEM_POOL,

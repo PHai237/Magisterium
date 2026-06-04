@@ -42,6 +42,10 @@ body,
   margin: 0;
 }
 
+html {
+  font-size: 16px;
+}
+
 body {
   overflow: hidden;
   background: var(--bg);
@@ -108,6 +112,24 @@ body {
 @media (max-width: 1180px) {
   body {
     overflow: hidden;
+  }
+}
+
+@media (min-width: 1600px) and (min-height: 900px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 2200px) and (min-height: 1200px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 3000px) and (min-height: 1600px) {
+  html {
+    font-size: 20px;
   }
 }
 
