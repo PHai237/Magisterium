@@ -878,6 +878,23 @@
     rgba(11, 15, 23, 0.91);
 }
 
+.gameshell-node--mine {
+  top: 57%;
+  right: 27%;
+  width: 7rem;
+  min-height: 7rem;
+  border-radius: 999px;
+  border-color: rgba(148, 163, 184, 0.42);
+  background:
+    radial-gradient(circle at 50% 12%, rgba(203, 213, 225, 0.12), transparent 4.8rem),
+    radial-gradient(circle at 50% 90%, rgba(180, 83, 9, 0.1), transparent 4.4rem),
+    rgba(11, 15, 23, 0.92);
+}
+
+.gameshell-node--mine strong {
+  color: #cbd5e1;
+}
+
 .gameshell-node--locked {
   top: 20%;
   right: 20%;

@@ -7,12 +7,14 @@ export type OriginId =
 
 export type EncounterId =
   | "town_outskirts_slime"
-  | "town_outskirts_boar"
-  | "town_outskirts_wolf"
-  | "town_outskirts_mixed"
-  | "goblin_scout"
-  | "forest_edge_spider"
-  | "forest_edge_mixed";
+  | "town_outskirts_rabbit"
+  | "town_outskirts_hawk"
+  | "forest_edge_boar"
+  | "forest_edge_wolf"
+  | "forest_edge_bear"
+  | "abandoned_mine_goblin"
+  | "abandoned_mine_spider"
+  | "abandoned_mine_ore_mite";
 
 export type MonsterId =
   | "slime"
@@ -25,7 +27,10 @@ export type MonsterId =
   | "spider"
   | "ore_mite";
 
-export type ExplorationZoneId = "town_outskirts" | "forest_edge";
+export type ExplorationZoneId =
+  | "town_outskirts"
+  | "forest_edge"
+  | "abandoned_mine";
 
 export type ExplorationSearchOutcomeType =
   | "encounter"

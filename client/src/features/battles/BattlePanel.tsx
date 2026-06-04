@@ -971,7 +971,16 @@ export function BattlePanel({
     if (!battle) {
       return (
         <div className="battle-loading-card">
-          {busy ? "Entering encounter..." : "Preparing battle..."}
+          <span>{error ?? (busy ? "Entering encounter..." : "Preparing battle...")}</span>
+          {error ? (
+            <button
+              type="button"
+              className="battle-drawer-button battle-drawer-button--wide"
+              onClick={onExitBattle}
+            >
+              Return to Exploration
+            </button>
+          ) : null}
         </div>
       );
     }
@@ -1545,8 +1554,8 @@ export function BattlePanel({
             ) : (
               <div className="battlefield-loading">
                 <div className="battlefield-label">Encounter</div>
-                <h2>Entering Battle</h2>
-                <span>Preparing monster data...</span>
+                <h2>{error ? "Battle Failed" : "Entering Battle"}</h2>
+                <span>{error ?? "Preparing monster data..."}</span>
               </div>
             )}
           </div>

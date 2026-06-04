@@ -51,6 +51,19 @@ const ENCOUNTER_DEFINITION_BY_ID: ReadonlyMap<
   ]),
 );
 
+const LEGACY_ENCOUNTER_ID_ALIAS_BY_ID = Object.freeze({
+  town_outskirts_boar: 'forest_edge_boar',
+  town_outskirts_wolf: 'forest_edge_wolf',
+  town_outskirts_mixed: 'town_outskirts_rabbit',
+  goblin_scout: 'abandoned_mine_goblin',
+  forest_edge_spider: 'abandoned_mine_spider',
+  forest_edge_mixed: 'forest_edge_wolf',
+}) satisfies Partial<Record<EncounterId, EncounterId>>;
+
+function resolveEncounterDefinitionId(encounterId: EncounterId): EncounterId {
+  return LEGACY_ENCOUNTER_ID_ALIAS_BY_ID[encounterId] ?? encounterId;
+}
+
 function normalizeMonsterCount(count: number): number {
   if (!Number.isFinite(count)) {
     return MIN_MONSTERS_PER_GROUP;
@@ -167,7 +180,8 @@ function assertEncounterMonsterCountLimit(
 export function getEncounterDefinitionById(
   encounterId: EncounterId,
 ): EncounterDefinition {
-  const encounter = ENCOUNTER_DEFINITION_BY_ID.get(encounterId);
+  const resolvedEncounterId = resolveEncounterDefinitionId(encounterId);
+  const encounter = ENCOUNTER_DEFINITION_BY_ID.get(resolvedEncounterId);
 
   if (!encounter) {
     throw new Error(`Encounter definition not found: ${encounterId}`);

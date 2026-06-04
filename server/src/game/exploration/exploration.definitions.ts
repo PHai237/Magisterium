@@ -9,6 +9,7 @@ import type {
 export const EXPLORATION_ZONE_IDS = [
   'town_outskirts',
   'forest_edge',
+  'abandoned_mine',
 ] as const satisfies readonly ExplorationZoneId[];
 
 function freezeEncounterPoolEntry(
@@ -48,14 +49,60 @@ function freezeExplorationZoneDefinition(
   });
 }
 
+const BASIC_SUPPLY_ITEM_POOL = Object.freeze([
+  {
+    itemId: 'stamina_bread',
+    minQuantity: 1,
+    maxQuantity: 1,
+    weight: 25,
+  },
+  {
+    itemId: 'minor_hp_potion',
+    minQuantity: 1,
+    maxQuantity: 1,
+    weight: 25,
+  },
+  {
+    itemId: 'minor_mp_potion',
+    minQuantity: 1,
+    maxQuantity: 1,
+    weight: 25,
+  },
+  {
+    itemId: 'one_night_inn_pass',
+    minQuantity: 1,
+    maxQuantity: 1,
+    weight: 25,
+  },
+]) satisfies readonly ExplorationItemPoolEntry[];
+
+const STANDARD_OUTCOME_WEIGHTS = Object.freeze([
+  {
+    outcomeType: 'encounter',
+    weight: 40,
+  },
+  {
+    outcomeType: 'bronze',
+    weight: 15,
+  },
+  {
+    outcomeType: 'item',
+    weight: 5,
+  },
+  {
+    outcomeType: 'nothing',
+    weight: 40,
+  },
+]) satisfies readonly ExplorationOutcomeWeight[];
+
 const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
   {
     id: 'town_outskirts',
     name: 'Town Outskirts',
     subtitle: 'Lv. 1 - 2 Wildlands',
     description:
-      'Open grassland outside the stronghold where slimes, wild boars, and wolves roam. Searching here can trigger real low-level encounters.',
-    icon: '🌾',
+      'Open grassland outside the stronghold where slimes, horned rabbits, and razorwing hawks roam.',
+    icon: 'Grass',
     dangerLevel: 1,
     staminaCost: 5,
     encounterPool: [
@@ -64,58 +111,16 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
         weight: 50,
       },
       {
-        encounterId: 'town_outskirts_boar',
+        encounterId: 'town_outskirts_rabbit',
         weight: 25,
       },
       {
-        encounterId: 'town_outskirts_wolf',
-        weight: 25,
-      },
-    ],
-    itemPool: [
-      {
-        itemId: 'stamina_bread',
-        minQuantity: 1,
-        maxQuantity: 1,
-        weight: 25,
-      },
-      {
-        itemId: 'minor_hp_potion',
-        minQuantity: 1,
-        maxQuantity: 1,
-        weight: 25,
-      },
-      {
-        itemId: 'minor_mp_potion',
-        minQuantity: 1,
-        maxQuantity: 1,
-        weight: 25,
-      },
-      {
-        itemId: 'one_night_inn_pass',
-        minQuantity: 1,
-        maxQuantity: 1,
+        encounterId: 'town_outskirts_hawk',
         weight: 25,
       },
     ],
-    outcomeWeights: [
-      {
-        outcomeType: 'encounter',
-        weight: 40,
-      },
-      {
-        outcomeType: 'bronze',
-        weight: 15,
-      },
-      {
-        outcomeType: 'item',
-        weight: 5,
-      },
-      {
-        outcomeType: 'nothing',
-        weight: 40,
-      },
-    ],
+    itemPool: BASIC_SUPPLY_ITEM_POOL,
+    outcomeWeights: STANDARD_OUTCOME_WEIGHTS,
     bronzeReward: {
       min: 1,
       max: 3,
@@ -130,68 +135,26 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
     name: 'Forest Edge',
     subtitle: 'Lv. 2 - 4 Border Woods',
     description:
-      'The first line of the forest beyond the safe roads. Wolves and goblin scouts are more common here.',
-    icon: '🌲',
+      'The first line of the forest beyond the safe roads. Wild boars, wolves, and bears claim these border woods.',
+    icon: 'Forest',
     dangerLevel: 2,
     staminaCost: 7,
     encounterPool: [
       {
-        encounterId: 'goblin_scout',
+        encounterId: 'forest_edge_boar',
         weight: 40,
       },
       {
-        encounterId: 'forest_edge_spider',
+        encounterId: 'forest_edge_wolf',
         weight: 35,
       },
       {
-        encounterId: 'forest_edge_mixed',
+        encounterId: 'forest_edge_bear',
         weight: 25,
       },
     ],
-    itemPool: [
-      {
-        itemId: 'stamina_bread',
-        minQuantity: 1,
-        maxQuantity: 1,
-        weight: 25,
-      },
-      {
-        itemId: 'minor_hp_potion',
-        minQuantity: 1,
-        maxQuantity: 1,
-        weight: 25,
-      },
-      {
-        itemId: 'minor_mp_potion',
-        minQuantity: 1,
-        maxQuantity: 1,
-        weight: 25,
-      },
-      {
-        itemId: 'one_night_inn_pass',
-        minQuantity: 1,
-        maxQuantity: 1,
-        weight: 25,
-      },
-    ],
-    outcomeWeights: [
-      {
-        outcomeType: 'encounter',
-        weight: 40,
-      },
-      {
-        outcomeType: 'bronze',
-        weight: 15,
-      },
-      {
-        outcomeType: 'item',
-        weight: 5,
-      },
-      {
-        outcomeType: 'nothing',
-        weight: 40,
-      },
-    ],
+    itemPool: BASIC_SUPPLY_ITEM_POOL,
+    outcomeWeights: STANDARD_OUTCOME_WEIGHTS,
     bronzeReward: {
       min: 1,
       max: 3,
@@ -199,6 +162,82 @@ const RAW_EXPLORATION_ZONE_DEFINITIONS: readonly ExplorationZoneDefinition[] = [
     entryLog: [
       'You approach the forest edge. The canopy muffles the sound of the road behind you.',
       'Broken branches and claw marks suggest that this area is no longer safe.',
+    ],
+  },
+  {
+    id: 'abandoned_mine',
+    name: 'Abandoned Mine',
+    subtitle: 'Lv. 2 - 3 Derelict Shafts',
+    description:
+      'A collapsed mining site where goblin scavengers, tunnel spiders, and ore mites haunt the old shafts.',
+    icon: 'Mine',
+    dangerLevel: 3,
+    staminaCost: 8,
+    encounterPool: [
+      {
+        encounterId: 'abandoned_mine_goblin',
+        weight: 35,
+      },
+      {
+        encounterId: 'abandoned_mine_spider',
+        weight: 35,
+      },
+      {
+        encounterId: 'abandoned_mine_ore_mite',
+        weight: 30,
+      },
+    ],
+    itemPool: [
+      {
+        itemId: 'coal',
+        minQuantity: 1,
+        maxQuantity: 2,
+        weight: 35,
+      },
+      {
+        itemId: 'copper_nugget',
+        minQuantity: 1,
+        maxQuantity: 1,
+        weight: 25,
+      },
+      {
+        itemId: 'rough_stone',
+        minQuantity: 1,
+        maxQuantity: 2,
+        weight: 25,
+      },
+      {
+        itemId: 'minor_hp_potion',
+        minQuantity: 1,
+        maxQuantity: 1,
+        weight: 15,
+      },
+    ],
+    outcomeWeights: [
+      {
+        outcomeType: 'encounter',
+        weight: 45,
+      },
+      {
+        outcomeType: 'bronze',
+        weight: 15,
+      },
+      {
+        outcomeType: 'item',
+        weight: 10,
+      },
+      {
+        outcomeType: 'nothing',
+        weight: 30,
+      },
+    ],
+    bronzeReward: {
+      min: 2,
+      max: 5,
+    },
+    entryLog: [
+      'You descend toward the abandoned mine where the air smells of rust, dust, and old stone.',
+      'Loose gravel shifts underfoot. Something skitters deeper in the dark.',
     ],
   },
 ];

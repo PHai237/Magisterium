@@ -1,7 +1,10 @@
 import type { CharacterSnapshot, ItemId } from '../character/character.types';
 import type { EncounterId } from '../encounter/encounter.types';
 
-export type ExplorationZoneId = 'town_outskirts' | 'forest_edge';
+export type ExplorationZoneId =
+  | 'town_outskirts'
+  | 'forest_edge'
+  | 'abandoned_mine';
 
 export type ExplorationSearchOutcomeType =
   | 'encounter'

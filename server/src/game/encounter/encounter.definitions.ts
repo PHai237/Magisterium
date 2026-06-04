@@ -6,6 +6,14 @@ import type {
 
 export const ENCOUNTER_IDS = [
   'town_outskirts_slime',
+  'town_outskirts_rabbit',
+  'town_outskirts_hawk',
+  'forest_edge_boar',
+  'forest_edge_wolf',
+  'forest_edge_bear',
+  'abandoned_mine_goblin',
+  'abandoned_mine_spider',
+  'abandoned_mine_ore_mite',
   'town_outskirts_boar',
   'town_outskirts_wolf',
   'town_outskirts_mixed',
@@ -57,10 +65,10 @@ const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
     tags: ['starter', 'town-outskirts', 'single-monster', 'slime'],
   },
   {
-    id: 'town_outskirts_boar',
-    name: 'Town Outskirts Boar',
+    id: 'town_outskirts_rabbit',
+    name: 'Town Outskirts Rabbit',
     description:
-      'A beginner encounter against a wild boar outside town. Slightly tougher than slime and drops boar meat.',
+      'A quick beginner encounter against a horned rabbit in the grass outside town. It is fragile, but fast enough to test careless adventurers.',
 
     zoneId: 'town_outskirts',
 
@@ -69,108 +77,61 @@ const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
 
     monsterGroups: [
       {
-        monsterId: 'wild_boar',
+        monsterId: 'horned_rabbit',
         count: 1,
-        instanceIdPrefix: 'outskirts_boar',
+        instanceIdPrefix: 'outskirts_rabbit',
       },
     ],
 
-    tags: ['starter', 'town-outskirts', 'single-monster', 'boar'],
+    tags: ['starter', 'town-outskirts', 'single-monster', 'rabbit'],
   },
   {
-    id: 'town_outskirts_wolf',
-    name: 'Town Outskirts Wolf',
+    id: 'town_outskirts_hawk',
+    name: 'Town Outskirts Hawk',
     description:
-      'A faster beginner encounter against a wild wolf. Useful for testing evasion, accuracy, speed, and early danger pressure.',
+      'A territorial razorwing hawk dives from the open sky near the outskirts. Useful for testing speed, evasion, and early pressure.',
 
     zoneId: 'town_outskirts',
 
     rank: 'normal',
-    recommendedLevel: 2,
+    recommendedLevel: 1,
 
     monsterGroups: [
       {
-        monsterId: 'wild_wolf',
+        monsterId: 'razorwing_hawk',
         count: 1,
-        instanceIdPrefix: 'outskirts_wolf',
+        instanceIdPrefix: 'outskirts_hawk',
       },
     ],
 
-    tags: ['starter', 'town-outskirts', 'single-monster', 'wolf'],
+    tags: ['starter', 'town-outskirts', 'single-monster', 'hawk'],
   },
   {
-    id: 'town_outskirts_mixed',
-    name: 'Town Outskirts Mixed Pack',
+    id: 'forest_edge_boar',
+    name: 'Forest Edge Boar',
     description:
-      'A small real encounter near town containing multiple beginner monsters. Used to test multi-monster turn order with real loot.',
+      'A territorial wild boar roots near the forest edge. Tougher than the grassland monsters and dangerous when it charges.',
 
-    zoneId: 'town_outskirts',
+    zoneId: 'forest_edge',
 
     rank: 'normal',
-    recommendedLevel: 2,
+    recommendedLevel: 1,
 
     monsterGroups: [
-      {
-        monsterId: 'slime',
-        count: 1,
-        instanceIdPrefix: 'outskirts_pack_slime',
-      },
       {
         monsterId: 'wild_boar',
         count: 1,
-        instanceIdPrefix: 'outskirts_pack_boar',
+        instanceIdPrefix: 'forest_boar',
       },
     ],
 
-    tags: ['starter', 'town-outskirts', 'multi-monster', 'mixed'],
+    tags: ['starter', 'forest-edge', 'single-monster', 'boar'],
   },
   {
-    id: 'goblin_scout',
-    name: 'Goblin Scout',
+    id: 'forest_edge_wolf',
+    name: 'Forest Edge Wolf',
     description:
-      'A single goblin scout encounter. Faster and more dangerous than town outskirts beasts, intended for forest-edge progression.',
-
-    zoneId: 'forest_edge',
-
-    rank: 'normal',
-    recommendedLevel: 2,
-
-    monsterGroups: [
-      {
-        monsterId: 'goblin',
-        count: 1,
-        instanceIdPrefix: 'goblin_scout',
-      },
-    ],
-
-    tags: ['starter', 'forest-edge', 'single-monster', 'goblin'],
-  },
-  {
-    id: 'forest_edge_spider',
-    name: 'Forest Edge Spider',
-    description:
-      'A single forest spider encounter. Useful for farming spider silk, eyes, and venom sacs for early crafting and alchemy.',
-
-    zoneId: 'forest_edge',
-
-    rank: 'normal',
-    recommendedLevel: 2,
-
-    monsterGroups: [
-      {
-        monsterId: 'spider',
-        count: 1,
-        instanceIdPrefix: 'forest_spider',
-      },
-    ],
-
-    tags: ['starter', 'forest-edge', 'single-monster', 'spider'],
-  },
-  {
-    id: 'forest_edge_mixed',
-    name: 'Forest Edge Mixed Pack',
-    description:
-      'A small mixed encounter containing forest-edge enemies. Used to test multi-monster pressure after the town outskirts loop is stable.',
+      'A lean wild wolf stalks the outer tree line. Faster and more accurate than most early beasts.',
 
     zoneId: 'forest_edge',
 
@@ -183,14 +144,93 @@ const RAW_ENCOUNTER_DEFINITIONS: readonly EncounterDefinition[] = [
         count: 1,
         instanceIdPrefix: 'forest_wolf',
       },
+    ],
+
+    tags: ['starter', 'forest-edge', 'single-monster', 'wolf'],
+  },
+  {
+    id: 'forest_edge_bear',
+    name: 'Forest Edge Bear',
+    description:
+      'A heavy forest bear blocks the deeper trail. It is the strongest early beast in the forest edge.',
+
+    zoneId: 'forest_edge',
+
+    rank: 'normal',
+    recommendedLevel: 3,
+
+    monsterGroups: [
       {
-        monsterId: 'goblin',
+        monsterId: 'bear',
         count: 1,
-        instanceIdPrefix: 'forest_goblin',
+        instanceIdPrefix: 'forest_bear',
       },
     ],
 
-    tags: ['starter', 'forest-edge', 'multi-monster', 'mixed'],
+    tags: ['starter', 'forest-edge', 'single-monster', 'bear'],
+  },
+  {
+    id: 'abandoned_mine_goblin',
+    name: 'Abandoned Mine Goblin',
+    description:
+      'A goblin scavenger prowls the abandoned mine tunnels, picking through rusted tools and broken carts.',
+
+    zoneId: 'abandoned_mine',
+
+    rank: 'normal',
+    recommendedLevel: 2,
+
+    monsterGroups: [
+      {
+        monsterId: 'goblin',
+        count: 1,
+        instanceIdPrefix: 'mine_goblin',
+      },
+    ],
+
+    tags: ['starter', 'abandoned-mine', 'single-monster', 'goblin'],
+  },
+  {
+    id: 'abandoned_mine_spider',
+    name: 'Abandoned Mine Spider',
+    description:
+      'A low tunnel spider nests between cracked support beams and old ore carts. Its silk and venom are useful early materials.',
+
+    zoneId: 'abandoned_mine',
+
+    rank: 'normal',
+    recommendedLevel: 2,
+
+    monsterGroups: [
+      {
+        monsterId: 'spider',
+        count: 1,
+        instanceIdPrefix: 'mine_spider',
+      },
+    ],
+
+    tags: ['starter', 'abandoned-mine', 'single-monster', 'spider'],
+  },
+  {
+    id: 'abandoned_mine_ore_mite',
+    name: 'Abandoned Mine Ore Mite',
+    description:
+      'A mineral-eating ore mite scrapes through the old mine floor, leaving coal dust and copper traces behind.',
+
+    zoneId: 'abandoned_mine',
+
+    rank: 'normal',
+    recommendedLevel: 2,
+
+    monsterGroups: [
+      {
+        monsterId: 'ore_mite',
+        count: 1,
+        instanceIdPrefix: 'mine_ore_mite',
+      },
+    ],
+
+    tags: ['starter', 'abandoned-mine', 'single-monster', 'ore-mite'],
   },
 ];
 

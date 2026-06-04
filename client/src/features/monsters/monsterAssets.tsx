@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 
 import greenSlimeImage from "../../assets/monsters/slime/green_slime.png";
+import rabbitImage from "../../assets/monsters/rabbit.png";
 import type { MonsterId } from "../../domain/magisterium.types";
 
 const MONSTER_IMAGE_BY_ID: Partial<Record<MonsterId, string>> = {
   slime: greenSlimeImage,
+  horned_rabbit: rabbitImage,
 };
 
 interface MonsterIconProps {

@@ -252,6 +252,7 @@ export function GameShell({
             }}
             onOpenTownOutskirts={() => openExploration("town_outskirts")}
             onOpenForestEdge={() => openExploration("forest_edge")}
+            onOpenAbandonedMine={() => openExploration("abandoned_mine")}
           />
         )}
       </main>

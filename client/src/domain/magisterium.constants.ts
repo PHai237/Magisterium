@@ -66,39 +66,52 @@ export const ENCOUNTER_OPTIONS: Array<{
     description: "A real beginner encounter against a slime. Drops Slime Gel.",
   },
   {
-    id: "town_outskirts_boar",
-    label: "Town Outskirts Boar",
+    id: "town_outskirts_rabbit",
+    label: "Town Outskirts Rabbit",
     description:
-      "A beginner beast encounter against a wild boar. Drops Boar Meat.",
+      "A quick beginner encounter against a horned rabbit. Drops Rabbit Meat.",
   },
   {
-    id: "town_outskirts_wolf",
-    label: "Town Outskirts Wolf",
+    id: "town_outskirts_hawk",
+    label: "Town Outskirts Hawk",
     description:
-      "A faster early encounter against a wild wolf. Drops Wolf Pelt.",
+      "A faster outskirts encounter against a razorwing hawk. Drops Hawk Feather.",
   },
   {
-    id: "town_outskirts_mixed",
-    label: "Town Outskirts Mixed Pack",
+    id: "forest_edge_boar",
+    label: "Forest Edge Boar",
     description:
-      "A small real encounter near town with multiple beginner monsters.",
+      "A forest-edge beast encounter against a wild boar. Drops Boar Meat.",
   },
   {
-    id: "goblin_scout",
-    label: "Goblin Scout",
-    description: "A sharper forest-edge encounter against a goblin scout.",
+    id: "forest_edge_wolf",
+    label: "Forest Edge Wolf",
+    description:
+      "A fast forest-edge encounter against a wild wolf. Drops Wolf Pelt.",
   },
   {
-    id: "forest_edge_spider",
-    label: "Forest Edge Spider",
+    id: "forest_edge_bear",
+    label: "Forest Edge Bear",
     description:
-      "A forest-edge spider encounter for silk, eyes, and venom sacs.",
+      "A heavy forest-edge encounter against a bear. Drops Bear Meat.",
   },
   {
-    id: "forest_edge_mixed",
-    label: "Forest Edge Mixed",
+    id: "abandoned_mine_goblin",
+    label: "Abandoned Mine Goblin",
     description:
-      "Small mixed encounter for testing forest-edge multi-monster turns.",
+      "A mine encounter against a goblin scavenger. Drops Goblin Scrap.",
+  },
+  {
+    id: "abandoned_mine_spider",
+    label: "Abandoned Mine Spider",
+    description:
+      "A mine encounter against a tunnel spider. Drops Spider Silk.",
+  },
+  {
+    id: "abandoned_mine_ore_mite",
+    label: "Abandoned Mine Ore Mite",
+    description:
+      "A mine encounter against an ore mite. Drops Coal and Copper Nugget.",
   },
 ];
 
@@ -122,7 +135,7 @@ export const EXPLORATION_ZONE_DEFINITIONS: Record<
     name: "Town Outskirts",
     subtitle: "Lv. 1 - 2 Wildlands",
     description:
-      "Slimes, wild boars, and wild wolves roam the grasslands outside the stronghold.",
+      "Slimes, horned rabbits, and razorwing hawks roam the grasslands outside the stronghold.",
     icon: "🌾",
     dangerLevel: 1,
     staminaCost: 5,
@@ -136,13 +149,27 @@ export const EXPLORATION_ZONE_DEFINITIONS: Record<
     name: "Forest Edge",
     subtitle: "Lv. 2 - 4 Border Woods",
     description:
-      "The first line of the forest beyond the safe roads. Wolves and goblin scouts are more common here.",
+      "The first line of the forest beyond the safe roads. Wild boars, wolves, and bears are more common here.",
     icon: "🌲",
     dangerLevel: 2,
     staminaCost: 7,
     entryLog: [
       "You approach the forest edge. The canopy muffles the road behind you.",
       "Broken branches and claw marks suggest this area is no longer safe.",
+    ],
+  },
+  abandoned_mine: {
+    id: "abandoned_mine",
+    name: "Abandoned Mine",
+    subtitle: "Lv. 2 - 3 Derelict Shafts",
+    description:
+      "Old shafts haunted by goblin scavengers, tunnel spiders, and ore mites.",
+    icon: "⛏️",
+    dangerLevel: 3,
+    staminaCost: 8,
+    entryLog: [
+      "You descend toward the abandoned mine where the air smells of rust, dust, and old stone.",
+      "Loose gravel shifts underfoot. Something skitters deeper in the dark.",
     ],
   },
 };

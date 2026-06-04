@@ -4,12 +4,14 @@ interface WorldMapProps {
   onReturnTown: () => void;
   onOpenTownOutskirts: () => void;
   onOpenForestEdge: () => void;
+  onOpenAbandonedMine: () => void;
 }
 
 export function WorldMap({
   onReturnTown,
   onOpenTownOutskirts,
-  onOpenForestEdge
+  onOpenForestEdge,
+  onOpenAbandonedMine
 }: WorldMapProps) {
   return (
     <>
@@ -35,6 +37,14 @@ export function WorldMap({
         name="Forest Edge"
         subtitle="Search Area"
         onClick={onOpenForestEdge}
+      />
+
+      <MapNode
+        className="gameshell-node--mine"
+        icon="⛏️"
+        name="Abandoned Mine"
+        subtitle="Search Area"
+        onClick={onOpenAbandonedMine}
       />
 
       <MapNode
