@@ -433,7 +433,7 @@ export function MarketPanel({
                           >
                             {renderItemIcon({
                               itemId: item.itemId,
-                              fallback: ITEM_ICONS[item.itemId] ?? "â—‡",
+                              fallback: ITEM_ICONS[item.itemId] ?? "◇",
                             })}
                           </div>
 

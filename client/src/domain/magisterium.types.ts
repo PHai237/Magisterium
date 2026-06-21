@@ -113,8 +113,6 @@ export interface CurrentState {
 export interface CharacterProgression {
   rankIndex?: number;
   rankId?: string;
-  level?: number;
-  exp?: number;
   milestoneIds: MilestoneId[];
 }
 
@@ -421,7 +419,6 @@ export interface BattleEngineResult {
 }
 
 export interface BattleRewardSummary {
-  exp: number;
   moneyBronze: number;
   items: Array<{
     itemId: ItemId;
@@ -438,15 +435,6 @@ export interface AppliedBattleRewardResponse {
   battle: BattleState;
   character: CharacterSnapshot;
   reward: BattleRewardSummary;
-  progression: {
-    previousLevel: number;
-    nextLevel: number;
-    previousExp: number;
-    nextExp: number;
-    expGained: number;
-    leveledUp: boolean;
-    levelsGained: number;
-  };
 }
 
 export type RankId =

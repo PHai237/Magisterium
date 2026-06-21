@@ -33,7 +33,16 @@ export const MARKET_VENDOR_DEFINITIONS = [
     description:
       'Local farmers bring the stable ingredients chefs cannot reliably loot from monsters.',
     unlockState: 'open',
-    stock: [] as readonly MarketStockEntry[],
+    stock: [
+      {
+        itemId: 'stamina_bread',
+        buyPriceBronze: 3,
+        minStock: 6,
+        maxStock: 10,
+        restockCadence: 'daily',
+        rarity: 'common',
+      },
+    ],
   },
   {
     id: 'herbalist_table',
@@ -43,7 +52,24 @@ export const MARKET_VENDOR_DEFINITIONS = [
     description:
       'Basic herbs and reagents for early alchemy work. Rare catalysts arrive slowly.',
     unlockState: 'open',
-    stock: [] as readonly MarketStockEntry[],
+    stock: [
+      {
+        itemId: 'minor_hp_potion',
+        buyPriceBronze: 5,
+        minStock: 4,
+        maxStock: 7,
+        restockCadence: 'daily',
+        rarity: 'common',
+      },
+      {
+        itemId: 'minor_mp_potion',
+        buyPriceBronze: 5,
+        minStock: 4,
+        maxStock: 7,
+        restockCadence: 'daily',
+        rarity: 'common',
+      },
+    ],
   },
   {
     id: 'general_goods',
@@ -53,6 +79,31 @@ export const MARKET_VENDOR_DEFINITIONS = [
     description:
       'Small tools and staple goods that support cooking, alchemy, and travel preparation.',
     unlockState: 'open',
-    stock: [] as readonly MarketStockEntry[],
+    stock: [
+      {
+        itemId: 'one_night_inn_pass',
+        buyPriceBronze: 2,
+        minStock: 2,
+        maxStock: 4,
+        restockCadence: 'weekly',
+        rarity: 'common',
+      },
+      {
+        itemId: 'rough_wood',
+        buyPriceBronze: 2,
+        minStock: 4,
+        maxStock: 8,
+        restockCadence: 'two_day',
+        rarity: 'common',
+      },
+      {
+        itemId: 'rough_stone',
+        buyPriceBronze: 2,
+        minStock: 4,
+        maxStock: 8,
+        restockCadence: 'two_day',
+        rarity: 'common',
+      },
+    ],
   },
 ] as const satisfies readonly MarketVendorDefinition[];

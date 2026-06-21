@@ -1,36 +1,66 @@
 # Magisterium Client
 
-Clean frontend scaffold for Magisterium Phase 5.
+The active Magisterium frontend is a React + TypeScript application built with
+Vite and plain CSS.
 
-## Setup
+## Responsibilities
+
+- Authentication screens and local bearer-token storage.
+- Character creation, selection, and deletion.
+- Town/world navigation.
+- Exploration, battle presentation, inventory, market, inn, sanctuary, and
+  smith interfaces.
+- Rendering server-owned character and battle state.
+
+The backend remains authoritative for gameplay mutations. Protected requests
+send:
+
+- `Authorization: Bearer <token>`
+- `x-user-id: <authenticated user id>`
+
+## Run locally
 
 ```bash
-cd client
-cp .env.example .env
 npm install
 npm run dev
 ```
 
-Backend default expected at `http://localhost:3000`.
+Vite proxies `/api` to `http://localhost:3000` during local development.
 
-## Current assumptions
+For deployment, set:
 
-- Frontend sends `x-user-id` on every protected request.
-- No real auth yet; `userId` is stored locally as a temporary development user scope.
-- UI is not the old demo UI. This scaffold separates:
-  - `src/lib/api`: transport layer
-  - `src/domain`: shared frontend contracts
-  - `src/features`: gameplay-facing screens
-  - `src/components`: reusable UI primitives
+```text
+VITE_API_BASE_URL=https://your-backend.example.com/api
+```
 
-## Suggested next UI phases
+## Commands
 
-1. Lock UI information architecture with Gemini:
-   - character creation
-   - character sheet
-   - inventory/equipment
-   - battle arena
-   - reward/result modal
-2. Replace placeholder panels with final visuals.
-3. Add proper routing when screens are stable.
-4. Add generated API types later when backend DTOs stop changing.
+```bash
+npm run dev
+npm run typecheck
+npm run build
+npm run preview
+```
+
+## Structure
+
+```text
+src/
+  app/          application/session flow
+  components/   shared UI and branding
+  config/       environment configuration
+  domain/       frontend API contracts and display constants
+  features/     auth and gameplay screens
+  lib/          API transport, formatting, and local token storage
+  styles/       global/shared styles
+```
+
+Navigation currently uses React state rather than React Router.
+
+## Current limitations
+
+- Frontend contracts are manually maintained alongside backend contracts.
+- There are no frontend automated tests yet.
+- `BattlePanel`, `InventoryOverlay`, and several CSS files are large and should
+  be split gradually by feature boundary.
+- The Grand Archive is a placeholder.
