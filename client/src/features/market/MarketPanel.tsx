@@ -10,6 +10,8 @@ import {
   type MarketVendor,
   marketApi,
 } from "./market.api";
+import { MarketDialogueOverlay } from "./MarketDialogueOverlay";
+import { getMarketNpcName } from "./marketDialogue";
 import "./market.css";
 
 interface MarketPanelProps {
@@ -163,22 +165,6 @@ function getDefaultVendor(catalog: MarketCatalog | null): MarketVendor | null {
   );
 }
 
-function getVendorNpcName(vendor: MarketVendor): string {
-  if (vendor.id === "farmer_stall") {
-    return "Lashop the Farmer";
-  }
-
-  if (vendor.id === "herbalist_table") {
-    return "Mirelle the Herbalist";
-  }
-
-  if (vendor.id === "general_goods") {
-    return "Borin the Provisioner";
-  }
-
-  return vendor.name;
-}
-
 export function MarketPanel({
   userId,
   currentCharacter,
@@ -191,6 +177,7 @@ export function MarketPanel({
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dialogueVendorId, setDialogueVendorId] = useState<string | null>(null);
 
   const selectedVendor = useMemo(() => {
     if (!catalog) {
@@ -212,6 +199,16 @@ export function MarketPanel({
     () => filterVendorItems(selectedVendor, activeFilter),
     [activeFilter, selectedVendor],
   );
+
+  const dialogueVendor = useMemo(() => {
+    if (!catalog || !dialogueVendorId) {
+      return null;
+    }
+
+    return (
+      catalog.vendors.find((vendor) => vendor.id === dialogueVendorId) ?? null
+    );
+  }, [catalog, dialogueVendorId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -273,6 +270,7 @@ export function MarketPanel({
     }
 
     setSelectedVendorId(vendor.id);
+    setDialogueVendorId(null);
     setActiveFilter("all");
     setNotice(null);
     setError(null);
@@ -387,8 +385,19 @@ export function MarketPanel({
             <>
               <div className="market-vendor-header">
                 <div>
-                  <h3>{getVendorNpcName(selectedVendor)}</h3>
+                  <h3>{getMarketNpcName(selectedVendor)}</h3>
                 </div>
+
+                <button
+                  type="button"
+                  className="market-talk-button"
+                  disabled={
+                    Boolean(busyItemId) || selectedVendor.unlockState !== "open"
+                  }
+                  onClick={() => setDialogueVendorId(selectedVendor.id)}
+                >
+                  Talk
+                </button>
               </div>
 
               <div className="market-filter-row" aria-label="Market filters">
@@ -507,6 +516,13 @@ export function MarketPanel({
             </strong>
           ) : null}
         </footer>
+      ) : null}
+
+      {dialogueVendor ? (
+        <MarketDialogueOverlay
+          vendor={dialogueVendor}
+          onClose={() => setDialogueVendorId(null)}
+        />
       ) : null}
     </section>
   );
