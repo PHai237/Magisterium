@@ -22,12 +22,14 @@ export class MarketController {
     @Body() dto: MarketTransactionDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.marketService.buyItem({
-      characterId: dto.characterId,
-      itemId: dto.itemId,
-      quantity: dto.quantity,
-      userId: this.readRequiredUserIdHeader(userIdHeader),
-    });
+    return this.marketService.completePersistence(
+      this.marketService.buyItem({
+        characterId: dto.characterId,
+        itemId: dto.itemId,
+        quantity: dto.quantity,
+        userId: this.readRequiredUserIdHeader(userIdHeader),
+      }),
+    );
   }
 
   @Post('sell')
@@ -35,12 +37,14 @@ export class MarketController {
     @Body() dto: MarketTransactionDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.marketService.sellItem({
-      characterId: dto.characterId,
-      itemId: dto.itemId,
-      quantity: dto.quantity,
-      userId: this.readRequiredUserIdHeader(userIdHeader),
-    });
+    return this.marketService.completePersistence(
+      this.marketService.sellItem({
+        characterId: dto.characterId,
+        itemId: dto.itemId,
+        quantity: dto.quantity,
+        userId: this.readRequiredUserIdHeader(userIdHeader),
+      }),
+    );
   }
 
   private readRequiredUserIdHeader(userIdHeader?: string | string[]): string {

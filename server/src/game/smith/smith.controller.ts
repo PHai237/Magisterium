@@ -1,6 +1,9 @@
 import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 
-import { normalizeRequiredUserId, USER_ID_HEADER } from '../../character/character.validation';
+import {
+  normalizeRequiredUserId,
+  USER_ID_HEADER,
+} from '../../character/character.validation';
 import { SmithCraftDto } from './dto/smith-craft.dto';
 import { SmithService } from './smith.service';
 
@@ -25,10 +28,12 @@ export class SmithController {
     @Body() dto: SmithCraftDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.smithService.craft(
-      characterId,
-      this.readRequiredUserIdHeader(userIdHeader),
-      dto.recipeId,
+    return this.smithService.completePersistence(
+      this.smithService.craft(
+        characterId,
+        this.readRequiredUserIdHeader(userIdHeader),
+        dto.recipeId,
+      ),
     );
   }
 

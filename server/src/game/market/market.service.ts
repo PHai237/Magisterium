@@ -23,6 +23,10 @@ export class MarketService {
 
   constructor(private readonly characterService: CharacterService) {}
 
+  completePersistence<T>(result: T): T | Promise<T> {
+    return this.characterService.completePersistence(result);
+  }
+
   getCatalog(now: Date = new Date()): MarketCatalog {
     return {
       id: MARKET_ID,
@@ -56,7 +60,9 @@ export class MarketService {
     const normalizedQuantity = Math.floor(input.quantity);
 
     if (!Number.isFinite(input.quantity) || normalizedQuantity <= 0) {
-      throw new BadRequestException('Item quantity must be a positive integer.');
+      throw new BadRequestException(
+        'Item quantity must be a positive integer.',
+      );
     }
 
     if (stockState.currentStock < normalizedQuantity) {
@@ -99,7 +105,9 @@ export class MarketService {
     }
 
     if (item.sellPriceBronze <= 0) {
-      throw new BadRequestException(`Market will not buy item ${input.itemId}.`);
+      throw new BadRequestException(
+        `Market will not buy item ${input.itemId}.`,
+      );
     }
 
     return this.characterService.sellMarketItem(
@@ -120,7 +128,9 @@ export class MarketService {
         continue;
       }
 
-      const entry = vendor.stock.find((stockEntry) => stockEntry.itemId === itemId);
+      const entry = vendor.stock.find(
+        (stockEntry) => stockEntry.itemId === itemId,
+      );
 
       if (entry) {
         return { vendor, entry };
@@ -218,7 +228,10 @@ export class MarketService {
     const maxStock = Math.max(minStock, Math.floor(entry.maxStock));
     const range = maxStock - minStock + 1;
 
-    return minStock + (this.hashToPositiveInteger(`${periodKey}:${entry.itemId}`) % range);
+    return (
+      minStock +
+      (this.hashToPositiveInteger(`${periodKey}:${entry.itemId}`) % range)
+    );
   }
 
   private hashToPositiveInteger(value: string): number {

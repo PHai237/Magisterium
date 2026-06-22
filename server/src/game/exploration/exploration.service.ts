@@ -6,13 +6,12 @@ import { CharacterService } from '../../character/character.service';
 
 import { getExplorationZoneDefinitionById } from './exploration.definitions';
 
-import type { CharacterSnapshot, ItemId } from '../character/character.types';
+import type { ItemId } from '../character/character.types';
 import type { EncounterId } from '../encounter/encounter.types';
 import type {
   ExplorationEncounterPoolEntry,
   ExplorationItemPoolEntry,
   ExplorationOutcomeWeight,
-  ExplorationSearchOutcomeType,
   ExplorationSearchResult,
   ExplorationZoneId,
 } from './exploration.types';
@@ -40,7 +39,9 @@ function weightedPick<T extends { weight: number }>(entries: readonly T[]): T {
   );
 
   if (totalWeight <= 0) {
-    throw new BadRequestException('Weighted pool must contain positive weight.');
+    throw new BadRequestException(
+      'Weighted pool must contain positive weight.',
+    );
   }
 
   const roll = randomInt(1, totalWeight + 1);
@@ -74,6 +75,10 @@ export class ExplorationService {
 
   constructor(private readonly characterService: CharacterService) {}
 
+  completePersistence<T>(result: T): T | Promise<T> {
+    return this.characterService.completePersistence(result);
+  }
+
   searchZone(input: SearchZoneInput): ExplorationSearchResult {
     this.assertSearchCooldownAvailable(input);
 
@@ -101,7 +106,10 @@ export class ExplorationService {
     }
 
     if (outcome === 'bronze') {
-      bronzeFound = randomInclusive(zone.bronzeReward.min, zone.bronzeReward.max);
+      bronzeFound = randomInclusive(
+        zone.bronzeReward.min,
+        zone.bronzeReward.max,
+      );
       reward.moneyBronze = bronzeFound;
       message = `You found ${bronzeFound} Bronze while searching.`;
       log.push(`Found a small abandoned pouch: +${bronzeFound} Bronze.`);
@@ -132,12 +140,12 @@ export class ExplorationService {
         moneyBronze: reward.moneyBronze ?? 0,
         items: reward.items ?? [],
       },
-    ) as CharacterSnapshot;
+    );
 
     return {
       zoneId: zone.id,
       zoneName: zone.name,
-      outcomeType: outcome as ExplorationSearchOutcomeType,
+      outcomeType: outcome,
       message,
       log,
       staminaCost: zone.staminaCost,

@@ -1,6 +1,7 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
+import { DatabaseService } from '../database/database.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -108,5 +109,64 @@ describe('AuthService', () => {
     expect(service.me(`Bearer ${response.token}`)).toBeNull();
 
     nowSpy.mockRestore();
+  });
+
+  it('waits for user persistence before writing the related session', async () => {
+    let resolveUserPersistence: (() => void) | undefined;
+    const upsertAuthUser = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveUserPersistence = resolve;
+        }),
+    );
+    const upsertAuthSession = jest.fn().mockResolvedValue(undefined);
+    const databaseService = {
+      isEnabled: () => true,
+      upsertAuthUser,
+      upsertAuthSession,
+    } as unknown as DatabaseService;
+    const persistentService = new AuthService(databaseService);
+
+    const response = persistentService.register({
+      username: 'Freya',
+      email: 'freya@example.com',
+      password: 'secret123',
+    });
+    const completion = persistentService.completePersistence(response);
+
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
+    expect(upsertAuthUser).toHaveBeenCalledTimes(1);
+    expect(upsertAuthSession).not.toHaveBeenCalled();
+
+    resolveUserPersistence?.();
+    await completion;
+
+    expect(upsertAuthSession).toHaveBeenCalledWith(
+      response.token,
+      response.user.id,
+      expect.any(String),
+    );
+  });
+
+  it('surfaces persistence failures to the request completion', async () => {
+    const databaseService = {
+      isEnabled: () => true,
+      upsertAuthUser: jest
+        .fn()
+        .mockRejectedValue(new Error('database unavailable')),
+      upsertAuthSession: jest.fn().mockResolvedValue(undefined),
+    } as unknown as DatabaseService;
+    const persistentService = new AuthService(databaseService);
+    const response = persistentService.register({
+      username: 'Loki',
+      email: 'loki@example.com',
+      password: 'secret123',
+    });
+
+    await expect(
+      persistentService.completePersistence(response),
+    ).rejects.toThrow('database unavailable');
   });
 });

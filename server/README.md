@@ -63,10 +63,15 @@ matching that authenticated session.
 
 PostgreSQL stores users, sessions, characters, and selected-character records.
 Character data is stored as a JSONB `Character` object; derived snapshots are
-calculated at runtime.
+calculated at runtime. Active/recent battle state is persisted as JSONB and
+hydrated when the server starts.
 
-Active battles, exploration cooldowns, and market purchase counters are
-currently process-local and reset on backend restart.
+Ordered migrations are recorded in `schema_migrations`. Character persistence
+uses a dedicated SQL version column for optimistic concurrency. Sessions have
+an explicit `expires_at`, and expired sessions/battles are cleaned on startup
+and hourly.
+
+Exploration cooldowns and market purchase counters remain process-local.
 
 ## Commands
 
@@ -79,11 +84,11 @@ npm run test:e2e
 
 ## Known limitations
 
-- Active battles are not persisted.
-- Database writes from gameplay services are not yet fully awaited or
-  transactional.
-- Character `version` is not yet used for database optimistic locking.
-- Schema evolution still relies on startup SQL rather than versioned
-  migrations.
+- Runtime caches currently target a single backend instance.
+- Market purchase counters and exploration cooldowns are not shared between
+  instances and reset on restart.
+- Not every multi-service mutation is represented by one cross-table database
+  transaction; ordered writes and compensating rollback are still used in
+  places such as battle reward application.
 - Status effects, passives, proc effects, and skill-rune attachment are
   incomplete.

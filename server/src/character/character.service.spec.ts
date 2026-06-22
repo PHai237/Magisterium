@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { CharacterService } from './character.service';
+import { DatabaseService } from '../database/database.service';
 
 import {
   ORIGIN_DEFINITIONS,
@@ -1334,5 +1335,68 @@ describe('CharacterService', () => {
     expect(result.character.inventoryItemIds).not.toContain('minor_hp_potion');
     expect(result.character.inventoryItemIds).toContain('goblin_ear');
   });
+});
 
+describe('CharacterService persistence', () => {
+  it('serializes create/current writes and uses optimistic versions', async () => {
+    const saveCharacter = jest.fn().mockResolvedValue(undefined);
+    const setCurrentCharacter = jest.fn().mockResolvedValue(undefined);
+    const databaseService = {
+      isEnabled: () => true,
+      saveCharacter,
+      setCurrentCharacter,
+    } as unknown as DatabaseService;
+    const persistentService = new CharacterService(databaseService);
+
+    const created = persistentService.create({
+      name: 'Persisted Hero',
+      originId: 'wanderer',
+      userId: 'user_persist',
+    });
+    await persistentService.flushPersistence();
+
+    expect(created.version).toBe(1);
+    expect(saveCharacter).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ version: 1 }),
+      undefined,
+    );
+    expect(saveCharacter.mock.invocationCallOrder[0]).toBeLessThan(
+      setCurrentCharacter.mock.invocationCallOrder[0],
+    );
+
+    const updated = persistentService.updateById(
+      created.id,
+      { name: 'Persisted Hero II' },
+      'user_persist',
+    );
+    await persistentService.flushPersistence();
+
+    expect(updated.version).toBe(2);
+    expect(saveCharacter).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ version: 2 }),
+      1,
+    );
+  });
+
+  it('surfaces optimistic persistence conflicts', async () => {
+    const databaseService = {
+      isEnabled: () => true,
+      saveCharacter: jest
+        .fn()
+        .mockRejectedValue(new Error('optimistic conflict')),
+      setCurrentCharacter: jest.fn().mockResolvedValue(undefined),
+    } as unknown as DatabaseService;
+    const persistentService = new CharacterService(databaseService);
+    const created = persistentService.create({
+      name: 'Conflicted Hero',
+      originId: 'scholar',
+      userId: 'user_conflict',
+    });
+
+    await expect(
+      persistentService.completePersistence(created),
+    ).rejects.toThrow('optimistic conflict');
+  });
 });

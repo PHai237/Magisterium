@@ -11,21 +11,25 @@ export class AuthController {
 
   @Post('register')
   register(@Body() dto: RegisterAuthDto) {
-    return this.authService.register(dto);
+    return this.authService.completePersistence(this.authService.register(dto));
   }
 
   @Post('login')
   login(@Body() dto: LoginAuthDto) {
-    return this.authService.login(dto);
+    return this.authService.completePersistence(this.authService.login(dto));
   }
 
   @Get('me')
   me(@Headers('authorization') authorizationHeader?: string | string[]) {
-    return this.authService.me(authorizationHeader);
+    return this.authService.completePersistence(
+      this.authService.me(authorizationHeader),
+    );
   }
 
   @Post('logout')
   logout(@Headers('authorization') authorizationHeader?: string | string[]) {
-    return this.authService.logout(authorizationHeader);
+    return this.authService.completePersistence(
+      this.authService.logout(authorizationHeader),
+    );
   }
 }

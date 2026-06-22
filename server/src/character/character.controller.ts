@@ -48,10 +48,12 @@ export class CharacterController {
     @Body() createCharacterDto: CreateCharacterDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.create({
-      ...createCharacterDto,
-      userId: this.readRequiredUserIdHeader(userIdHeader),
-    });
+    return this.characterService.completePersistence(
+      this.characterService.create({
+        ...createCharacterDto,
+        userId: this.readRequiredUserIdHeader(userIdHeader),
+      }),
+    );
   }
 
   @Get()
@@ -63,8 +65,10 @@ export class CharacterController {
 
   @Get('current')
   findCurrent(@Headers(USER_ID_HEADER) userIdHeader?: string | string[]) {
-    return this.characterService.findCurrent(
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.characterService.completePersistence(
+      this.characterService.findCurrent(
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 
@@ -73,9 +77,11 @@ export class CharacterController {
     @Param('id') id: string,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.setCurrentCharacter(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.characterService.completePersistence(
+      this.characterService.setCurrentCharacter(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 
@@ -112,11 +118,13 @@ export class CharacterController {
     @Body() dto: InventoryItemQuantityDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.addInventoryItem(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
-      dto.itemId,
-      dto.quantity,
+    return this.characterService.completePersistence(
+      this.characterService.addInventoryItem(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+        dto.itemId,
+        dto.quantity,
+      ),
     );
   }
 
@@ -126,11 +134,13 @@ export class CharacterController {
     @Body() dto: InventoryItemQuantityDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.removeInventoryItem(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
-      dto.itemId,
-      dto.quantity,
+    return this.characterService.completePersistence(
+      this.characterService.removeInventoryItem(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+        dto.itemId,
+        dto.quantity,
+      ),
     );
   }
 
@@ -140,10 +150,12 @@ export class CharacterController {
     @Body() dto: InventoryItemActionDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.equipInventoryItem(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
-      dto.itemId,
+    return this.characterService.completePersistence(
+      this.characterService.equipInventoryItem(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+        dto.itemId,
+      ),
     );
   }
 
@@ -153,10 +165,12 @@ export class CharacterController {
     @Body() dto: InventoryItemActionDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.unequipInventoryItem(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
-      dto.itemId,
+    return this.characterService.completePersistence(
+      this.characterService.unequipInventoryItem(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+        dto.itemId,
+      ),
     );
   }
 
@@ -166,10 +180,12 @@ export class CharacterController {
     @Body() dto: InventoryItemActionDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.useConsumableItemOutOfBattle(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
-      dto.itemId,
+    return this.characterService.completePersistence(
+      this.characterService.useConsumableItemOutOfBattle(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+        dto.itemId,
+      ),
     );
   }
 
@@ -178,9 +194,11 @@ export class CharacterController {
     @Param('id') id: string,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.restAtInn(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.characterService.completePersistence(
+      this.characterService.restAtInn(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 
@@ -189,9 +207,11 @@ export class CharacterController {
     @Param('id') id: string,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.restAtInnWithPass(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.characterService.completePersistence(
+      this.characterService.restAtInnWithPass(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 
@@ -212,10 +232,12 @@ export class CharacterController {
     @Body() updateCharacterDto: UpdateCharacterDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.updateById(
-      id,
-      updateCharacterDto,
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.characterService.completePersistence(
+      this.characterService.updateById(
+        id,
+        updateCharacterDto,
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 
@@ -224,9 +246,11 @@ export class CharacterController {
     @Param('id') id: string,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.characterService.deleteById(
-      id,
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.characterService.completePersistence(
+      this.characterService.deleteById(
+        id,
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 

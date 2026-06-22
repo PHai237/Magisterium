@@ -2,15 +2,28 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { CharacterService } from '../../character/character.service';
 import { countInventoryItem } from '../inventory/inventory.calculations';
-import { getItemDefinitionById, hasItemDefinition } from '../item/item.registry';
+import {
+  getItemDefinitionById,
+  hasItemDefinition,
+} from '../item/item.registry';
 import { SMITH_RECIPE_DEFINITIONS } from './smith.constants';
 
 import type { CharacterSnapshot, ItemId } from '../character/character.types';
-import type { SmithCraftResult, SmithRecipeCatalogResult, SmithRecipeDefinition, SmithRecipeRequirementView, SmithRecipeView } from './smith.types';
+import type {
+  SmithCraftResult,
+  SmithRecipeCatalogResult,
+  SmithRecipeDefinition,
+  SmithRecipeRequirementView,
+  SmithRecipeView,
+} from './smith.types';
 
 @Injectable()
 export class SmithService {
   constructor(private readonly characterService: CharacterService) {}
+
+  completePersistence<T>(result: T): T | Promise<T> {
+    return this.characterService.completePersistence(result);
+  }
 
   getRecipes(characterId: string, userId: string): SmithRecipeCatalogResult {
     const character = this.characterService.findByIdForUserScope(
@@ -113,10 +126,16 @@ export class SmithService {
     }
 
     const requirements = recipe.requiredItems.map((requiredItem) =>
-      this.buildRequirementView(requiredItem.itemId, requiredItem.quantity, character),
+      this.buildRequirementView(
+        requiredItem.itemId,
+        requiredItem.quantity,
+        character,
+      ),
     );
 
-    const hasAllItems = requirements.every((requirement) => requirement.isSatisfied);
+    const hasAllItems = requirements.every(
+      (requirement) => requirement.isSatisfied,
+    );
     const hasBronze = character.moneyBronze >= recipe.bronzeCost;
 
     return {
@@ -145,7 +164,10 @@ export class SmithService {
     character: CharacterSnapshot,
   ): SmithRecipeRequirementView {
     const item = getItemDefinitionById(itemId);
-    const ownedQuantity = countInventoryItem(character.inventoryItemIds, itemId);
+    const ownedQuantity = countInventoryItem(
+      character.inventoryItemIds,
+      itemId,
+    );
 
     return {
       itemId,

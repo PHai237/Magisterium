@@ -33,6 +33,8 @@ export class AuthService implements OnModuleInit {
   private readonly userIdsByUsername = new Map<string, string>();
   private readonly userIdsByEmail = new Map<string, string>();
   private readonly userIdsByToken = new Map<string, string>();
+  private readonly pendingPersistence = new Set<Promise<void>>();
+  private persistenceChain: Promise<void> = Promise.resolve();
 
   constructor(
     @Optional()
@@ -141,6 +143,18 @@ export class AuthService implements OnModuleInit {
     this.persistClearAuthState();
   }
 
+  completePersistence<T>(result: T): T | Promise<T> {
+    if (!this.databaseService?.isEnabled()) {
+      return result;
+    }
+
+    return this.flushPersistence().then(() => result);
+  }
+
+  async flushPersistence(): Promise<void> {
+    await Promise.all(Array.from(this.pendingPersistence));
+  }
+
   private async hydrateAuthStateFromDatabase(): Promise<void> {
     if (!this.databaseService?.isEnabled()) {
       return;
@@ -179,6 +193,8 @@ export class AuthService implements OnModuleInit {
         }
       }
 
+      await this.flushPersistence();
+
       this.logger.log(
         `Hydrated ${users.length} auth users and ${sessions.length} sessions from database.`,
       );
@@ -194,9 +210,10 @@ export class AuthService implements OnModuleInit {
 
   private createAuthResponse(user: StoredAuthUser): AuthResponse {
     const token = this.createSessionToken();
+    const expiresAt = this.getSessionTokenExpiry(token);
 
     this.userIdsByToken.set(token, user.id);
-    this.persistAuthSession(token, user.id);
+    this.persistAuthSession(token, user.id, expiresAt ?? Date.now());
 
     return {
       user: this.toSessionSnapshot(user),
@@ -315,29 +332,42 @@ export class AuthService implements OnModuleInit {
       return;
     }
 
-    void this.databaseService.upsertAuthUser(user).catch((error: unknown) => {
-      const message =
-        error instanceof Error ? error.message : 'Unknown database error.';
-
-      this.logger.error(`Failed to persist auth user ${user.id}: ${message}`);
-    });
+    this.trackPersistence(async () => {
+      try {
+        await this.databaseService!.upsertAuthUser(user);
+      } catch (error) {
+        this.usersById.delete(user.id);
+        this.userIdsByUsername.delete(this.normalizeUsernameKey(user.username));
+        this.userIdsByEmail.delete(this.normalizeEmailKey(user.email));
+        for (const [token, userId] of this.userIdsByToken.entries()) {
+          if (userId === user.id) this.userIdsByToken.delete(token);
+        }
+        throw error;
+      }
+    }, `persist auth user ${user.id}`);
   }
 
-  private persistAuthSession(token: string, userId: string): void {
+  private persistAuthSession(
+    token: string,
+    userId: string,
+    expiresAt: number,
+  ): void {
     if (!this.databaseService?.isEnabled()) {
       return;
     }
 
-    void this.databaseService
-      .upsertAuthSession(token, userId)
-      .catch((error: unknown) => {
-        const message =
-          error instanceof Error ? error.message : 'Unknown database error.';
-
-        this.logger.error(
-          `Failed to persist auth session for user ${userId}: ${message}`,
+    this.trackPersistence(async () => {
+      try {
+        await this.databaseService!.upsertAuthSession(
+          token,
+          userId,
+          new Date(expiresAt).toISOString(),
         );
-      });
+      } catch (error) {
+        this.userIdsByToken.delete(token);
+        throw error;
+      }
+    }, `persist auth session for user ${userId}`);
   }
 
   private deleteAuthSession(token: string): void {
@@ -345,14 +375,10 @@ export class AuthService implements OnModuleInit {
       return;
     }
 
-    void this.databaseService
-      .deleteAuthSession(token)
-      .catch((error: unknown) => {
-        const message =
-          error instanceof Error ? error.message : 'Unknown database error.';
-
-        this.logger.error(`Failed to delete auth session: ${message}`);
-      });
+    this.trackPersistence(
+      () => this.databaseService!.deleteAuthSession(token),
+      'delete auth session',
+    );
   }
 
   private persistClearAuthState(): void {
@@ -360,11 +386,28 @@ export class AuthService implements OnModuleInit {
       return;
     }
 
-    void this.databaseService.clearAuthState().catch((error: unknown) => {
-      const message =
-        error instanceof Error ? error.message : 'Unknown database error.';
+    this.trackPersistence(
+      () => this.databaseService!.clearAuthState(),
+      'clear auth state',
+    );
+  }
 
-      this.logger.error(`Failed to clear auth state: ${message}`);
-    });
+  private trackPersistence(
+    persistenceOperation: () => Promise<void>,
+    operationLabel: string,
+  ): void {
+    const trackedPromise: Promise<void> = this.persistenceChain
+      .then(persistenceOperation)
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : 'Unknown database error.';
+        this.logger.error(`Failed to ${operationLabel}: ${message}`);
+        throw error;
+      })
+      .finally(() => {
+        this.pendingPersistence.delete(trackedPromise);
+      });
+    this.persistenceChain = trackedPromise;
+    this.pendingPersistence.add(trackedPromise);
   }
 }

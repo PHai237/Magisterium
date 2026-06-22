@@ -17,11 +17,13 @@ export class ExplorationController {
     @Body() dto: SearchZoneDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.explorationService.searchZone({
-      characterId: dto.characterId,
-      zoneId: dto.zoneId,
-      userId: this.readRequiredUserIdHeader(userIdHeader),
-    });
+    return this.explorationService.completePersistence(
+      this.explorationService.searchZone({
+        characterId: dto.characterId,
+        zoneId: dto.zoneId,
+        userId: this.readRequiredUserIdHeader(userIdHeader),
+      }),
+    );
   }
 
   private readRequiredUserIdHeader(userIdHeader?: string | string[]): string {

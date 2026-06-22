@@ -1,4 +1,5 @@
 import { BattleService } from './battle.service';
+import { DatabaseService } from '../../database/database.service';
 
 import { createCharacterSnapshot } from '../character/character.calculations';
 
@@ -460,5 +461,41 @@ describe('BattleService', () => {
 
       expect(service.listBattles()).toHaveLength(0);
     });
+  });
+});
+
+describe('BattleService persistence', () => {
+  it('persists battle mutations and hydrates them after restart', async () => {
+    const seedService = new BattleService();
+    const character = createTestCharacterSnapshot();
+    const battle = createSavedVictoryBattleWithDefeatedSlime(
+      seedService,
+      character,
+      'persisted_battle',
+    );
+    const upsertBattle = jest.fn().mockResolvedValue(undefined);
+    const databaseService = {
+      isEnabled: () => true,
+      loadBattles: jest.fn().mockResolvedValue([battle]),
+      upsertBattle,
+      deleteBattle: jest.fn().mockResolvedValue(undefined),
+    } as unknown as DatabaseService;
+    const persistentService = new BattleService(databaseService);
+
+    await persistentService.onModuleInit();
+
+    expect(persistentService.getBattleOrThrow('persisted_battle')).toEqual(
+      battle,
+    );
+
+    persistentService.saveBattle({
+      ...battle,
+      updatedAt: new Date().toISOString(),
+    });
+    await persistentService.flushPersistence();
+
+    expect(upsertBattle).toHaveBeenCalledWith(
+      expect.objectContaining({ battleId: 'persisted_battle' }),
+    );
   });
 });

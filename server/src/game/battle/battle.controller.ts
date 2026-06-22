@@ -47,14 +47,16 @@ export class BattleController {
     }
 
     if (dto.encounterId) {
-      return this.battleService.createBattleFromEncounter({
-        battleId: dto.battleId,
-        seed: dto.seed,
-        character,
-        encounterId: dto.encounterId,
-        autoStart: dto.autoStart,
-        autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
-      });
+      return this.completeBattlePersistence(
+        this.battleService.createBattleFromEncounter({
+          battleId: dto.battleId,
+          seed: dto.seed,
+          character,
+          encounterId: dto.encounterId,
+          autoStart: dto.autoStart,
+          autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
+        }),
+      );
     }
 
     if (!dto.monsters || dto.monsters.length === 0) {
@@ -63,20 +65,24 @@ export class BattleController {
       );
     }
 
-    return this.battleService.createBattleFromCharacter({
-      battleId: dto.battleId,
-      seed: dto.seed,
-      character,
-      monsters: dto.monsters,
-      autoStart: dto.autoStart,
-      autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
-    });
+    return this.completeBattlePersistence(
+      this.battleService.createBattleFromCharacter({
+        battleId: dto.battleId,
+        seed: dto.seed,
+        character,
+        monsters: dto.monsters,
+        autoStart: dto.autoStart,
+        autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
+      }),
+    );
   }
 
   @Get()
   listBattles(@Headers(USER_ID_HEADER) userIdHeader?: string | string[]) {
-    return this.battleService.listBattlesForUserScope(
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.completeBattlePersistence(
+      this.battleService.listBattlesForUserScope(
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 
@@ -97,17 +103,19 @@ export class BattleController {
     @Body() dto: ResolveBattleActionDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.battleService.resolveActionForUserScope(
-      {
-        battleId,
-        actorId: dto.actorId,
-        targetIds: dto.targetIds ?? [],
-        actionType: dto.actionType,
-        skillId: dto.skillId,
-        itemId: dto.itemId,
-        autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
-      },
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.completeBattlePersistence(
+      this.battleService.resolveActionForUserScope(
+        {
+          battleId,
+          actorId: dto.actorId,
+          targetIds: dto.targetIds ?? [],
+          actionType: dto.actionType,
+          skillId: dto.skillId,
+          itemId: dto.itemId,
+          autoResolveMonsterTurns: dto.autoResolveMonsterTurns,
+        },
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 
@@ -138,7 +146,7 @@ export class BattleController {
       reward: preparedClaim.reward,
     });
 
-    try {
+    const applyRewardAndPersist = () => {
       const appliedReward = this.characterService.applyBattleReward(
         character.id,
         userId,
@@ -155,18 +163,40 @@ export class BattleController {
         },
       );
 
-      return {
+      const response = {
         battle: committedClaim.battle,
         character: appliedReward.character,
         reward: appliedReward.reward,
       };
+      return this.completeCharacterPersistence(response);
+    };
+
+    const rollbackClaim = async (error: unknown): Promise<never> => {
+      this.battleService.rollbackBattleRewardClaim({
+        battleId,
+        characterId: character.id,
+        userId,
+      });
+      await this.completeBattlePersistence(undefined);
+      throw error;
+    };
+
+    const battlePersistence = this.completeBattlePersistence(committedClaim);
+
+    if (battlePersistence instanceof Promise) {
+      return battlePersistence
+        .then(() => applyRewardAndPersist())
+        .catch((error: unknown) => rollbackClaim(error));
+    }
+
+    try {
+      return applyRewardAndPersist();
     } catch (error) {
       this.battleService.rollbackBattleRewardClaim({
         battleId,
         characterId: character.id,
         userId,
       });
-
       throw error;
     }
   }
@@ -176,12 +206,12 @@ export class BattleController {
     @Param('battleId') battleId: string,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return {
+    return this.completeBattlePersistence({
       deleted: this.battleService.deleteBattleForUserScope(
         battleId,
         this.readRequiredUserIdHeader(userIdHeader),
       ),
-    };
+    });
   }
 
   private readRequiredUserIdHeader(userIdHeader?: string | string[]): string {
@@ -190,5 +220,17 @@ export class BattleController {
       : userIdHeader;
 
     return normalizeRequiredUserId(rawUserId);
+  }
+
+  private completeBattlePersistence<T>(result: T): T | Promise<T> {
+    return typeof this.battleService.completePersistence === 'function'
+      ? this.battleService.completePersistence(result)
+      : result;
+  }
+
+  private completeCharacterPersistence<T>(result: T): T | Promise<T> {
+    return typeof this.characterService.completePersistence === 'function'
+      ? this.characterService.completePersistence(result)
+      : result;
   }
 }

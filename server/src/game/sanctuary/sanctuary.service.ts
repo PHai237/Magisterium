@@ -8,6 +8,10 @@ import type { StatKey } from '../character/character.types';
 export class SanctuaryService {
   constructor(private readonly characterService: CharacterService) {}
 
+  completePersistence<T>(result: T): T | Promise<T> {
+    return this.characterService.completePersistence(result);
+  }
+
   getStatus(characterId: string, userId: string) {
     return this.characterService.getSanctuaryStatus(characterId, userId);
   }

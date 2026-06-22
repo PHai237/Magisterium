@@ -24,7 +24,7 @@ export interface MarketVendorDefinition {
 export const MARKET_ID = 'town_market';
 export const MARKET_NAME = 'Market';
 
-export const MARKET_VENDOR_DEFINITIONS = [
+export const MARKET_VENDOR_DEFINITIONS: readonly MarketVendorDefinition[] = [
   {
     id: 'farmer_stall',
     name: 'Farmer Stall',
@@ -106,4 +106,4 @@ export const MARKET_VENDOR_DEFINITIONS = [
       },
     ],
   },
-] as const satisfies readonly MarketVendorDefinition[];
+];

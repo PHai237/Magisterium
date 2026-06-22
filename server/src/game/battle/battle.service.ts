@@ -5,6 +5,8 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 
 import {
@@ -61,6 +63,10 @@ import type {
   BattleRewardSummary,
   DefeatedMonsterRewardInput,
 } from '../reward/reward.types';
+import { DatabaseService } from '../../database/database.service';
+
+const TERMINAL_BATTLE_MEMORY_RETENTION_MS = 1000 * 60 * 60;
+const MAX_BATTLE_AGE_MS = 1000 * 60 * 60 * 24;
 
 export interface CreateBattleFromCharacterInput {
   battleId?: string;
@@ -131,9 +137,38 @@ export interface ClaimBattleRewardResult {
 }
 
 @Injectable()
-export class BattleService {
+export class BattleService implements OnModuleInit {
   private readonly logger = new Logger(BattleService.name);
   private readonly battles = new Map<string, BattleState>();
+  private readonly persistenceChains = new Map<string, Promise<void>>();
+  private readonly pendingPersistence = new Set<Promise<void>>();
+
+  constructor(
+    @Optional()
+    private readonly databaseService?: DatabaseService,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    if (!this.databaseService?.isEnabled()) return;
+
+    const battles = await this.databaseService.loadBattles();
+    this.battles.clear();
+    for (const battle of battles) {
+      this.battles.set(battle.battleId, battle);
+    }
+    this.cleanupStaleBattles();
+    await this.flushPersistence();
+    this.logger.log(`Hydrated ${battles.length} active battles from database.`);
+  }
+
+  completePersistence<T>(result: T): T | Promise<T> {
+    if (!this.databaseService?.isEnabled()) return result;
+    return this.flushPersistence().then(() => result);
+  }
+
+  async flushPersistence(): Promise<void> {
+    await Promise.all(Array.from(this.pendingPersistence));
+  }
 
   createBattleFromCharacter(
     input: CreateBattleFromCharacterInput,
@@ -185,6 +220,7 @@ export class BattleService {
   }
 
   createBattleFromActors(input: CreateBattleFromActorsInput): BattleState {
+    this.cleanupStaleBattles();
     const battle = createBattleState({
       battleId: input.battleId,
       seed: input.seed,
@@ -208,7 +244,7 @@ export class BattleService {
         ? this.resolveAutoMonsterTurns(startedBattle)
         : startedBattle;
 
-    this.battles.set(nextBattle.battleId, nextBattle);
+    this.persistBattle(nextBattle);
 
     return nextBattle;
   }
@@ -241,10 +277,12 @@ export class BattleService {
   }
 
   listBattles(): BattleState[] {
+    this.cleanupStaleBattles();
     return Array.from(this.battles.values());
   }
 
   listBattlesForUserScope(userId: string): BattleState[] {
+    this.cleanupStaleBattles();
     const userScope = this.normalizeRequiredBattleUserId(userId);
 
     return Array.from(this.battles.values()).filter(
@@ -271,7 +309,7 @@ export class BattleService {
       battleState: battleAfterMonsterTurns,
     };
 
-    this.battles.set(finalResult.battleState.battleId, finalResult.battleState);
+    this.persistBattle(finalResult.battleState);
 
     return finalResult;
   }
@@ -311,7 +349,7 @@ export class BattleService {
       updatedAt: new Date().toISOString(),
     };
 
-    this.battles.set(nextBattle.battleId, nextBattle);
+    this.persistBattle(nextBattle);
 
     return nextBattle;
   }
@@ -401,7 +439,7 @@ export class BattleService {
       updatedAt: new Date().toISOString(),
     };
 
-    this.battles.set(nextBattle.battleId, nextBattle);
+    this.persistBattle(nextBattle);
 
     return {
       battle: nextBattle,
@@ -421,13 +459,15 @@ export class BattleService {
   }
 
   saveBattle(battle: BattleState): BattleState {
-    this.battles.set(battle.battleId, battle);
+    this.persistBattle(battle);
 
     return battle;
   }
 
   deleteBattle(battleId: string): boolean {
-    return this.battles.delete(battleId);
+    const deleted = this.battles.delete(battleId);
+    if (deleted) this.deletePersistedBattle(battleId);
+    return deleted;
   }
 
   deleteBattleForUserScope(battleId: string, userId: string): boolean {
@@ -455,6 +495,7 @@ export class BattleService {
       }
 
       this.battles.delete(battleId);
+      this.deletePersistedBattle(battleId);
       deletedCount += 1;
     }
 
@@ -463,6 +504,93 @@ export class BattleService {
 
   clearBattles(): void {
     this.battles.clear();
+    if (this.databaseService?.isEnabled()) {
+      this.queuePersistence('battles:clear', () =>
+        this.databaseService!.clearBattles(),
+      );
+    }
+  }
+
+  private persistBattle(battle: BattleState): void {
+    this.battles.set(battle.battleId, battle);
+    if (!this.databaseService?.isEnabled()) return;
+    this.queuePersistence(`battle:${battle.battleId}`, async () => {
+      try {
+        await this.databaseService!.upsertBattle(battle);
+      } catch (error) {
+        await this.restoreBattleAfterPersistenceFailure(battle.battleId);
+        throw error;
+      }
+    });
+  }
+
+  private deletePersistedBattle(battleId: string): void {
+    if (!this.databaseService?.isEnabled()) return;
+    this.queuePersistence(`battle:${battleId}`, () =>
+      this.databaseService!.deleteBattle(battleId),
+    );
+  }
+
+  private cleanupStaleBattles(now = Date.now()): void {
+    for (const [battleId, battle] of this.battles.entries()) {
+      const updatedAt = new Date(battle.updatedAt).getTime();
+      const age = Number.isFinite(updatedAt)
+        ? now - updatedAt
+        : MAX_BATTLE_AGE_MS;
+      const terminal = ['victory', 'defeat', 'escaped', 'cancelled'].includes(
+        battle.status,
+      );
+      const expired =
+        age >= MAX_BATTLE_AGE_MS ||
+        (terminal && age >= TERMINAL_BATTLE_MEMORY_RETENTION_MS);
+
+      if (expired) {
+        this.battles.delete(battleId);
+        this.deletePersistedBattle(battleId);
+      }
+    }
+  }
+
+  private queuePersistence(key: string, operation: () => Promise<void>): void {
+    const previous = this.persistenceChains.get(key) ?? Promise.resolve();
+    const trackedPromise: Promise<void> = previous
+      .catch(() => undefined)
+      .then(operation)
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : 'Unknown database error.';
+        this.logger.error(`Persistence operation ${key} failed: ${message}`);
+        throw error;
+      })
+      .finally(() => {
+        this.pendingPersistence.delete(trackedPromise);
+        if (this.persistenceChains.get(key) === trackedPromise) {
+          this.persistenceChains.delete(key);
+        }
+      });
+    this.persistenceChains.set(key, trackedPromise);
+    this.pendingPersistence.add(trackedPromise);
+  }
+
+  private async restoreBattleAfterPersistenceFailure(
+    battleId: string,
+  ): Promise<void> {
+    try {
+      const persistedBattle = await this.databaseService?.loadBattle(battleId);
+      if (persistedBattle) {
+        this.battles.set(battleId, persistedBattle);
+      } else {
+        this.battles.delete(battleId);
+      }
+    } catch (restoreError) {
+      const message =
+        restoreError instanceof Error
+          ? restoreError.message
+          : 'Unknown database error.';
+      this.logger.error(
+        `Failed to restore battle ${battleId} after persistence failure: ${message}`,
+      );
+    }
   }
 
   private normalizeRequiredBattleUserId(userId: string): string {

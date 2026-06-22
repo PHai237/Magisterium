@@ -89,10 +89,17 @@ PostgreSQL currently stores:
 - auth sessions
 - characters as JSONB
 - each user's selected character
+- active/recent battles as JSONB
 
 Auth and character state are hydrated from PostgreSQL when the backend starts.
-Active battle state, exploration cooldowns, and current market stock purchases
-are process-local and reset when the backend restarts.
+Battle state is also restored after a backend restart. Exploration cooldowns
+and current market stock purchases remain process-local and reset when the
+backend restarts.
+
+Database schema changes are applied through ordered migrations recorded in
+`schema_migrations`. Character writes use optimistic version checks, session
+rows carry an explicit expiry timestamp, and expired sessions/battles are
+cleaned periodically.
 
 ## Local development
 
@@ -142,11 +149,11 @@ npm run build
 
 ## Known prototype limitations
 
-- Active battles are not persisted and can be lost on backend restart.
-- Important database writes are still initiated asynchronously by services;
-  stronger transaction/error handling is planned.
-- Character updates do not yet use optimistic concurrency at the database
-  level.
+- Runtime caches assume a single backend instance; horizontally scaled
+  instances would require shared cache coordination or database-first reads.
+- Market purchase counters and exploration cooldowns are still process-local.
+- Multi-aggregate operations use ordered/compensating persistence rather than a
+  single cross-service transaction in every case.
 - Status effects, passives, proc effects, and skill-rune attachment are
   incomplete scaffolding.
 - The Grand Archive is a placeholder.
@@ -157,10 +164,9 @@ npm run build
 
 ## Near-term direction
 
-1. Improve persistence reliability and battle recovery.
-2. Add database migrations, transactions, and optimistic concurrency.
-3. Build one complete content slice:
+1. Build one complete content slice:
    quest -> exploration -> crafting -> dungeon boss -> unique reward.
-4. Add NPC dialogue and give the Grand Archive its first concrete purpose.
-5. Expand status effects, passives, proc effects, and skill runes after the
+2. Add NPC dialogue and give the Grand Archive its first concrete purpose.
+3. Expand status effects, passives, proc effects, and skill runes after the
    first content slice is stable.
+4. Continue splitting large services/components while their features evolve.

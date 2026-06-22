@@ -1,5 +1,37 @@
 # Magisterium Admin Database Queries
 
+## Phase B persistence additions
+
+The backend now creates and manages:
+
+- `schema_migrations`
+- `auth_sessions.expires_at`
+- `characters.version`
+- `battles`
+
+Useful checks:
+
+```sql
+SELECT id, applied_at
+FROM schema_migrations
+ORDER BY id;
+```
+
+```sql
+SELECT
+  id AS battle_id,
+  owner_user_id,
+  character_id,
+  status,
+  updated_at,
+  expires_at
+FROM battles
+ORDER BY updated_at DESC;
+```
+
+Do not manually edit `characters.version` independently from
+`characters.data->>'version'`.
+
 Ghi chú: chạy các câu lệnh này trong Neon SQL Editor hoặc pgAdmin đang kết nối đúng Neon database của Render backend.
 
 Không SELECT password_hash / password_salt nếu không cần.

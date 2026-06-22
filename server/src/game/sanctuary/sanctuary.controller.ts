@@ -29,11 +29,13 @@ export class SanctuaryController {
     @Body() dto: SanctuaryStatDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.sanctuaryService.refineRune(
-      characterId,
-      this.readRequiredUserIdHeader(userIdHeader),
-      dto.statKey,
-      dto.quantity,
+    return this.sanctuaryService.completePersistence(
+      this.sanctuaryService.refineRune(
+        characterId,
+        this.readRequiredUserIdHeader(userIdHeader),
+        dto.statKey,
+        dto.quantity,
+      ),
     );
   }
 
@@ -43,11 +45,13 @@ export class SanctuaryController {
     @Body() dto: SanctuaryStatDto,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.sanctuaryService.imbueRune(
-      characterId,
-      this.readRequiredUserIdHeader(userIdHeader),
-      dto.statKey,
-      dto.quantity,
+    return this.sanctuaryService.completePersistence(
+      this.sanctuaryService.imbueRune(
+        characterId,
+        this.readRequiredUserIdHeader(userIdHeader),
+        dto.statKey,
+        dto.quantity,
+      ),
     );
   }
 
@@ -56,9 +60,11 @@ export class SanctuaryController {
     @Param('characterId') characterId: string,
     @Headers(USER_ID_HEADER) userIdHeader?: string | string[],
   ) {
-    return this.sanctuaryService.rankUp(
-      characterId,
-      this.readRequiredUserIdHeader(userIdHeader),
+    return this.sanctuaryService.completePersistence(
+      this.sanctuaryService.rankUp(
+        characterId,
+        this.readRequiredUserIdHeader(userIdHeader),
+      ),
     );
   }
 
