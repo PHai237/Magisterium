@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "../../components/ui/Button";
 import type { CharacterSnapshot, ItemId } from "../../domain/magisterium.types";
@@ -50,6 +50,7 @@ export function InnPanel({
   const [restFlash, setRestFlash] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const paymentMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (paymentMethod === "pass" && !hasPass) {
@@ -69,6 +70,24 @@ export function InnPanel({
 
     return () => window.clearTimeout(timerId);
   }, [message, error]);
+
+  useEffect(() => {
+    if (!isPaymentMenuOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        paymentMenuRef.current &&
+        !paymentMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsPaymentMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [isPaymentMenuOpen]);
 
   const canRest = paymentMethod === "pass" ? hasPass : canAffordBronze;
 
@@ -151,12 +170,7 @@ export function InnPanel({
       <div className="inn-panel__body">
         <section className="inn-room-service" aria-label="Rent a room">
           <div className="inn-section-heading">
-            <span>Private Rooms</span>
             <h2>Rent a Room</h2>
-            <p>
-              A full night's rest restores HP, MP and Stamina before the next
-              expedition.
-            </p>
           </div>
 
           <div className="inn-room-visual" aria-hidden="true">
@@ -189,7 +203,7 @@ export function InnPanel({
           </div>
 
           <div className="inn-action-panel">
-            <div className="inn-payment-menu">
+            <div className="inn-payment-menu" ref={paymentMenuRef}>
               <button
                 type="button"
                 className="inn-payment-trigger"
@@ -262,22 +276,12 @@ export function InnPanel({
 
         <section className="inn-tavern-service" aria-label="Tavern and kitchen">
           <div className="inn-section-heading">
-            <span>Hearth & Table</span>
             <h2>Tavern & Kitchen</h2>
-            <p>
-              Buy a prepared meal from the innkeeper or borrow the kitchen to
-              cook with ingredients from your own inventory.
-            </p>
           </div>
 
           <article className="innkeeper-card">
-            <div className="innkeeper-card__avatar" aria-hidden="true">
-              🕯️
-            </div>
             <div className="innkeeper-card__copy">
-              <span>Owner & Host</span>
-              <strong>The Innkeeper</strong>
-              <p>Rooms, warm meals and the latest stories from the road.</p>
+              <strong>Mara the Innkeeper</strong>
             </div>
             <button
               type="button"
@@ -290,12 +294,13 @@ export function InnPanel({
 
           <div className="inn-tavern-options">
             <article className="inn-tavern-option">
-              <div className="inn-tavern-option__icon" aria-hidden="true">
-                🍲
-              </div>
-              <div>
-                <span>Prepared Food</span>
+              <div className="inn-tavern-option__heading">
+                <div className="inn-tavern-option__icon" aria-hidden="true">
+                  🍲
+                </div>
                 <h3>Today's Menu</h3>
+              </div>
+              <div className="inn-tavern-option__copy">
                 <p>
                   Order a cooked meal without spending your own ingredients.
                 </p>
@@ -309,12 +314,13 @@ export function InnPanel({
             </article>
 
             <article className="inn-tavern-option">
-              <div className="inn-tavern-option__icon" aria-hidden="true">
-                🔥
-              </div>
-              <div>
-                <span>Shared Facility</span>
+              <div className="inn-tavern-option__heading">
+                <div className="inn-tavern-option__icon" aria-hidden="true">
+                  🔥
+                </div>
                 <h3>Borrow the Kitchen</h3>
+              </div>
+              <div className="inn-tavern-option__copy">
                 <p>
                   Use known recipes and ingredients collected on your travels.
                 </p>
@@ -326,14 +332,6 @@ export function InnPanel({
                 Use Kitchen
               </button>
             </article>
-          </div>
-
-          <div className="inn-kitchen-note">
-            <span aria-hidden="true">✦</span>
-            <p>
-              The innkeeper allows adventurers to use the kitchen. Cooking
-              services will become available when recipes are connected.
-            </p>
           </div>
         </section>
       </div>

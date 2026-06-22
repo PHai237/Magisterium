@@ -80,7 +80,7 @@
 .inn-tavern-service {
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.13);
   border-radius: 0.82rem;
   background: rgba(2, 6, 23, 0.31);
@@ -91,14 +91,14 @@
 
 .inn-room-service {
   display: grid;
-  grid-template-rows: auto minmax(7.5rem, 1fr) auto auto auto;
+  grid-template-rows: auto minmax(6.2rem, 1fr) auto auto auto;
   align-content: start;
   gap: 0.72rem;
 }
 
 .inn-tavern-service {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr);
   align-content: start;
   gap: 0.72rem;
 }
@@ -106,17 +106,6 @@
 .inn-section-heading {
   display: grid;
   gap: 0.28rem;
-}
-
-.inn-section-heading > span,
-.innkeeper-card__copy > span,
-.inn-tavern-option > div:nth-child(2) > span {
-  color: #f59e0b;
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  font-weight: 950;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .inn-section-heading h2,
@@ -130,10 +119,7 @@
   font-size: 1.35rem;
 }
 
-.inn-section-heading p,
-.innkeeper-card__copy p,
-.inn-tavern-option p,
-.inn-kitchen-note p {
+.inn-tavern-option p {
   margin: 0;
   color: #94a3b8;
   font-size: 0.72rem;
@@ -142,7 +128,7 @@
 
 .inn-room-visual {
   position: relative;
-  min-height: 7.5rem;
+  min-height: 6.2rem;
   overflow: hidden;
   border: 1px solid rgba(245, 158, 11, 0.16);
   border-radius: 0.78rem;
@@ -374,22 +360,11 @@
   background:
     radial-gradient(circle at 0 0, rgba(245, 158, 11, 0.09), transparent 9rem),
     rgba(15, 23, 42, 0.48);
-  padding: 0.72rem;
+  padding: 0.62rem 0.72rem;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.65rem;
-}
-
-.innkeeper-card__avatar {
-  width: 2.8rem;
-  height: 2.8rem;
-  border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: 0.68rem;
-  background: rgba(120, 53, 15, 0.2);
-  display: grid;
-  place-items: center;
-  font-size: 1.25rem;
 }
 
 .innkeeper-card__copy {
@@ -400,8 +375,10 @@
 
 .innkeeper-card__copy strong {
   color: #f8fafc;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 950;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
 }
 
 .innkeeper-card__talk,
@@ -447,7 +424,7 @@
   border: 1px solid rgba(148, 163, 184, 0.13);
   border-radius: 0.78rem;
   background: rgba(15, 23, 42, 0.4);
-  padding: 0.72rem;
+  padding: 0.68rem;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   align-items: start;
@@ -455,8 +432,9 @@
 }
 
 .inn-tavern-option__icon {
-  width: 2.7rem;
-  height: 2.7rem;
+  flex: 0 0 auto;
+  width: 2.35rem;
+  height: 2.35rem;
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 0.65rem;
   background: rgba(2, 6, 23, 0.42);
@@ -465,33 +443,28 @@
   font-size: 1.25rem;
 }
 
-.inn-tavern-option > div:nth-child(2) {
+.inn-tavern-option__heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.inn-tavern-option__copy {
   display: grid;
   align-content: start;
   gap: 0.22rem;
 }
 
 .inn-tavern-option h3 {
-  font-size: 0.92rem;
+  min-width: 0;
+  font-size: 0.88rem;
+  line-height: 1.2;
 }
 
 .inn-tavern-option button {
   width: 100%;
   min-height: 2.35rem;
-}
-
-.inn-kitchen-note {
-  border: 1px dashed rgba(245, 158, 11, 0.2);
-  border-radius: 0.68rem;
-  background: rgba(245, 158, 11, 0.045);
-  padding: 0.65rem 0.72rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.inn-kitchen-note > span {
-  color: #fbbf24;
 }
 
 .inn-panel__footer {
@@ -741,12 +714,12 @@
   }
 
   .innkeeper-card {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .innkeeper-card__talk {
-    grid-column: 1 / -1;
-    width: 100%;
+    grid-column: auto;
+    width: auto;
   }
 
   .inn-dialogue-backdrop {

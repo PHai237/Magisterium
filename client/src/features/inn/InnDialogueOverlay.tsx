@@ -79,7 +79,7 @@ export function InnDialogueOverlay({ onClose }: InnDialogueOverlayProps) {
 
             <div>
               <span>Keeper of The Inn</span>
-              <h2 id={titleId}>The Innkeeper</h2>
+              <h2 id={titleId}>Mara the Innkeeper</h2>
             </div>
           </div>
 
