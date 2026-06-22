@@ -6,7 +6,7 @@ import { Button } from "../../components/ui/Button";
 import type {
   CharacterSnapshot,
   EncounterId,
-  ExplorationZoneId
+  ExplorationZoneId,
 } from "../../domain/magisterium.types";
 import { BattlePanel } from "../battles/BattlePanel";
 import { ExplorationZone } from "../exploration/ExplorationZone";
@@ -58,7 +58,7 @@ function LocationStage({
   returnLabel,
   onBack,
   className = "",
-  children
+  children,
 }: PropsWithChildren<LocationStageProps>) {
   return (
     <section className={`gameshell-location-stage ${className}`}>
@@ -81,7 +81,7 @@ function PlaceholderPanel({
   subtitle,
   description,
   onBack,
-  returnLabel = "Return"
+  returnLabel = "Return",
 }: PlaceholderPanelProps) {
   return (
     <LocationStage returnLabel={returnLabel} onBack={onBack}>
@@ -99,14 +99,15 @@ export function GameShell({
   currentCharacter,
   onBackToCharacters,
   onCharacterUpdated,
-  onLogout
+  onLogout,
 }: GameShellProps) {
   const [mapView, setMapView] = useState<MapView>("town");
   const [activePanel, setActivePanel] = useState<ActivePanel>("map");
   const [selectedZoneId, setSelectedZoneId] =
     useState<ExplorationZoneId>("town_outskirts");
-  const [selectedEncounterId, setSelectedEncounterId] =
-    useState<EncounterId>("town_outskirts_slime");
+  const [selectedEncounterId, setSelectedEncounterId] = useState<EncounterId>(
+    "town_outskirts_slime",
+  );
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
   function openPanel(panel: ActivePanel) {
@@ -159,11 +160,16 @@ export function GameShell({
 
     if (activePanel === "inn") {
       return (
-        <LocationStage returnLabel="Return" onBack={returnToTownMap}>
+        <LocationStage
+          returnLabel="Return"
+          onBack={returnToTownMap}
+          className="gameshell-location-stage--inn"
+        >
           <InnPanel
             userId={userId}
             currentCharacter={currentCharacter}
             onCharacterUpdated={onCharacterUpdated}
+            onBack={returnToTownMap}
           />
         </LocationStage>
       );

@@ -210,8 +210,7 @@ Nên cân nhắc nhiều lớp reputation:
 
 ## 10. NPC, Quest và Town
 
-- Thêm NPC vào The Inn, The Market, The Smith, The Sanctuary và The Library.
-- NPC có hội thoại và nút tương tác ngay trong panel địa điểm.
+- Thêm NPC và hội thoại vào The Smith, The Sanctuary và The Library.
 - NPC chưa cần giao quest ngay; hệ thống hội thoại có thể được xây trước.
 - Reputation ảnh hưởng đến giá, hội thoại và xác suất nhận quest.
 - Quest chain và cốt truyện sẽ được thiết kế sau.
