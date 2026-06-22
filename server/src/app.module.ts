@@ -15,6 +15,7 @@ import { DatabaseModule } from './database/database.module';
 import { BattleModule } from './game/battle/battle.module';
 import { ExplorationModule } from './game/exploration/exploration.module';
 import { MarketModule } from './game/market/market.module';
+import { LibraryModule } from './game/library/library.module';
 import { SanctuaryModule } from './game/sanctuary/sanctuary.module';
 import { SmithModule } from './game/smith/smith.module';
 
@@ -26,6 +27,7 @@ import { SmithModule } from './game/smith/smith.module';
     BattleModule,
     ExplorationModule,
     MarketModule,
+    LibraryModule,
     SanctuaryModule,
     SmithModule,
   ],
@@ -65,6 +67,14 @@ export class AppModule implements NestModule {
       },
       {
         path: 'market/(.*)',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'library',
+        method: RequestMethod.ALL,
+      },
+      {
+        path: 'library/(.*)',
         method: RequestMethod.ALL,
       },
       {

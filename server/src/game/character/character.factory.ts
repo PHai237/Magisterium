@@ -85,6 +85,7 @@ export function createCharacter(input: CreateCharacterInput): Character {
 
     inventoryItemIds,
     equippedItemIds,
+    monsterKnowledge: [],
 
     fatigue: STARTING_FATIGUE,
     lastRestAt: now,

@@ -109,6 +109,7 @@ import type {
   AppliedBattleRewardResult,
   BattleRewardSummary,
 } from '../game/reward/reward.types';
+import { recordClaimedBattleKnowledge } from '../game/library/library.knowledge';
 
 const BASIC_INN_REST_PRICE_BRONZE = 2;
 const ONE_NIGHT_INN_PASS_ID: ItemId = 'one_night_inn_pass';
@@ -296,6 +297,7 @@ export class CharacterService implements OnModuleInit {
       addItemStacksToInventory(inventoryAfterBattle, reward.items),
     );
 
+    const claimedAt = new Date().toISOString();
     const nextCharacter: Character = {
       ...existingCharacter,
 
@@ -313,7 +315,12 @@ export class CharacterService implements OnModuleInit {
           }
         : existingCharacter.currentState,
 
-      updatedAt: new Date().toISOString(),
+      monsterKnowledge: recordClaimedBattleKnowledge(
+        existingCharacter,
+        reward,
+        claimedAt,
+      ),
+      updatedAt: claimedAt,
     };
 
     this.characters.set(characterId, nextCharacter);

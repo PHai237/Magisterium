@@ -264,6 +264,27 @@
   min-height: 0;
 }
 
+.gameshell-location-stage--library {
+  padding: 0.85rem 1rem;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(59, 130, 246, 0.1), transparent 24rem),
+    radial-gradient(circle at 16% 84%, rgba(168, 85, 247, 0.07), transparent 22rem),
+    #070b12;
+}
+
+.gameshell-location-stage--library .gameshell-location-main {
+  place-items: stretch;
+  padding-top: 0;
+}
+
+.gameshell-location-stage--library > .gameshell-location-back {
+  display: none;
+}
+
+.gameshell-location-stage--library .library-panel {
+  min-height: 0;
+}
+
 .gameshell-location-stage--market {
   padding: 0.85rem 1rem;
 }

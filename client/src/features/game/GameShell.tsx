@@ -12,6 +12,7 @@ import { BattlePanel } from "../battles/BattlePanel";
 import { ExplorationZone } from "../exploration/ExplorationZone";
 import { InnPanel } from "../inn/InnPanel";
 import { InventoryOverlay } from "../inventory/InventoryOverlay";
+import { LibraryPanel } from "../library/LibraryPanel";
 import { MarketPanel } from "../market/MarketPanel";
 import { SanctuaryPanel } from "../sanctuary/SanctuaryPanel";
 import { SmithPanel } from "../smith/SmithPanel";
@@ -225,12 +226,17 @@ export function GameShell({
 
     if (activePanel === "archive") {
       return (
-        <PlaceholderPanel
-          title="The Library"
-          subtitle="Knowledge & Magic"
-          description="Chỗ này sau sẽ nối skill, rune, passive và progression knowledge."
+        <LocationStage
+          returnLabel="Return"
           onBack={returnToTownMap}
-        />
+          className="gameshell-location-stage--library"
+        >
+          <LibraryPanel
+            userId={userId}
+            currentCharacter={currentCharacter}
+            onBack={returnToTownMap}
+          />
+        </LocationStage>
       );
     }
 

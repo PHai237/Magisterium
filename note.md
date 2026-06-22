@@ -210,12 +210,12 @@ Nên cân nhắc nhiều lớp reputation:
 
 ## 10. NPC, Quest và Town
 
-- Thêm NPC và hội thoại vào The Smith, The Sanctuary và The Library.
+- Thêm NPC và hội thoại vào The Smith và The Sanctuary.
 - NPC chưa cần giao quest ngay; hệ thống hội thoại có thể được xây trước.
 - Reputation ảnh hưởng đến giá, hội thoại và xác suất nhận quest.
 - Quest chain và cốt truyện sẽ được thiết kế sau.
-- The Library có thể lưu Bestiary, item records, lore, quest records và về sau
-  là nơi học/nghiên cứu phép.
+- The Library về sau có thể mở rộng thêm item records, lore, quest records và
+  nơi học/nghiên cứu phép.
 
 ## 11. Dungeon, Boss và Monster Families
 
@@ -223,6 +223,10 @@ Nên cân nhắc nhiều lớp reputation:
 - Dungeon tập trung vào boss và progression milestone.
 - Boss cần reward đặc biệt và có thể cung cấp nguyên liệu crafting độc quyền.
 - Chỉ triển khai boss khi combat stat và economy đã đủ cân bằng.
+- Khi combat có nhiều loại quái trong cùng một trận, reward UI cần hiển thị rõ
+  từng món đồ đến từ quái nào. Backend hiện đã giữ `monsterId` trong từng
+  `lootRoll`, nhưng phần reward trình bày cho người chơi vẫn đang gộp theo
+  encounter vì các trận hiện tại chủ yếu là solo.
 
 Lizard hiện là ý tưởng cho một monster family, không chỉ một quái đơn lẻ:
 

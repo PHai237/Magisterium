@@ -127,6 +127,14 @@ export interface CharacterProgression {
   milestoneIds: MilestoneId[];
 }
 
+export interface MonsterKnowledgeRecord {
+  monsterId: string;
+  defeatCount: number;
+  discoveredDropItemIds: ItemId[];
+  firstDefeatedAt: string;
+  lastDefeatedAt: string;
+}
+
 export interface Character {
   id: string;
   version: number;
@@ -152,6 +160,7 @@ export interface Character {
 
   inventoryItemIds: ItemId[];
   equippedItemIds: ItemId[];
+  monsterKnowledge?: MonsterKnowledgeRecord[];
 
   fatigue: number;
   lastRestAt: string;
