@@ -156,7 +156,7 @@ npm run build
   single cross-service transaction in every case.
 - Status effects, passives, proc effects, and skill-rune attachment are
   incomplete scaffolding.
-- The Grand Archive is a placeholder.
+- The Library is a placeholder.
 - Quest chains, NPC dialogue, boss dungeons, and narrative progression are not
   implemented yet.
 - Several large service/UI files should be split as their related features are
@@ -166,7 +166,7 @@ npm run build
 
 1. Build one complete content slice:
    quest -> exploration -> crafting -> dungeon boss -> unique reward.
-2. Add NPC dialogue and give the Grand Archive its first concrete purpose.
+2. Add NPC dialogue and give The Library its first concrete purpose.
 3. Expand status effects, passives, proc effects, and skill runes after the
    first content slice is stable.
 4. Continue splitting large services/components while their features evolve.

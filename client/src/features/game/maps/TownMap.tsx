@@ -45,7 +45,7 @@ export function TownMap({
       <MapNode
         className="gameshell-node--forge"
         icon="⚒️"
-        name="Iron & Ember"
+        name="The Smith"
         subtitle="Smithy & Armory"
         onClick={onOpenSmith}
       />
@@ -53,7 +53,7 @@ export function TownMap({
       <MapNode
         className="gameshell-node--market"
         icon="🧺"
-        name="Market"
+        name="The Market"
         subtitle="Supplies & Trade"
         onClick={onOpenMarket}
       />
@@ -69,8 +69,8 @@ export function TownMap({
       <MapNode
         className="gameshell-node--archive"
         icon="🔮"
-        name="The Grand Archive"
-        subtitle="Library / Runes"
+        name="The Library"
+        subtitle="Knowledge & Magic"
         onClick={onOpenArchive}
       />
 

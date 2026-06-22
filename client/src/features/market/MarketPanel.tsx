@@ -320,10 +320,10 @@ export function MarketPanel({
   }
 
   return (
-    <section className="market-basic-card" aria-label="Market">
+    <section className="market-basic-card" aria-label="The Market">
       <header className="market-basic-card__top">
         <div className="market-basic-card__identity">
-          <span>Market</span>
+          <span>The Market</span>
           <div className="market-basic-card__icon" aria-hidden="true">
             🧺
           </div>
@@ -331,7 +331,7 @@ export function MarketPanel({
       </header>
 
       <div className="market-basic-card__body">
-        <aside className="market-vendor-list" aria-label="Market vendors">
+        <aside className="market-vendor-list" aria-label="The Market vendors">
           <div className="market-section-title">Vendors</div>
 
           {loading ? (

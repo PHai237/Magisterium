@@ -220,8 +220,8 @@ export function GameShell({
     if (activePanel === "archive") {
       return (
         <PlaceholderPanel
-          title="The Grand Archive"
-          subtitle="Library / Runes"
+          title="The Library"
+          subtitle="Knowledge & Magic"
           description="Chỗ này sau sẽ nối skill, rune, passive và progression knowledge."
           onBack={returnToTownMap}
         />
