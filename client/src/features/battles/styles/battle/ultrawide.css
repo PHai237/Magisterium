@@ -1,0 +1,245 @@
+@media (min-width: 3000px) and (min-height: 1200px) and (max-height: 1600px) {
+  .battle-topbar {
+    height: 3.7rem;
+    flex-basis: 3.7rem;
+  }
+
+  .battle-topbar__vitals {
+    gap: 1.35rem;
+    padding-inline: 0.78rem;
+  }
+
+  .battle-resource__label {
+    font-size: 0.78rem;
+  }
+
+  .battle-resource__track {
+    height: 1.34rem;
+  }
+
+  .battle-resource__value {
+    font-size: 0.82rem;
+  }
+
+  .battle-shell {
+    grid-template-columns: minmax(17rem, 21%) minmax(0, 58%) minmax(17rem, 21%);
+  }
+
+  .battle-side {
+    padding: 0.9rem;
+    gap: 0.8rem;
+  }
+
+  .battle-panel-eyebrow {
+    font-size: 0.78rem;
+  }
+
+  .battle-character-card {
+    padding: 0.9rem;
+  }
+
+  .battle-character-card__avatar {
+    width: 3.8rem;
+    height: 3.8rem;
+    margin-bottom: 0.68rem;
+    font-size: 1.22rem;
+  }
+
+  .battle-character-card > strong {
+    font-size: 1rem;
+  }
+
+  .battle-character-card > span {
+    font-size: 0.82rem;
+  }
+
+  .battle-stat-grid {
+    gap: 0.46rem;
+    margin-top: 0.82rem;
+    padding-top: 0.64rem;
+  }
+
+  .battle-stat-grid div {
+    padding: 0.38rem;
+  }
+
+  .battle-stat-grid span,
+  .battle-effect-chip small {
+    font-size: 0.68rem;
+  }
+
+  .battle-stat-grid strong {
+    font-size: 0.82rem;
+  }
+
+  .battle-effect-box {
+    padding: 0.68rem;
+    gap: 0.54rem;
+  }
+
+  .battle-enemy-effect-box {
+    top: 0.9rem;
+    right: 0.9rem;
+    width: 12rem;
+    padding: 0.64rem;
+  }
+
+  .battle-effect-title,
+  .battle-enemy-health .battle-resource__label {
+    font-size: 0.78rem;
+  }
+
+  .battle-effects-empty,
+  .battle-effect-chip {
+    font-size: 0.82rem;
+  }
+
+  .battle-center {
+    padding: 1.32rem;
+  }
+
+  .battlefield-focus {
+    gap: 0.8rem;
+  }
+
+  .battlefield-label {
+    font-size: 0.82rem;
+  }
+
+  .battle-enemy-orb {
+    width: 5.8rem;
+    height: 5.8rem;
+    font-size: 2.42rem;
+  }
+
+  .battle-enemy-orb--image .monster-pixel-icon {
+    width: 3.55rem;
+    height: 3.55rem;
+  }
+
+  .battlefield-focus h2,
+  .battlefield-loading h2 {
+    font-size: 2.45rem;
+  }
+
+  .battlefield-focus > span,
+  .battlefield-loading span {
+    font-size: 0.82rem;
+  }
+
+  .battle-enemy-health {
+    width: min(80%, 27rem);
+  }
+
+  .battle-enemy-health .battle-resource__track {
+    height: 1.9rem;
+  }
+
+  .battle-enemy-health .battle-resource__value {
+    font-size: 0.86rem;
+  }
+
+  .battle-target-strip {
+    width: min(100%, 30rem);
+    grid-template-columns: repeat(auto-fit, minmax(8.8rem, 1fr));
+    gap: 0.5rem;
+  }
+
+  .battle-target-card {
+    padding: 0.5rem;
+    gap: 0.48rem;
+  }
+
+  .battle-target-card__icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.1rem;
+  }
+
+  .battle-target-card__copy strong {
+    font-size: 0.82rem;
+  }
+
+  .battle-target-card__copy em {
+    font-size: 0.68rem;
+  }
+
+  .battle-command-panel {
+    padding-top: 0.9rem;
+    gap: 0.68rem;
+  }
+
+  .battle-command-top div {
+    font-size: 0.76rem;
+  }
+
+  .battle-command-back {
+    font-size: 0.82rem;
+  }
+
+  .battle-main-actions {
+    gap: 0.62rem;
+  }
+
+  .battle-main-action {
+    min-height: 3.7rem;
+    padding: 0.48rem;
+  }
+
+  .battle-main-action strong {
+    font-size: 0.92rem;
+  }
+
+  .battle-main-action span {
+    font-size: 0.68rem;
+  }
+
+  .battle-drawer-grid {
+    gap: 0.46rem;
+  }
+
+  .battle-drawer-button {
+    min-height: 2.55rem;
+    padding: 0.38rem 0.58rem;
+    gap: 0.32rem;
+    font-size: 0.84rem;
+  }
+
+  .battle-drawer-button em,
+  .battle-log-turn__tag,
+  .battle-log-awaiting {
+    font-size: 0.68rem;
+  }
+
+  .battle-result-card {
+    padding: 0.78rem;
+    gap: 0.5rem;
+  }
+
+  .battle-result-card strong {
+    font-size: 1rem;
+  }
+
+  .battle-result-card span,
+  .battle-primary-button,
+  .battle-secondary-button {
+    font-size: 0.84rem;
+  }
+
+  .battle-primary-button,
+  .battle-secondary-button {
+    min-height: 2.55rem;
+    padding: 0.42rem 0.64rem;
+  }
+
+  .battle-log-scroll {
+    gap: 0.84rem;
+    font-size: 0.82rem;
+    line-height: 1.56;
+  }
+
+  .battle-log-turn {
+    gap: 0.34rem;
+    padding-bottom: 0.72rem;
+  }
+}

@@ -1,0 +1,249 @@
+.gameshell-root {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0b0f0d;
+  color: #d7e1d2;
+}
+
+.gameshell-header {
+  height: 65px;
+  flex: 0 0 65px;
+  border-bottom: 1px solid #22293a;
+  background: linear-gradient(180deg, #11151d, #0b0d13);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 2rem;
+  z-index: 60;
+}
+
+.gameshell-hud {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.gameshell-vitals {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.gameshell-vital {
+  width: fit-content;
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0.7rem;
+  background: rgba(2, 6, 23, 0.48);
+  padding: 0.34rem 0.54rem;
+  display: grid;
+  gap: 0.08rem;
+}
+
+.gameshell-vital span {
+  color: #64748b;
+  font-size: 0.58rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.gameshell-vital strong {
+  color: #f8fafc;
+  font-size: 0.7rem;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gameshell-vital--hp {
+  border-color: rgba(248, 113, 113, 0.2);
+  background: rgba(248, 113, 113, 0.055);
+}
+
+.gameshell-vital--hp span {
+  color: #f87171;
+}
+
+.gameshell-vital--mp {
+  border-color: rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.055);
+}
+
+.gameshell-vital--mp span {
+  color: #38bdf8;
+}
+
+.gameshell-vital--stamina {
+  border-color: rgba(234, 179, 8, 0.2);
+  background: rgba(234, 179, 8, 0.055);
+}
+
+.gameshell-vital--stamina span {
+  color: #eab308;
+}
+
+.gameshell-character-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.62rem;
+  min-width: 0;
+}
+
+.gameshell-character-chip__copy {
+  min-width: 0;
+  display: grid;
+  justify-items: end;
+  gap: 0.1rem;
+  text-align: right;
+}
+
+.gameshell-character-chip__copy strong {
+  max-width: 11rem;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gameshell-character-chip__copy span {
+  max-width: 12rem;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 0.66rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gameshell-account {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.gameshell-account__avatar {
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 1px solid rgba(168, 85, 247, 0.46);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.18), transparent 0.9rem),
+    rgba(168, 85, 247, 0.32);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 950;
+  box-shadow:
+    0 0 0 4px rgba(168, 85, 247, 0.055),
+    0 12px 26px rgba(0, 0, 0, 0.28);
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.gameshell-account__avatar:hover,
+.gameshell-account__avatar[aria-expanded="true"] {
+  border-color: rgba(216, 180, 254, 0.84);
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.22), transparent 0.9rem),
+    rgba(168, 85, 247, 0.46);
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 4px rgba(168, 85, 247, 0.08),
+    0 0 22px rgba(168, 85, 247, 0.22),
+    0 12px 26px rgba(0, 0, 0, 0.32);
+}
+
+.gameshell-account-menu {
+  position: absolute;
+  top: calc(100% + 0.9rem);
+  right: -0.1rem;
+  z-index: 120;
+  width: max-content;
+  min-width: 11.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0.72rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(168, 85, 247, 0.12), transparent 10rem),
+    rgba(12, 17, 28, 0.98);
+  box-shadow:
+    0 18px 52px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  padding: 0.36rem;
+  display: grid;
+  gap: 0.16rem;
+  backdrop-filter: blur(14px);
+}
+
+.gameshell-account-menu::before {
+  content: "";
+  position: absolute;
+  top: -0.34rem;
+  right: 0.86rem;
+  width: 0.58rem;
+  height: 0.58rem;
+  border-left: 1px solid rgba(148, 163, 184, 0.22);
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(12, 17, 28, 0.98);
+  transform: rotate(45deg);
+}
+
+.gameshell-account-menu button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  border: 0;
+  border-radius: 0.48rem;
+  background: transparent;
+  color: #cbd5e1;
+  padding: 0.56rem 0.62rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.52rem;
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-align: left;
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.gameshell-account-menu button:not(:disabled):hover {
+  background: rgba(168, 85, 247, 0.12);
+  color: #ffffff;
+}
+
+.gameshell-account-menu button:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.gameshell-account-menu__divider {
+  height: 1px;
+  background: rgba(148, 163, 184, 0.16);
+  margin: 0.16rem 0;
+}
+
+.gameshell-account-menu .gameshell-account-menu__danger {
+  color: #fecdd3;
+}
+
+.gameshell-account-menu .gameshell-account-menu__danger:hover {
+  background: rgba(251, 113, 133, 0.13);
+  color: #fff1f2;
+}

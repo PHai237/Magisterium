@@ -1,0 +1,207 @@
+@media (min-width: 1440px) and (min-height: 760px) {
+  .inventory-overlay {
+    width: min(clamp(64rem, 70vw, 86rem), calc(100% - clamp(2rem, 3vw, 5rem)));
+    height: min(clamp(31rem, 58vh, 44rem), calc(100% - clamp(2rem, 3vw, 5rem)));
+    bottom: clamp(0.85rem, 0.5rem + 0.45vw, 1.6rem);
+    border-radius:
+      clamp(1.1rem, 0.76rem + 0.3vw, 1.62rem)
+      clamp(1.1rem, 0.76rem + 0.3vw, 1.62rem)
+      clamp(0.9rem, 0.64rem + 0.22vw, 1.28rem)
+      clamp(0.9rem, 0.64rem + 0.22vw, 1.28rem);
+  }
+
+  .inventory-overlay__header {
+    height: clamp(3.45rem, 2.55rem + 0.68vw, 4.72rem);
+    gap: clamp(1rem, 0.72rem + 0.24vw, 1.42rem);
+    padding:
+      0
+      clamp(0.9rem, 0.62rem + 0.24vw, 1.32rem)
+      0
+      clamp(1rem, 0.72rem + 0.24vw, 1.45rem);
+  }
+
+  .inventory-overlay__heading {
+    gap: clamp(0.85rem, 0.58rem + 0.22vw, 1.22rem);
+  }
+
+  .inventory-overlay__heading h2 {
+    font-size: clamp(1rem, 0.78rem + 0.18vw, 1.36rem);
+  }
+
+  .inventory-wallet {
+    gap: clamp(0.42rem, 0.3rem + 0.11vw, 0.62rem);
+  }
+
+  .inventory-wallet__coin {
+    padding:
+      clamp(0.24rem, 0.16rem + 0.08vw, 0.38rem)
+      clamp(0.52rem, 0.36rem + 0.14vw, 0.78rem);
+    font-size: clamp(0.68rem, 0.54rem + 0.11vw, 0.88rem);
+  }
+
+  .inventory-overlay__close {
+    width: clamp(2rem, 1.5rem + 0.38vw, 2.72rem);
+    height: clamp(2rem, 1.5rem + 0.38vw, 2.72rem);
+    font-size: clamp(1.15rem, 0.86rem + 0.22vw, 1.58rem);
+  }
+
+  .inventory-overlay__layout {
+    height: calc(100% - clamp(3.45rem, 2.55rem + 0.68vw, 4.72rem));
+    grid-template-columns: minmax(27rem, 42%) minmax(0, 58%);
+  }
+
+  .inventory-paperdoll {
+    padding:
+      clamp(0.9rem, 0.62rem + 0.24vw, 1.35rem)
+      clamp(1.15rem, 0.78rem + 0.32vw, 1.72rem);
+  }
+
+  .inventory-character-model {
+    width: clamp(8.1rem, 6.2rem + 1.45vw, 11rem);
+    height: clamp(10.8rem, 8.2rem + 2vw, 14.8rem);
+    border-radius: clamp(0.9rem, 0.64rem + 0.22vw, 1.28rem);
+    gap: clamp(0.54rem, 0.36rem + 0.15vw, 0.78rem);
+  }
+
+  .inventory-character-model__avatar {
+    width: clamp(3.1rem, 2.35rem + 0.58vw, 4.25rem);
+    height: clamp(3.1rem, 2.35rem + 0.58vw, 4.25rem);
+    font-size: clamp(0.9rem, 0.68rem + 0.18vw, 1.25rem);
+  }
+
+  .inventory-character-model span {
+    font-size: clamp(0.72rem, 0.56rem + 0.13vw, 0.96rem);
+  }
+
+  .inventory-equipment-slot {
+    width: clamp(4.15rem, 3.2rem + 0.72vw, 5.7rem);
+    height: clamp(3.85rem, 3rem + 0.66vw, 5.25rem);
+    border-radius: clamp(0.78rem, 0.56rem + 0.18vw, 1.12rem);
+    gap: clamp(0.38rem, 0.26rem + 0.11vw, 0.56rem);
+    padding:
+      clamp(0.36rem, 0.24rem + 0.1vw, 0.54rem)
+      clamp(0.3rem, 0.2rem + 0.08vw, 0.46rem)
+      clamp(0.32rem, 0.22rem + 0.08vw, 0.48rem);
+  }
+
+  .inventory-equipment-slot span {
+    font-size: clamp(1.14rem, 0.86rem + 0.22vw, 1.58rem);
+  }
+
+  .inventory-equipment-slot small {
+    font-size: clamp(0.5rem, 0.4rem + 0.08vw, 0.66rem);
+  }
+
+  .inventory-equipment-slot strong {
+    max-width: clamp(3.45rem, 2.7rem + 0.56vw, 4.75rem);
+    font-size: clamp(0.55rem, 0.44rem + 0.09vw, 0.74rem);
+  }
+
+  .inventory-bag {
+    grid-template-columns: minmax(0, 1fr) clamp(3.3rem, 2.5rem + 0.6vw, 4.4rem);
+    gap: clamp(0.7rem, 0.48rem + 0.18vw, 1rem);
+    padding: clamp(0.85rem, 0.58rem + 0.22vw, 1.25rem);
+  }
+
+  .inventory-bag__main {
+    gap: clamp(0.65rem, 0.44rem + 0.18vw, 0.96rem);
+  }
+
+  .inventory-bag-grid {
+    grid-auto-rows: minmax(clamp(3.7rem, 3rem + 0.54vw, 5.05rem), 1fr);
+    gap: clamp(0.55rem, 0.38rem + 0.14vw, 0.82rem);
+    padding:
+      clamp(0.1rem, 0.06rem + 0.05vw, 0.18rem)
+      clamp(0.25rem, 0.16rem + 0.1vw, 0.42rem)
+      clamp(0.2rem, 0.12rem + 0.08vw, 0.34rem)
+      0;
+  }
+
+  .inventory-bag-cell {
+    border-radius: clamp(0.55rem, 0.4rem + 0.12vw, 0.78rem);
+    font-size: clamp(1.35rem, 1rem + 0.28vw, 1.86rem);
+  }
+
+  .inventory-bag-cell__quantity {
+    right: clamp(0.3rem, 0.2rem + 0.08vw, 0.46rem);
+    bottom: clamp(0.25rem, 0.16rem + 0.08vw, 0.4rem);
+    font-size: clamp(0.62rem, 0.5rem + 0.09vw, 0.8rem);
+  }
+
+  .inventory-bag-cell .item-pixel-icon {
+    width: clamp(1.9rem, 1.4rem + 0.38vw, 2.7rem);
+    height: clamp(1.9rem, 1.4rem + 0.38vw, 2.7rem);
+  }
+
+  .inventory-type-tabs {
+    gap: clamp(0.42rem, 0.28rem + 0.12vw, 0.64rem);
+  }
+
+  .inventory-type-tab {
+    width: clamp(2.75rem, 2.08rem + 0.5vw, 3.68rem);
+    height: clamp(2.75rem, 2.08rem + 0.5vw, 3.68rem);
+    border-radius: 0 clamp(0.72rem, 0.52rem + 0.18vw, 1.02rem) clamp(0.72rem, 0.52rem + 0.18vw, 1.02rem) 0;
+    font-size: clamp(1rem, 0.76rem + 0.18vw, 1.36rem);
+  }
+
+  .inventory-action-panel {
+    min-height: clamp(7.2rem, 5.4rem + 1.35vw, 10rem);
+    border-radius: clamp(0.75rem, 0.54rem + 0.18vw, 1.08rem);
+    padding: clamp(0.72rem, 0.48rem + 0.2vw, 1.08rem);
+    gap: clamp(0.55rem, 0.38rem + 0.14vw, 0.82rem);
+  }
+
+  .inventory-action-panel__item {
+    gap: clamp(0.62rem, 0.42rem + 0.16vw, 0.92rem);
+  }
+
+  .inventory-action-panel__icon {
+    width: clamp(2.1rem, 1.58rem + 0.4vw, 2.86rem);
+    height: clamp(2.1rem, 1.58rem + 0.4vw, 2.86rem);
+    border-radius: clamp(0.6rem, 0.42rem + 0.14vw, 0.86rem);
+    font-size: clamp(1.15rem, 0.86rem + 0.22vw, 1.58rem);
+  }
+
+  .inventory-action-panel__icon--image .item-pixel-icon {
+    width: clamp(1.55rem, 1.16rem + 0.3vw, 2.12rem);
+    height: clamp(1.55rem, 1.16rem + 0.3vw, 2.12rem);
+  }
+
+  .inventory-action-panel__item strong {
+    font-size: clamp(0.84rem, 0.66rem + 0.14vw, 1.12rem);
+  }
+
+  .inventory-action-panel__item small {
+    font-size: clamp(0.66rem, 0.52rem + 0.11vw, 0.86rem);
+  }
+
+  .inventory-action-panel p,
+  .inventory-action-panel__empty span {
+    font-size: clamp(0.72rem, 0.56rem + 0.12vw, 0.94rem);
+  }
+
+  .inventory-action-panel__empty strong {
+    font-size: clamp(0.82rem, 0.64rem + 0.14vw, 1.08rem);
+  }
+
+  .inventory-action-panel__actions {
+    gap: clamp(0.45rem, 0.3rem + 0.12vw, 0.68rem);
+  }
+
+  .inventory-action-panel__actions button {
+    min-height: clamp(1.95rem, 1.46rem + 0.36vw, 2.62rem);
+    border-radius: clamp(0.52rem, 0.38rem + 0.12vw, 0.76rem);
+    padding:
+      clamp(0.3rem, 0.2rem + 0.1vw, 0.48rem)
+      clamp(0.62rem, 0.42rem + 0.16vw, 0.92rem);
+    font-size: clamp(0.68rem, 0.54rem + 0.1vw, 0.86rem);
+  }
+
+  .inventory-status {
+    border-radius: clamp(0.55rem, 0.4rem + 0.12vw, 0.78rem);
+    padding:
+      clamp(0.46rem, 0.3rem + 0.14vw, 0.7rem)
+      clamp(0.55rem, 0.38rem + 0.14vw, 0.82rem);
+    font-size: clamp(0.68rem, 0.54rem + 0.1vw, 0.86rem);
+  }
+}

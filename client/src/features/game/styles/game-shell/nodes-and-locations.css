@@ -1,0 +1,320 @@
+.gameshell-node {
+  position: absolute;
+  z-index: 4;
+  width: 7.6rem;
+  min-height: 6.25rem;
+  border: 1.5px solid rgba(51, 65, 85, 0.92);
+  border-radius: 0.95rem;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 4.6rem),
+    rgba(11, 15, 23, 0.9);
+  color: #d7e1d2;
+  padding: 0.72rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.025),
+    0 18px 42px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(7px);
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    opacity 220ms ease,
+    background-color 220ms ease;
+}
+
+.gameshell-node:not(:disabled):hover {
+  transform: translateY(-5px) scale(1.045);
+  border-color: rgba(248, 250, 252, 0.86);
+  box-shadow:
+    0 0 0 7px rgba(250, 204, 21, 0.08),
+    0 0 34px rgba(250, 204, 21, 0.22),
+    0 0 46px rgba(168, 85, 247, 0.25),
+    0 20px 42px rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(0 0 20px rgba(250, 204, 21, 0.2));
+}
+
+.gameshell-node:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.gameshell-node__icon {
+  font-size: 1.55rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.gameshell-node strong {
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.gameshell-node small {
+  color: #9ca89a;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gameshell-node--inn {
+  top: 12%;
+  left: 44%;
+  border-color: rgba(245, 158, 11, 0.33);
+}
+
+.gameshell-node--forge {
+  bottom: 23%;
+  left: 14%;
+  border-color: rgba(239, 68, 68, 0.32);
+}
+
+.gameshell-node--market {
+  left: 35%;
+  bottom: 15%;
+  border-color: rgba(250, 204, 21, 0.4);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.12), transparent 4.6rem),
+    rgba(11, 15, 23, 0.9);
+}
+
+.gameshell-node--market strong {
+  color: #facc15;
+}
+
+.gameshell-node--archive {
+  top: 24%;
+  right: 10%;
+  border-color: rgba(168, 85, 247, 0.38);
+}
+
+.gameshell-node--sanctuary {
+  top: 36%;
+  right: 28%;
+  border-color: rgba(212, 163, 89, 0.4);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(212, 163, 89, 0.13), transparent 4.8rem),
+    radial-gradient(circle at 50% 100%, rgba(59, 130, 246, 0.08), transparent 4.5rem),
+    rgba(11, 15, 23, 0.91);
+}
+
+.gameshell-node--sanctuary strong {
+  color: #fcd34d;
+}
+
+.gameshell-node--gate {
+  width: 8.8rem;
+  bottom: 11%;
+  right: 11%;
+  border-color: rgba(56, 189, 248, 0.42);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.13), transparent 4.8rem),
+    linear-gradient(180deg, rgba(19, 23, 34, 0.94), rgba(56, 189, 248, 0.04));
+}
+
+.gameshell-node--gate strong {
+  color: #38bdf8;
+}
+
+.gameshell-node--return {
+  top: 20%;
+  left: 10%;
+  border-color: rgba(56, 189, 248, 0.34);
+}
+
+.gameshell-node--outskirts {
+  top: 55%;
+  left: 24%;
+  width: 7.4rem;
+  min-height: 7.4rem;
+  border-radius: 999px;
+  border-color: rgba(250, 204, 21, 0.36);
+  background:
+    radial-gradient(circle at 50% 12%, rgba(250, 204, 21, 0.12), transparent 4.8rem),
+    radial-gradient(circle at 50% 88%, rgba(74, 222, 128, 0.08), transparent 4.4rem),
+    rgba(11, 15, 23, 0.91);
+}
+
+.gameshell-node--outskirts strong {
+  color: #fde68a;
+}
+
+.gameshell-node--shadowfen {
+  top: 45%;
+  left: 43%;
+  width: 6.8rem;
+  min-height: 6.8rem;
+  border-radius: 999px;
+  border-color: rgba(74, 222, 128, 0.38);
+  background:
+    radial-gradient(circle at 50% 15%, rgba(74, 222, 128, 0.12), transparent 4.8rem),
+    rgba(11, 15, 23, 0.91);
+}
+
+.gameshell-node--mine {
+  top: 57%;
+  right: 27%;
+  width: 7rem;
+  min-height: 7rem;
+  border-radius: 999px;
+  border-color: rgba(148, 163, 184, 0.42);
+  background:
+    radial-gradient(circle at 50% 12%, rgba(203, 213, 225, 0.12), transparent 4.8rem),
+    radial-gradient(circle at 50% 90%, rgba(180, 83, 9, 0.1), transparent 4.4rem),
+    rgba(11, 15, 23, 0.92);
+}
+
+.gameshell-node--mine strong {
+  color: #cbd5e1;
+}
+
+.gameshell-node--locked {
+  top: 20%;
+  right: 20%;
+  width: 6.8rem;
+  min-height: 6.8rem;
+  border-radius: 999px;
+  border-color: rgba(251, 113, 133, 0.24);
+}
+
+.gameshell-location-stage {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 0.85rem;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(168, 85, 247, 0.08), transparent 26rem),
+    radial-gradient(circle at 75% 70%, rgba(56, 189, 248, 0.06), transparent 24rem),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.44), rgba(2, 6, 23, 0.5)),
+    #07090e;
+}
+
+.gameshell-location-stage::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+  background-size: 34px 34px;
+  opacity: 0.5;
+}
+
+.gameshell-location-stage > * {
+  position: relative;
+  z-index: 1;
+}
+
+.gameshell-location-main {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.gameshell-location-back {
+  position: absolute;
+  top: 0.85rem;
+  left: 1.25rem;
+  z-index: 4;
+  min-height: 2.45rem;
+  padding-inline: 1rem;
+  white-space: nowrap;
+}
+
+.gameshell-location-stage--battle .gameshell-location-main {
+  place-items: stretch;
+  padding-top: 3.6rem;
+}
+
+.gameshell-location-stage--battle .battle-panel {
+  min-height: 0;
+}
+
+.gameshell-location-stage--market {
+  padding: 0.85rem 1rem;
+}
+
+.gameshell-location-stage--market .gameshell-location-main {
+  place-items: stretch;
+  padding-top: 0;
+}
+
+.gameshell-location-stage--market .gameshell-location-back {
+  top: 2rem;
+  left: 2.05rem;
+}
+
+.gameshell-location-stage--market .market-basic-card {
+  min-height: 0;
+}
+
+.gameshell-location-stage--sanctuary {
+  padding: 0.85rem 1rem;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.11), transparent 24rem),
+    radial-gradient(circle at 18% 72%, rgba(212, 163, 89, 0.08), transparent 20rem),
+    #070b12;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-main {
+  place-items: stretch;
+  padding-top: 0;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-back {
+  top: 2rem;
+  left: 2.05rem;
+  border-color: rgba(212, 163, 89, 0.24);
+  background: rgba(7, 11, 18, 0.72);
+  color: #fcd34d;
+}
+
+.gameshell-location-stage--sanctuary .sanctuary-panel {
+  min-height: 0;
+}
+
+.gameshell-location-stage--sanctuary .gameshell-location-back:not(:disabled):hover {
+  border-color: rgba(212, 163, 89, 0.48);
+  background: rgba(120, 53, 15, 0.16);
+}
+
+.gameshell-placeholder-card {
+  max-width: 34rem;
+  border: 1px solid #22293a;
+  border-radius: 1rem;
+  background: rgba(19, 23, 34, 0.72);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+  padding: 1.4rem;
+}
+
+.gameshell-placeholder-card p {
+  margin: 0 0 0.5rem;
+  color: #a855f7;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gameshell-placeholder-card h2 {
+  margin: 0 0 0.6rem;
+  color: #f8fafc;
+}
+
+.gameshell-placeholder-card span {
+  color: #94a3b8;
+  line-height: 1.55;
+}

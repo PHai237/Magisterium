@@ -1,0 +1,102 @@
+.gameshell-actionbar {
+  position: relative;
+  z-index: 420;
+  height: 58px;
+  flex: 0 0 58px;
+  border-top: 1px solid #22293a;
+  background: #0b0d13;
+  display: grid;
+  place-items: center;
+  padding: 0 1.25rem;
+}
+
+.gameshell-actionbar__inventory {
+  position: relative;
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1px solid rgba(168, 85, 247, 0.42);
+  border-radius: 0.85rem;
+  background:
+    radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.16), transparent 1.1rem),
+    rgba(168, 85, 247, 0.12);
+  color: #f8fafc;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 1.25rem;
+  box-shadow:
+    0 0 0 5px rgba(168, 85, 247, 0.045),
+    0 14px 28px rgba(0, 0, 0, 0.28);
+  transform: rotate(-4deg);
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.gameshell-actionbar__inventory:hover,
+.gameshell-actionbar__inventory--active {
+  border-color: rgba(216, 180, 254, 0.86);
+  background:
+    radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.2), transparent 1.1rem),
+    rgba(168, 85, 247, 0.24);
+  box-shadow:
+    0 0 0 6px rgba(168, 85, 247, 0.07),
+    0 0 26px rgba(168, 85, 247, 0.22),
+    0 16px 30px rgba(0, 0, 0, 0.34);
+  transform: translateY(-2px) rotate(0deg);
+}
+
+.gameshell-actionbar__inventory::after {
+  content: attr(data-tooltip);
+  position: fixed;
+  left: 50%;
+  bottom: 4.45rem;
+  z-index: 9999;
+  border: 1px solid rgba(168, 85, 247, 0.36);
+  border-radius: 999px;
+  background: rgba(11, 15, 23, 0.98);
+  color: #f8fafc;
+  padding: 0.36rem 0.64rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(0.28rem);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.36);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.gameshell-actionbar__inventory::before {
+  content: "";
+  position: fixed;
+  left: 50%;
+  bottom: 4.18rem;
+  z-index: 10000;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1px solid rgba(168, 85, 247, 0.36);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.36);
+  background: rgba(11, 15, 23, 0.98);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) rotate(45deg);
+  transition: opacity 160ms ease;
+}
+
+.gameshell-actionbar__inventory:hover::after,
+.gameshell-actionbar__inventory:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.gameshell-actionbar__inventory:hover::before,
+.gameshell-actionbar__inventory:focus-visible::before {
+  opacity: 1;
+}

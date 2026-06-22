@@ -9,9 +9,37 @@ import {
   Optional,
 } from '@nestjs/common';
 
-import { CreateCharacterDto } from './dto/create-character.dto';
 import { PreviewCharacterDto } from './dto/preview-character.dto';
 import { UpdateCharacterDto } from './dto/update-character.dto';
+import type {
+  ApplyBattleRewardOptions,
+  ApplyExplorationSearchResultOptions,
+  CharacterConsumableUseResult,
+  CharacterCraftInventoryItemCommand,
+  CharacterCraftInventoryItemResult,
+  CharacterEquipmentMutationResult,
+  CharacterInnRestResult,
+  CharacterInventoryMutationResult,
+  CharacterMarketTransactionResult,
+  CreateCharacterCommand,
+} from './character-service.types';
+import { CharacterPersistenceCoordinator } from './character-persistence.coordinator';
+import {
+  assertConsumableIsAllowedFromInventory,
+  assertInventoryHasQuantity,
+  assertInventoryItemIsConsumableForContext,
+  assertInventoryItemIsEquipment,
+  assertKnownInventoryItem,
+  buildSanctuaryStatusResult,
+  buildStartingKitPreview,
+  calculateMarketTotalPrice,
+  normalizeNonNegativeBronzeAmount,
+  normalizeNonNegativeExplorationStaminaCost,
+  normalizePositiveInventoryMutationQuantity,
+  normalizeSanctuaryStatKey,
+  reconcileInventoryAfterBattle,
+  runInventoryOperationOrThrowBadRequest,
+} from './character-domain.helpers';
 
 import {
   normalizeCharacterName,
@@ -45,19 +73,10 @@ import {
   removeItemQuantityFromInventory,
 } from '../game/inventory/inventory.calculations';
 
-import type {
-  InventoryItemStack,
-  InventoryOperationResult,
-} from '../game/inventory/inventory.types';
-
-import {
-  getItemDefinitionById,
-  hasItemDefinition,
-} from '../game/item/item.registry';
+import type { InventoryItemStack } from '../game/inventory/inventory.types';
 
 import {
   SANCTUARY_FRAGMENT_COST_PER_RUNE,
-  SANCTUARY_STAT_KEYS,
   STAT_FRAGMENT_ITEM_ID_BY_STAT,
   STAT_RUNE_ITEM_ID_BY_STAT,
 } from '../game/sanctuary/sanctuary.constants';
@@ -75,15 +94,7 @@ import {
   unequipItem,
 } from '../game/inventory/equipment.calculations';
 
-import {
-  applyConsumableItemEffectsToCharacter,
-  getConsumableItemDefinitionForUse,
-} from '../game/inventory/consumable.calculations';
-
-import type {
-  ConsumableEffectApplication,
-  ItemUseContext,
-} from '../game/inventory/consumable.calculations';
+import { applyConsumableItemEffectsToCharacter } from '../game/inventory/consumable.calculations';
 
 import type {
   Character,
@@ -92,116 +103,12 @@ import type {
   CurrentState,
   ItemId,
   StatKey,
-  StarterKitDefinition,
 } from '../game/character/character.types';
 
 import type {
   AppliedBattleRewardResult,
   BattleRewardSummary,
 } from '../game/reward/reward.types';
-
-type CreateCharacterCommand = CreateCharacterDto & {
-  userId: string;
-};
-
-export interface CharacterInventoryMutationResult {
-  character: CharacterSnapshot;
-  inventoryChange: InventoryOperationResult;
-}
-
-export interface CharacterEquipmentMutationResult {
-  character: CharacterSnapshot;
-
-  equipmentChange: {
-    itemId: ItemId;
-    equippedItemIds: ItemId[];
-    removedItemIds: ItemId[];
-  };
-}
-
-export interface ApplyBattleRewardOptions {
-  battleStartingInventoryItemIds?: ItemId[];
-  battleInventoryItemIds?: ItemId[];
-  battleCurrentState?: CurrentState;
-}
-
-export interface ApplyExplorationSearchResultOptions {
-  staminaCost: number;
-  moneyBronze?: number;
-  items?: Array<{
-    itemId: ItemId;
-    quantity: number;
-  }>;
-}
-
-export interface CharacterConsumableUseResult {
-  character: CharacterSnapshot;
-
-  itemUse: {
-    itemId: ItemId;
-    context: ItemUseContext;
-    consumesOnUse: boolean;
-    effects: ConsumableEffectApplication[];
-  };
-
-  inventoryChange: InventoryOperationResult;
-}
-
-export interface CharacterInnRestResult {
-  character: CharacterSnapshot;
-
-  rest: {
-    paymentMethod: 'bronze' | 'pass';
-    priceBronze: number;
-    passItemId?: ItemId;
-    previousMoneyBronze: number;
-    nextMoneyBronze: number;
-    previousCurrentState: CurrentState;
-    nextCurrentState: CurrentState;
-    restedAt: string;
-  };
-}
-
-export interface CharacterMarketTransactionResult {
-  character: CharacterSnapshot;
-
-  transaction: {
-    type: 'buy' | 'sell';
-    itemId: ItemId;
-    quantity: number;
-    unitPriceBronze: number;
-    totalPriceBronze: number;
-    previousMoneyBronze: number;
-    nextMoneyBronze: number;
-    inventoryChange: InventoryOperationResult;
-  };
-}
-
-export interface CharacterCraftInventoryItemCommand {
-  outputItemId: ItemId;
-  outputQuantity: number;
-  requiredItems: Array<{
-    itemId: ItemId;
-    quantity: number;
-  }>;
-  bronzeCost: number;
-}
-
-export interface CharacterCraftInventoryItemResult {
-  character: CharacterSnapshot;
-
-  craft: {
-    outputItemId: ItemId;
-    outputQuantity: number;
-    consumedItems: Array<{
-      itemId: ItemId;
-      quantity: number;
-    }>;
-    consumedBronze: number;
-    previousMoneyBronze: number;
-    nextMoneyBronze: number;
-  };
-}
 
 const BASIC_INN_REST_PRICE_BRONZE = 2;
 const ONE_NIGHT_INN_PASS_ID: ItemId = 'one_night_inn_pass';
@@ -212,9 +119,7 @@ const MAX_CHARACTERS_PER_USER = 3;
 export class CharacterService implements OnModuleInit {
   private readonly characters = new Map<string, Character>();
   private readonly currentCharacterIdsByUserScope = new Map<string, string>();
-  private readonly scheduledCharacterVersions = new Map<string, number>();
-  private readonly persistenceChains = new Map<string, Promise<void>>();
-  private readonly pendingPersistence = new Set<Promise<void>>();
+  private readonly persistence: CharacterPersistenceCoordinator;
 
   private readonly logger = new Logger(CharacterService.name);
 
@@ -225,7 +130,9 @@ export class CharacterService implements OnModuleInit {
     @Optional()
     @Inject(forwardRef(() => BattleService))
     private readonly battleService?: BattleService,
-  ) {}
+  ) {
+    this.persistence = new CharacterPersistenceCoordinator(databaseService);
+  }
 
   async onModuleInit(): Promise<void> {
     await this.hydrateCharacterStateFromDatabase();
@@ -248,7 +155,7 @@ export class CharacterService implements OnModuleInit {
   }
 
   async flushPersistence(): Promise<void> {
-    await Promise.all(Array.from(this.pendingPersistence));
+    await this.persistence.flush();
     await this.battleService?.flushPersistence();
   }
 
@@ -267,7 +174,7 @@ export class CharacterService implements OnModuleInit {
       derivedStats,
       currentState,
 
-      startingKit: this.buildStartingKitPreview(starterKitDef),
+      startingKit: buildStartingKitPreview(starterKitDef),
     };
   }
 
@@ -380,13 +287,13 @@ export class CharacterService implements OnModuleInit {
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
 
-    const inventoryAfterBattle = this.reconcileInventoryAfterBattle(
+    const inventoryAfterBattle = reconcileInventoryAfterBattle(
       existingCharacter.inventoryItemIds,
       options,
     );
 
-    const nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(
-      () => addItemStacksToInventory(inventoryAfterBattle, reward.items),
+    const nextInventoryItemIds = runInventoryOperationOrThrowBadRequest(() =>
+      addItemStacksToInventory(inventoryAfterBattle, reward.items),
     );
 
     const nextCharacter: Character = {
@@ -429,7 +336,7 @@ export class CharacterService implements OnModuleInit {
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
 
-    const staminaCost = this.normalizeNonNegativeExplorationStaminaCost(
+    const staminaCost = normalizeNonNegativeExplorationStaminaCost(
       options.staminaCost,
     );
 
@@ -444,16 +351,12 @@ export class CharacterService implements OnModuleInit {
     const itemRewards = options.items ?? [];
 
     for (const itemReward of itemRewards) {
-      this.assertKnownInventoryItem(itemReward.itemId);
-      this.normalizePositiveInventoryMutationQuantity(itemReward.quantity);
+      assertKnownInventoryItem(itemReward.itemId);
+      normalizePositiveInventoryMutationQuantity(itemReward.quantity);
     }
 
-    const nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(
-      () =>
-        addItemStacksToInventory(
-          existingCharacter.inventoryItemIds,
-          itemRewards,
-        ),
+    const nextInventoryItemIds = runInventoryOperationOrThrowBadRequest(() =>
+      addItemStacksToInventory(existingCharacter.inventoryItemIds, itemRewards),
     );
 
     const moneyBronze = options.moneyBronze ?? 0;
@@ -520,7 +423,7 @@ export class CharacterService implements OnModuleInit {
     const character = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(character, userScope);
-    this.assertKnownInventoryItem(itemId);
+    assertKnownInventoryItem(itemId);
 
     return countInventoryItem(character.inventoryItemIds, itemId);
   }
@@ -533,13 +436,13 @@ export class CharacterService implements OnModuleInit {
   ): CharacterInventoryMutationResult {
     const userScope = normalizeRequiredUserId(userId);
     const normalizedQuantity =
-      this.normalizePositiveInventoryMutationQuantity(quantity);
+      normalizePositiveInventoryMutationQuantity(quantity);
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertKnownInventoryItem(itemId);
+    assertKnownInventoryItem(itemId);
 
-    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+    const inventoryChange = runInventoryOperationOrThrowBadRequest(() =>
       addItemQuantityToInventory(
         existingCharacter.inventoryItemIds,
         itemId,
@@ -571,18 +474,14 @@ export class CharacterService implements OnModuleInit {
   ): CharacterInventoryMutationResult {
     const userScope = normalizeRequiredUserId(userId);
     const normalizedQuantity =
-      this.normalizePositiveInventoryMutationQuantity(quantity);
+      normalizePositiveInventoryMutationQuantity(quantity);
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertKnownInventoryItem(itemId);
-    this.assertInventoryHasQuantity(
-      existingCharacter,
-      itemId,
-      normalizedQuantity,
-    );
+    assertKnownInventoryItem(itemId);
+    assertInventoryHasQuantity(existingCharacter, itemId, normalizedQuantity);
 
-    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+    const inventoryChange = runInventoryOperationOrThrowBadRequest(() =>
       removeItemQuantityFromInventory(
         existingCharacter.inventoryItemIds,
         itemId,
@@ -624,24 +523,24 @@ export class CharacterService implements OnModuleInit {
   ): CharacterCraftInventoryItemResult {
     const userScope = normalizeRequiredUserId(userId);
     const existingCharacter = this.findEntityById(characterId);
-    const outputQuantity = this.normalizePositiveInventoryMutationQuantity(
+    const outputQuantity = normalizePositiveInventoryMutationQuantity(
       command.outputQuantity,
     );
-    const bronzeCost = this.normalizeNonNegativeBronzeAmount(
+    const bronzeCost = normalizeNonNegativeBronzeAmount(
       command.bronzeCost,
       'Smithing fee',
     );
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertKnownInventoryItem(command.outputItemId);
-    this.assertInventoryItemIsEquipment(command.outputItemId);
+    assertKnownInventoryItem(command.outputItemId);
+    assertInventoryItemIsEquipment(command.outputItemId);
 
     const requiredQuantityByItemId = new Map<ItemId, number>();
 
     for (const requiredItem of command.requiredItems) {
-      this.assertKnownInventoryItem(requiredItem.itemId);
+      assertKnownInventoryItem(requiredItem.itemId);
 
-      const requiredQuantity = this.normalizePositiveInventoryMutationQuantity(
+      const requiredQuantity = normalizePositiveInventoryMutationQuantity(
         requiredItem.quantity,
       );
 
@@ -659,24 +558,23 @@ export class CharacterService implements OnModuleInit {
     }
 
     for (const [itemId, quantity] of requiredQuantityByItemId.entries()) {
-      this.assertInventoryHasQuantity(existingCharacter, itemId, quantity);
+      assertInventoryHasQuantity(existingCharacter, itemId, quantity);
     }
 
     let nextInventoryItemIds = [...existingCharacter.inventoryItemIds];
 
     for (const [itemId, quantity] of requiredQuantityByItemId.entries()) {
-      nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(() =>
+      nextInventoryItemIds = runInventoryOperationOrThrowBadRequest(() =>
         removeItemQuantityFromInventory(nextInventoryItemIds, itemId, quantity),
       ).inventoryItemIds;
     }
 
-    const outputInventoryChange = this.runInventoryOperationOrThrowBadRequest(
-      () =>
-        addItemQuantityToInventory(
-          nextInventoryItemIds,
-          command.outputItemId,
-          outputQuantity,
-        ),
+    const outputInventoryChange = runInventoryOperationOrThrowBadRequest(() =>
+      addItemQuantityToInventory(
+        nextInventoryItemIds,
+        command.outputItemId,
+        outputQuantity,
+      ),
     );
 
     const nextCharacter: Character = {
@@ -721,19 +619,19 @@ export class CharacterService implements OnModuleInit {
   ): CharacterMarketTransactionResult {
     const userScope = normalizeRequiredUserId(userId);
     const normalizedQuantity =
-      this.normalizePositiveInventoryMutationQuantity(quantity);
-    const normalizedUnitPrice = this.normalizeNonNegativeBronzeAmount(
+      normalizePositiveInventoryMutationQuantity(quantity);
+    const normalizedUnitPrice = normalizeNonNegativeBronzeAmount(
       unitPriceBronze,
       'Market item price',
     );
-    const totalPriceBronze = this.calculateMarketTotalPrice(
+    const totalPriceBronze = calculateMarketTotalPrice(
       normalizedUnitPrice,
       normalizedQuantity,
     );
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertKnownInventoryItem(itemId);
+    assertKnownInventoryItem(itemId);
 
     if (existingCharacter.moneyBronze < totalPriceBronze) {
       throw new BadRequestException(
@@ -741,7 +639,7 @@ export class CharacterService implements OnModuleInit {
       );
     }
 
-    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+    const inventoryChange = runInventoryOperationOrThrowBadRequest(() =>
       addItemQuantityToInventory(
         existingCharacter.inventoryItemIds,
         itemId,
@@ -784,26 +682,22 @@ export class CharacterService implements OnModuleInit {
   ): CharacterMarketTransactionResult {
     const userScope = normalizeRequiredUserId(userId);
     const normalizedQuantity =
-      this.normalizePositiveInventoryMutationQuantity(quantity);
-    const normalizedUnitPrice = this.normalizeNonNegativeBronzeAmount(
+      normalizePositiveInventoryMutationQuantity(quantity);
+    const normalizedUnitPrice = normalizeNonNegativeBronzeAmount(
       unitPriceBronze,
       'Market item price',
     );
-    const totalPriceBronze = this.calculateMarketTotalPrice(
+    const totalPriceBronze = calculateMarketTotalPrice(
       normalizedUnitPrice,
       normalizedQuantity,
     );
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertKnownInventoryItem(itemId);
-    this.assertInventoryHasQuantity(
-      existingCharacter,
-      itemId,
-      normalizedQuantity,
-    );
+    assertKnownInventoryItem(itemId);
+    assertInventoryHasQuantity(existingCharacter, itemId, normalizedQuantity);
 
-    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+    const inventoryChange = runInventoryOperationOrThrowBadRequest(() =>
       removeItemQuantityFromInventory(
         existingCharacter.inventoryItemIds,
         itemId,
@@ -850,9 +744,9 @@ export class CharacterService implements OnModuleInit {
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertKnownInventoryItem(itemId);
-    this.assertInventoryHasQuantity(existingCharacter, itemId, 1);
-    this.assertInventoryItemIsEquipment(itemId);
+    assertKnownInventoryItem(itemId);
+    assertInventoryHasQuantity(existingCharacter, itemId, 1);
+    assertInventoryItemIsEquipment(itemId);
 
     const equipmentResult = equipItem(
       existingCharacter.equippedItemIds,
@@ -888,8 +782,8 @@ export class CharacterService implements OnModuleInit {
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertKnownInventoryItem(itemId);
-    this.assertInventoryItemIsEquipment(itemId);
+    assertKnownInventoryItem(itemId);
+    assertInventoryItemIsEquipment(itemId);
 
     const equipmentResult = unequipItem(
       existingCharacter.equippedItemIds,
@@ -925,10 +819,10 @@ export class CharacterService implements OnModuleInit {
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertKnownInventoryItem(itemId);
-    this.assertInventoryHasQuantity(existingCharacter, itemId, 1);
-    this.assertInventoryItemIsConsumableForContext(itemId, 'out_of_battle');
-    this.assertConsumableIsAllowedFromInventory(itemId);
+    assertKnownInventoryItem(itemId);
+    assertInventoryHasQuantity(existingCharacter, itemId, 1);
+    assertInventoryItemIsConsumableForContext(itemId, 'out_of_battle');
+    assertConsumableIsAllowedFromInventory(itemId);
 
     const snapshotBeforeUse = createCharacterSnapshot(existingCharacter);
 
@@ -946,7 +840,7 @@ export class CharacterService implements OnModuleInit {
     );
 
     const inventoryChange = itemUseResult.consumesOnUse
-      ? this.runInventoryOperationOrThrowBadRequest(() =>
+      ? runInventoryOperationOrThrowBadRequest(() =>
           removeItemQuantityFromInventory(
             itemUseResult.character.inventoryItemIds,
             itemId,
@@ -1000,7 +894,7 @@ export class CharacterService implements OnModuleInit {
 
     this.assertCharacterBelongsToUserScope(character, userScope);
 
-    return this.buildSanctuaryStatusResult(character);
+    return buildSanctuaryStatusResult(character);
   }
 
   refineStatRune(
@@ -1010,9 +904,9 @@ export class CharacterService implements OnModuleInit {
     quantity = 1,
   ): CharacterRuneRefinementResult {
     const userScope = normalizeRequiredUserId(userId);
-    const normalizedStatKey = this.normalizeSanctuaryStatKey(statKey);
+    const normalizedStatKey = normalizeSanctuaryStatKey(statKey);
     const normalizedQuantity =
-      this.normalizePositiveInventoryMutationQuantity(quantity);
+      normalizePositiveInventoryMutationQuantity(quantity);
     const consumedFragmentQuantity =
       SANCTUARY_FRAGMENT_COST_PER_RUNE * normalizedQuantity;
     const fragmentItemId = STAT_FRAGMENT_ITEM_ID_BY_STAT[normalizedStatKey];
@@ -1020,13 +914,13 @@ export class CharacterService implements OnModuleInit {
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertInventoryHasQuantity(
+    assertInventoryHasQuantity(
       existingCharacter,
       fragmentItemId,
       consumedFragmentQuantity,
     );
 
-    const removedFragments = this.runInventoryOperationOrThrowBadRequest(() =>
+    const removedFragments = runInventoryOperationOrThrowBadRequest(() =>
       removeItemQuantityFromInventory(
         existingCharacter.inventoryItemIds,
         fragmentItemId,
@@ -1034,7 +928,7 @@ export class CharacterService implements OnModuleInit {
       ),
     );
 
-    const createdRune = this.runInventoryOperationOrThrowBadRequest(() =>
+    const createdRune = runInventoryOperationOrThrowBadRequest(() =>
       addItemQuantityToInventory(
         removedFragments.inventoryItemIds,
         runeItemId,
@@ -1053,7 +947,7 @@ export class CharacterService implements OnModuleInit {
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
-      ...this.buildSanctuaryStatusResult(nextCharacter),
+      ...buildSanctuaryStatusResult(nextCharacter),
       refinement: {
         statKey: normalizedStatKey,
         consumedItemId: fragmentItemId,
@@ -1071,14 +965,14 @@ export class CharacterService implements OnModuleInit {
     quantity = 1,
   ): CharacterRuneImbueResult {
     const userScope = normalizeRequiredUserId(userId);
-    const normalizedStatKey = this.normalizeSanctuaryStatKey(statKey);
+    const normalizedStatKey = normalizeSanctuaryStatKey(statKey);
     const normalizedQuantity =
-      this.normalizePositiveInventoryMutationQuantity(quantity);
+      normalizePositiveInventoryMutationQuantity(quantity);
     const runeItemId = STAT_RUNE_ITEM_ID_BY_STAT[normalizedStatKey];
     const existingCharacter = this.findEntityById(characterId);
 
     this.assertCharacterBelongsToUserScope(existingCharacter, userScope);
-    this.assertInventoryHasQuantity(
+    assertInventoryHasQuantity(
       existingCharacter,
       runeItemId,
       normalizedQuantity,
@@ -1101,7 +995,7 @@ export class CharacterService implements OnModuleInit {
       );
     }
 
-    const removedRune = this.runInventoryOperationOrThrowBadRequest(() =>
+    const removedRune = runInventoryOperationOrThrowBadRequest(() =>
       removeItemQuantityFromInventory(
         existingCharacter.inventoryItemIds,
         runeItemId,
@@ -1124,7 +1018,7 @@ export class CharacterService implements OnModuleInit {
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
-      ...this.buildSanctuaryStatusResult(nextCharacter),
+      ...buildSanctuaryStatusResult(nextCharacter),
       imbue: {
         statKey: normalizedStatKey,
         consumedItemId: runeItemId,
@@ -1171,7 +1065,7 @@ export class CharacterService implements OnModuleInit {
     this.repairCurrentCharacterForUserScope(userScope);
 
     return {
-      ...this.buildSanctuaryStatusResult(nextCharacter),
+      ...buildSanctuaryStatusResult(nextCharacter),
       rankUp: {
         previousRank: rankStatus.currentRank,
         nextRank,
@@ -1199,7 +1093,7 @@ export class CharacterService implements OnModuleInit {
     this.assertCharacterBelongsToUserScope(character, userScope);
 
     this.characters.delete(id);
-    this.scheduledCharacterVersions.delete(id);
+    this.persistence.forgetCharacter(id);
     this.battleService?.deleteBattlesForCharacterForUserScope(id, userScope);
     this.deletePersistedCharacter(id);
     this.repairCurrentCharacterForUserScope(userScope);
@@ -1213,7 +1107,7 @@ export class CharacterService implements OnModuleInit {
   clearCharacters(): void {
     this.characters.clear();
     this.currentCharacterIdsByUserScope.clear();
-    this.scheduledCharacterVersions.clear();
+    this.persistence.clearVersions();
 
     this.persistClearCharacterState();
   }
@@ -1279,7 +1173,7 @@ export class CharacterService implements OnModuleInit {
       throw new NotFoundException(`Character not found: ${characterId}`);
     }
 
-    this.assertInventoryHasQuantity(character, ONE_NIGHT_INN_PASS_ID, 1);
+    assertInventoryHasQuantity(character, ONE_NIGHT_INN_PASS_ID, 1);
 
     const snapshotBeforeRest = createCharacterSnapshot(character);
     const restedAt = new Date().toISOString();
@@ -1297,7 +1191,7 @@ export class CharacterService implements OnModuleInit {
       'out_of_battle',
     );
 
-    const inventoryChange = this.runInventoryOperationOrThrowBadRequest(() =>
+    const inventoryChange = runInventoryOperationOrThrowBadRequest(() =>
       removeItemQuantityFromInventory(
         itemUseResult.character.inventoryItemIds,
         ONE_NIGHT_INN_PASS_ID,
@@ -1332,309 +1226,6 @@ export class CharacterService implements OnModuleInit {
         restedAt,
       },
     };
-  }
-
-  private buildStartingKitPreview(starterKit: StarterKitDefinition) {
-    const itemQuantityById = new Map<ItemId, number>();
-
-    for (const itemId of starterKit.startingItemIds) {
-      itemQuantityById.set(itemId, (itemQuantityById.get(itemId) ?? 0) + 1);
-    }
-
-    return {
-      id: starterKit.id,
-      name: starterKit.name,
-      moneyBronze: starterKit.startingMoneyBronze,
-      items: Array.from(itemQuantityById.entries()).map(
-        ([itemId, quantity]) => {
-          const itemDefinition = getItemDefinitionById(itemId);
-
-          return {
-            itemId,
-            name: itemDefinition.name,
-            quantity,
-          };
-        },
-      ),
-    };
-  }
-
-  private runInventoryOperationOrThrowBadRequest<T>(operation: () => T): T {
-    try {
-      return operation();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Inventory operation failed.';
-
-      throw new BadRequestException(message);
-    }
-  }
-
-  private countItemIds(itemIds: readonly ItemId[]): Map<ItemId, number> {
-    const counts = new Map<ItemId, number>();
-
-    for (const itemId of itemIds) {
-      counts.set(itemId, (counts.get(itemId) ?? 0) + 1);
-    }
-
-    return counts;
-  }
-
-  private removeItemCopies(
-    inventoryItemIds: readonly ItemId[],
-    itemId: ItemId,
-    quantity: number,
-  ): ItemId[] {
-    let remainingToRemove = quantity;
-    const nextInventoryItemIds: ItemId[] = [];
-
-    for (const currentItemId of inventoryItemIds) {
-      if (currentItemId === itemId && remainingToRemove > 0) {
-        remainingToRemove -= 1;
-        continue;
-      }
-
-      nextInventoryItemIds.push(currentItemId);
-    }
-
-    return nextInventoryItemIds;
-  }
-
-  private reconcileInventoryAfterBattle(
-    currentInventoryItemIds: readonly ItemId[],
-    options: ApplyBattleRewardOptions,
-  ): ItemId[] {
-    if (!options.battleInventoryItemIds) {
-      return [...currentInventoryItemIds];
-    }
-
-    if (!options.battleStartingInventoryItemIds) {
-      return [...options.battleInventoryItemIds];
-    }
-
-    const startingCounts = this.countItemIds(
-      options.battleStartingInventoryItemIds,
-    );
-    const endingCounts = this.countItemIds(options.battleInventoryItemIds);
-    let nextInventoryItemIds = [...currentInventoryItemIds];
-
-    for (const [itemId, startingQuantity] of startingCounts.entries()) {
-      const endingQuantity = endingCounts.get(itemId) ?? 0;
-      const consumedQuantity = Math.max(0, startingQuantity - endingQuantity);
-
-      if (consumedQuantity > 0) {
-        nextInventoryItemIds = this.removeItemCopies(
-          nextInventoryItemIds,
-          itemId,
-          consumedQuantity,
-        );
-      }
-    }
-
-    for (const [itemId, endingQuantity] of endingCounts.entries()) {
-      const startingQuantity = startingCounts.get(itemId) ?? 0;
-      const gainedQuantity = Math.max(0, endingQuantity - startingQuantity);
-
-      if (gainedQuantity > 0) {
-        nextInventoryItemIds = this.runInventoryOperationOrThrowBadRequest(() =>
-          addItemQuantityToInventory(
-            nextInventoryItemIds,
-            itemId,
-            gainedQuantity,
-          ),
-        ).inventoryItemIds;
-      }
-    }
-
-    return nextInventoryItemIds;
-  }
-
-  private normalizeNonNegativeExplorationStaminaCost(
-    staminaCost: number,
-  ): number {
-    if (!Number.isFinite(staminaCost)) {
-      throw new BadRequestException(
-        'Exploration stamina cost must be a finite number.',
-      );
-    }
-
-    const normalizedStaminaCost = Math.floor(staminaCost);
-
-    if (!Number.isSafeInteger(normalizedStaminaCost)) {
-      throw new BadRequestException(
-        'Exploration stamina cost must be a safe integer.',
-      );
-    }
-
-    if (normalizedStaminaCost < 0) {
-      throw new BadRequestException(
-        'Exploration stamina cost must not be negative.',
-      );
-    }
-
-    return normalizedStaminaCost;
-  }
-
-  private normalizeSanctuaryStatKey(statKey: StatKey): StatKey {
-    if (!SANCTUARY_STAT_KEYS.includes(statKey)) {
-      throw new BadRequestException(
-        `Unsupported sanctuary stat key: ${statKey}`,
-      );
-    }
-
-    return statKey;
-  }
-
-  private buildSanctuaryStatusResult(
-    character: Character,
-  ): CharacterSanctuaryStatusResult {
-    const snapshot = createCharacterSnapshot(character);
-
-    return {
-      character: snapshot,
-      rankStatus: calculateRankStatus(character),
-      fragments: SANCTUARY_STAT_KEYS.map((statKey) => ({
-        statKey,
-        itemId: STAT_FRAGMENT_ITEM_ID_BY_STAT[statKey],
-        quantity: countInventoryItem(
-          snapshot.inventoryItemIds,
-          STAT_FRAGMENT_ITEM_ID_BY_STAT[statKey],
-        ),
-      })),
-      runes: SANCTUARY_STAT_KEYS.map((statKey) => ({
-        statKey,
-        itemId: STAT_RUNE_ITEM_ID_BY_STAT[statKey],
-        quantity: countInventoryItem(
-          snapshot.inventoryItemIds,
-          STAT_RUNE_ITEM_ID_BY_STAT[statKey],
-        ),
-      })),
-    };
-  }
-
-  private assertInventoryItemIsConsumableForContext(
-    itemId: ItemId,
-    context: ItemUseContext,
-  ): void {
-    try {
-      getConsumableItemDefinitionForUse(itemId, context);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : `Item ${itemId} is not consumable.`;
-
-      throw new BadRequestException(message);
-    }
-  }
-
-  private assertInventoryItemIsEquipment(itemId: ItemId): void {
-    try {
-      equipItem([], itemId);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : `Item ${itemId} is not equipment.`;
-
-      throw new BadRequestException(message);
-    }
-  }
-
-  private assertKnownInventoryItem(itemId: ItemId): void {
-    if (!hasItemDefinition(itemId)) {
-      throw new BadRequestException(`Item definition not found: ${itemId}`);
-    }
-  }
-
-  private assertConsumableIsAllowedFromInventory(itemId: ItemId): void {
-    const itemDefinition = getItemDefinitionById(itemId);
-
-    const hasRestEffect =
-      itemDefinition.consumable?.effects.some(
-        (effect) => effect.type === 'rest',
-      ) ?? false;
-
-    if (hasRestEffect) {
-      throw new BadRequestException(
-        `Item ${itemId} can only be used through an inn service.`,
-      );
-    }
-  }
-
-  private normalizePositiveInventoryMutationQuantity(quantity: number): number {
-    if (!Number.isFinite(quantity)) {
-      throw new BadRequestException(
-        'Item quantity must be a positive integer.',
-      );
-    }
-
-    const normalizedQuantity = Math.floor(quantity);
-
-    if (normalizedQuantity <= 0) {
-      throw new BadRequestException(
-        'Item quantity must be a positive integer.',
-      );
-    }
-
-    if (!Number.isSafeInteger(normalizedQuantity)) {
-      throw new BadRequestException('Item quantity must be a safe integer.');
-    }
-
-    return normalizedQuantity;
-  }
-
-  private normalizeNonNegativeBronzeAmount(
-    amount: number,
-    label: string,
-  ): number {
-    if (!Number.isFinite(amount)) {
-      throw new BadRequestException(`${label} must be a finite number.`);
-    }
-
-    const normalizedAmount = Math.floor(amount);
-
-    if (!Number.isSafeInteger(normalizedAmount)) {
-      throw new BadRequestException(`${label} must be a safe integer.`);
-    }
-
-    if (normalizedAmount < 0) {
-      throw new BadRequestException(`${label} must not be negative.`);
-    }
-
-    return normalizedAmount;
-  }
-
-  private calculateMarketTotalPrice(
-    unitPriceBronze: number,
-    quantity: number,
-  ): number {
-    const totalPriceBronze = unitPriceBronze * quantity;
-
-    if (!Number.isSafeInteger(totalPriceBronze)) {
-      throw new BadRequestException(
-        'Market total price must be a safe integer.',
-      );
-    }
-
-    return totalPriceBronze;
-  }
-
-  private assertInventoryHasQuantity(
-    character: Character,
-    itemId: ItemId,
-    quantity: number,
-  ): void {
-    const currentQuantity = countInventoryItem(
-      character.inventoryItemIds,
-      itemId,
-    );
-
-    if (currentQuantity < quantity) {
-      throw new BadRequestException(
-        `Not enough item ${itemId} in inventory. Required ${quantity}, available ${currentQuantity}.`,
-      );
-    }
   }
 
   private findEntityById(id: string): Character {
@@ -1777,11 +1368,10 @@ export class CharacterService implements OnModuleInit {
       const characters = await this.databaseService.loadCharacters();
 
       this.characters.clear();
-      this.scheduledCharacterVersions.clear();
+      this.persistence.resetVersions(characters);
 
       for (const character of characters) {
         this.characters.set(character.id, character);
-        this.scheduledCharacterVersions.set(character.id, character.version);
       }
 
       const currentCharacters =
@@ -1820,85 +1410,25 @@ export class CharacterService implements OnModuleInit {
   }
 
   private persistCharacter(character: Character): void {
-    const scheduledVersion = this.scheduledCharacterVersions.get(character.id);
-    const expectedVersion = scheduledVersion;
-    character.version =
-      scheduledVersion === undefined
-        ? Math.max(1, character.version)
-        : scheduledVersion + 1;
-    this.scheduledCharacterVersions.set(character.id, character.version);
-
-    if (!this.databaseService?.isEnabled()) return;
-
-    this.queuePersistence(`character:${character.id}`, async () => {
-      try {
-        await this.databaseService!.saveCharacter(character, expectedVersion);
-      } catch (error) {
-        await this.restoreCharacterAfterPersistenceFailure(character.id);
-        throw error;
-      }
-    });
+    this.persistence.persistCharacter(character, () =>
+      this.restoreCharacterAfterPersistenceFailure(character.id),
+    );
   }
 
   private deletePersistedCharacter(characterId: string): void {
-    if (!this.databaseService?.isEnabled()) {
-      return;
-    }
-
-    this.queuePersistence(`character:${characterId}`, () =>
-      this.databaseService!.deleteCharacter(characterId),
-    );
+    this.persistence.deleteCharacter(characterId);
   }
 
   private persistCurrentCharacter(userId: string, characterId: string): void {
-    if (!this.databaseService?.isEnabled()) {
-      return;
-    }
-
-    this.queuePersistence(`current-character:${userId}`, () =>
-      this.databaseService!.setCurrentCharacter(userId, characterId),
-    );
+    this.persistence.setCurrentCharacter(userId, characterId);
   }
 
   private deletePersistedCurrentCharacter(userId: string): void {
-    if (!this.databaseService?.isEnabled()) {
-      return;
-    }
-
-    this.queuePersistence(`current-character:${userId}`, () =>
-      this.databaseService!.deleteCurrentCharacter(userId),
-    );
+    this.persistence.deleteCurrentCharacter(userId);
   }
 
   private persistClearCharacterState(): void {
-    if (!this.databaseService?.isEnabled()) {
-      return;
-    }
-
-    this.queuePersistence('characters:clear', () =>
-      this.databaseService!.clearCharacterState(),
-    );
-  }
-
-  private queuePersistence(key: string, operation: () => Promise<void>): void {
-    const chainKey = 'character-state';
-    const previous = this.persistenceChains.get(chainKey) ?? Promise.resolve();
-    const trackedPromise: Promise<void> = previous
-      .then(operation)
-      .catch((error: unknown) => {
-        const message =
-          error instanceof Error ? error.message : 'Unknown database error.';
-        this.logger.error(`Persistence operation ${key} failed: ${message}`);
-        throw error;
-      })
-      .finally(() => {
-        this.pendingPersistence.delete(trackedPromise);
-        if (this.persistenceChains.get(chainKey) === trackedPromise) {
-          this.persistenceChains.delete(chainKey);
-        }
-      });
-    this.persistenceChains.set(chainKey, trackedPromise);
-    this.pendingPersistence.add(trackedPromise);
+    this.persistence.clearCharacterState();
   }
 
   private async restoreCharacterAfterPersistenceFailure(
@@ -1909,14 +1439,10 @@ export class CharacterService implements OnModuleInit {
         await this.databaseService?.loadCharacter(characterId);
       if (persistedCharacter) {
         this.characters.set(characterId, persistedCharacter);
-        this.scheduledCharacterVersions.set(
-          characterId,
-          persistedCharacter.version,
-        );
       } else {
         this.characters.delete(characterId);
-        this.scheduledCharacterVersions.delete(characterId);
       }
+      this.persistence.restoreVersion(persistedCharacter, characterId);
     } catch (restoreError) {
       const message =
         restoreError instanceof Error
