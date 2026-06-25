@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { Button } from "../../components/ui/Button";
 import type {
@@ -8,6 +8,7 @@ import type {
 } from "../../domain/magisterium.types";
 import { formatNumber } from "../../lib/format";
 import { smithApi, type SmithRecipeView } from "./smith.api";
+import { SmithDialogueOverlay } from "./SmithDialogueOverlay";
 import "./smith.css";
 
 interface SmithPanelProps {
@@ -184,6 +185,7 @@ export function SmithPanel({
   const [busyRecipeId, setBusyRecipeId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDialogueOpen, setIsDialogueOpen] = useState(false);
 
   const filteredRecipes = useMemo(
     () =>
@@ -346,26 +348,34 @@ export function SmithPanel({
             <div className="smith-empty-state smith-empty-state--error">{error}</div>
           ) : (
             <div className="smith-blueprint-grid">
-              {filteredRecipes.map((recipe) => {
+              {filteredRecipes.map((recipe, index) => {
                 const isActive = selectedRecipe?.id === recipe.id;
 
                 return (
-                  <button
-                    key={recipe.id}
-                    type="button"
-                    className={`smith-blueprint-cell ${
-                      isActive ? "smith-blueprint-cell--active" : ""
-                    } ${recipe.canCraft ? "" : "smith-blueprint-cell--incomplete"}`}
-                    onClick={() => setSelectedRecipeId(recipe.id)}
-                  >
-                    <span className="smith-blueprint-cell__icon" aria-hidden="true">
-                      {getItemIcon(recipe)}
-                    </span>
-                    <strong>{recipe.output.name}</strong>
-                    <small>{recipe.output.rarity}</small>
-                  </button>
+                  <Fragment key={recipe.id}>
+                    {index === 3 ? (
+                      <SmithNpcCell onTalk={() => setIsDialogueOpen(true)} />
+                    ) : null}
+                    <button
+                      type="button"
+                      className={`smith-blueprint-cell ${
+                        isActive ? "smith-blueprint-cell--active" : ""
+                      } ${recipe.canCraft ? "" : "smith-blueprint-cell--incomplete"}`}
+                      onClick={() => setSelectedRecipeId(recipe.id)}
+                    >
+                      <span className="smith-blueprint-cell__icon" aria-hidden="true">
+                        {getItemIcon(recipe)}
+                      </span>
+                      <strong>{recipe.output.name}</strong>
+                      <small>{recipe.output.rarity}</small>
+                    </button>
+                  </Fragment>
                 );
               })}
+
+              {filteredRecipes.length < 4 ? (
+                <SmithNpcCell onTalk={() => setIsDialogueOpen(true)} />
+              ) : null}
 
               {Array.from({ length: emptyCellCount }, (_, index) => (
                 <div key={`empty-${index}`} className="smith-blueprint-cell smith-blueprint-cell--empty">
@@ -480,6 +490,35 @@ export function SmithPanel({
           )}
         </aside>
       </div>
+
+      {isDialogueOpen ? (
+        <SmithDialogueOverlay onClose={() => setIsDialogueOpen(false)} />
+      ) : null}
     </section>
+  );
+}
+
+function SmithNpcCell({ onTalk }: { onTalk: () => void }) {
+  return (
+    <div className="smith-blueprint-cell smith-npc-cell">
+      <span className="smith-npc-cell__avatar" aria-hidden="true">
+        G
+      </span>
+      <span className="smith-npc-cell__name" aria-label="Garran">
+        <span>G</span>
+        <span>A</span>
+        <span>R</span>
+        <span>R</span>
+        <span>A</span>
+        <span>N</span>
+      </span>
+      <span className="smith-npc-cell__role" aria-label="The Smith">
+        <span>The</span>
+        <span>Smith</span>
+      </span>
+      <button type="button" onClick={onTalk}>
+        Talk
+      </button>
+    </div>
   );
 }
