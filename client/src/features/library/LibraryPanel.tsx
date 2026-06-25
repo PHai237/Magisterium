@@ -225,7 +225,6 @@ export function LibraryPanel({
         <main className="library-information">
           <div className="library-librarian">
             <div>
-              <span>Head Librarian</span>
               <strong>Elara the Librarian</strong>
             </div>
             <button
