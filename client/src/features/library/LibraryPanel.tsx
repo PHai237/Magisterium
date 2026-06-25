@@ -161,7 +161,6 @@ export function LibraryPanel({
       <div className="library-panel__body">
         <aside className="library-collections" aria-label="Collections">
           <div className="library-column-heading">
-            <span>Library Wing</span>
             <h2>Collections</h2>
           </div>
 
@@ -207,7 +206,6 @@ export function LibraryPanel({
           aria-label={`${activeCollection.name} index`}
         >
           <div className="library-column-heading library-column-heading--active">
-            <span>{activeCollection.subtitle}</span>
             <h2>{activeCollection.name}</h2>
           </div>
 
