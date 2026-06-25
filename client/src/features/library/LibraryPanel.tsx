@@ -9,6 +9,7 @@ import {
   type LibraryBestiaryResult,
   type LibraryMonsterRecord,
 } from "./library.api";
+import { LibraryDialogueOverlay } from "./LibraryDialogueOverlay";
 import "./library.css";
 
 interface LibraryPanelProps {
@@ -85,7 +86,7 @@ export function LibraryPanel({
   const [selectedMonsterId, setSelectedMonsterId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [librarianMessage, setLibrarianMessage] = useState<string | null>(null);
+  const [isDialogueOpen, setIsDialogueOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,7 +143,6 @@ export function LibraryPanel({
 
   function selectCollection(collectionId: LibraryCollectionId) {
     setActiveCollectionId(collectionId);
-    setLibrarianMessage(null);
   }
 
   return (
@@ -229,23 +229,11 @@ export function LibraryPanel({
             </div>
             <button
               type="button"
-              onClick={() =>
-                setLibrarianMessage(
-                  activeCollectionId === "bestiary"
-                    ? "Defeat creatures and claim their rewards. The Library preserves only what you have truly discovered."
-                    : `${activeCollection.name} is being prepared. Its shelves will open when this collection gains a purpose in your journey.`,
-                )
-              }
+              onClick={() => setIsDialogueOpen(true)}
             >
               Talk
             </button>
           </div>
-
-          {librarianMessage ? (
-            <div className="library-librarian__message">
-              “{librarianMessage}”
-            </div>
-          ) : null}
 
           <div className="library-information__record">
             {activeCollectionId === "bestiary" ? (
@@ -264,6 +252,10 @@ export function LibraryPanel({
           </div>
         </main>
       </div>
+
+      {isDialogueOpen ? (
+        <LibraryDialogueOverlay onClose={() => setIsDialogueOpen(false)} />
+      ) : null}
     </section>
   );
 }
